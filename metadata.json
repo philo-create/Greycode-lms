@@ -1,0 +1,8 @@
+{
+  "name": "Greycode LMS",
+  "description": "An interactive educational web app for Foundation Phase (Grade R - 3) students to learn coding, robotics, and digital concepts according to the school curriculum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
