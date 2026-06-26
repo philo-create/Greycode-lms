@@ -3,6 +3,21 @@ import { supabase } from '../supabase';
 export async function getLearnerData(userId: string) {
   if (!userId) throw new Error('No user ID provided');
 
+  if (!supabase) {
+    return {
+      learner: { id: 'demo-learner', full_name: 'Demo Student' },
+      stats: {
+        points: 150,
+        completedLessons: 4,
+        badgesCount: 2,
+        currentProgress: 65
+      },
+      recentBadges: [],
+      upcomingActivities: [], // Placeholder
+      continueLesson: null // Placeholder for next lesson
+    };
+  }
+
   // First get learner profile
   const { data: learner } = await supabase
     .from('learners')

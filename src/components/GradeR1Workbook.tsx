@@ -41,6 +41,7 @@ import RoboticsActivity from './RoboticsActivity';
 import DigitalConceptsActivity, { ColorfulDesktop, ColorfulLaptop, ColorfulTablet, ColorfulSmartphone, ColorfulMicrowave, ColorfulSmartwatch } from './DigitalConceptsActivity';
 import SequenceActivity from './SequenceActivity';
 import CreativeDesignWorkshop from './CreativeDesignWorkshop';
+import CreativeWorkstationApp from './CreativeWorkstationApp';
 import MascotGirl from './MascotGirl';
 import SpeakableText from './SpeakableText';
 import { getZolaImage } from '../zolaImages';
@@ -4092,11 +4093,17 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
     const timeout = setTimeout(() => {
       speakText(`${workbookConfig.mascotSpeech} Let's explore our big vocabulary word: ${workbookConfig.bigWord}. Say it out loud: ${workbookConfig.bigWord}. Now type it out by matching the letters in the writing desk below!`);
     }, 400);
+
+    // Save started state if it's W7 to check for workstation unlocking
+    if (lesson.id === 'R-T1-W7' && activeStudentId) {
+      localStorage.setItem(`w7_started_${activeStudentId}`, 'true');
+    }
+
     return () => {
       clearTimeout(timeout);
       handleStopSpeech();
     };
-  }, [lesson.id]);
+  }, [lesson.id, activeStudentId]);
 
   // Unlock section 3 once the student tries writing the big word
   const handleVerifyBigWord = () => {
@@ -4121,6 +4128,23 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
   const onCompleteActivitySimulation = (starsEarned: number, possible?: number) => {
     setPracticeCompleted(true);
     playChime();
+    
+    if (lesson.id === 'R-T1-W7') {
+      const finalStars = starsEarned;
+      const finalPossible = possible || 3;
+      setQuizSubmitted(true);
+      setQuizFinalScore(finalStars);
+      setQuizTotalScore(finalPossible);
+      
+      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_submitted`, 'true');
+      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_score`, finalStars.toString());
+      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_total`, finalPossible.toString());
+      
+      onComplete(finalStars, finalPossible);
+      speakText(`Magnificent design, bracelet designer! You completed your beaded bracelet design with a grade of ${finalStars} out of ${finalPossible} stars! Your workbook entries are locked and certified!`);
+      return;
+    }
+    
     speakText(`Wonderful job! You finished the sandbox simulation! Let's write down how you felt, and head to the Page 2 Tech Challenge!`);
   };
 
@@ -4351,40 +4375,48 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
       {/* Dynamic Workbook Navigator Header */}
       <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 justify-between items-center gap-4 flex-wrap">
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer transition ${
-              currentPage === 1 
-                ? 'bg-slate-900 text-white shadow-xs' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            Page 1: Discovery Guide Study 📖
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              playPop();
-              if (!practiceCompleted && !quizSubmitted) {
-                setShowHomeworkWarning(true);
-                speakText("Wait champion! You must complete the Discovery Guide Study on Page 1 first.");
-                return;
-              }
-              setCurrentPage(2);
-            }}
-            className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer transition ${
-              currentPage === 2 
-                ? 'bg-slate-900 text-white shadow-xs' 
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            } ${(!practiceCompleted && !quizSubmitted) ? 'opacity-50' : ''}`}
-          >
-            Page 2: Tech Challenge 📝
-            {(!practiceCompleted && !quizSubmitted) && <span className="ml-1">🔒</span>}
-          </button>
+          {lesson.id === 'R-T1-W7' ? (
+            <span className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-xs select-none">
+              Page 1: Design Challenge Workspace 🎨
+            </span>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  playPop();
+                  setCurrentPage(1);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer transition ${
+                  currentPage === 1 
+                    ? 'bg-slate-900 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                }`}
+              >
+                Page 1: Discovery Guide Study 📖
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  playPop();
+                  if (!practiceCompleted && !quizSubmitted) {
+                    setShowHomeworkWarning(true);
+                    speakText("Wait champion! You must complete the Discovery Guide Study on Page 1 first.");
+                    return;
+                  }
+                  setCurrentPage(2);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer transition ${
+                  currentPage === 2 
+                    ? 'bg-slate-900 text-white shadow-xs' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                } ${(!practiceCompleted && !quizSubmitted) ? 'opacity-50' : ''}`}
+              >
+                Page 2: Tech Challenge 📝
+                {(!practiceCompleted && !quizSubmitted) && <span className="ml-1">🔒</span>}
+              </button>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -4413,158 +4445,164 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
             className="space-y-6"
           >
             {/* Section 1: Mascot Hello Bubble */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-3xs flex gap-4 md:gap-6 flex-col md:flex-row items-center md:items-start">
-              {lesson.grade === 'R' ? (
-                <div className="w-16 h-16 shrink-0 select-none animate-bounce flex items-center justify-center bg-rose-50 border border-rose-200 rounded-2xl overflow-hidden p-0.5">
-                  <img 
-                    src={getZolaImage('waving')} 
-                    alt="Zola"
-                    referrerPolicy="no-referrer"
-                    className="w-14 h-14 object-contain rounded-xl"
-                  />
+            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+              <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-3xs flex gap-4 md:gap-6 flex-col md:flex-row items-center md:items-start">
+                {lesson.grade === 'R' ? (
+                  <div className="w-16 h-16 shrink-0 select-none animate-bounce flex items-center justify-center bg-rose-50 border border-rose-200 rounded-2xl overflow-hidden p-0.5">
+                    <img 
+                      src={getZolaImage('waving')} 
+                      alt="Zola"
+                      referrerPolicy="no-referrer"
+                      className="w-14 h-14 object-contain rounded-xl"
+                    />
+                  </div>
+                ) : lesson.grade === '1' ? (
+                  <div className="w-16 h-16 shrink-0 select-none animate-bounce flex items-center justify-center bg-purple-50 border border-purple-200 rounded-2xl p-1">
+                    <MascotGirl grade="1" pose="waving" className="w-14 h-14" />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-4xl shrink-0 select-none animate-bounce border border-slate-200">
+                    {lesson.strand === 'Coding' ? '🐰' : lesson.strand === 'Robotics' ? '🤖' : '📱'}
+                  </div>
+                )}
+                <div className="text-center md:text-left space-y-2">
+                  <span className="px-2.5 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black rounded-full uppercase tracking-wider">
+                    Mascot Speech Guide
+                  </span>
+                  <p className="text-sm md:text-base font-bold text-slate-800 leading-snug">
+                    &ldquo;{workbookConfig.mascotSpeech}&rdquo;
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => speakText(workbookConfig.mascotSpeech)}
+                    className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg text-xs active:scale-95 transition inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Volume2 className="w-4 h-4" />
+                    <span>Listen to Voice 🔊</span>
+                  </button>
                 </div>
-              ) : lesson.grade === '1' ? (
-                <div className="w-16 h-16 shrink-0 select-none animate-bounce flex items-center justify-center bg-purple-50 border border-purple-200 rounded-2xl p-1">
-                  <MascotGirl grade="1" pose="waving" className="w-14 h-14" />
-                </div>
-              ) : (
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center text-4xl shrink-0 select-none animate-bounce border border-slate-200">
-                  {lesson.strand === 'Coding' ? '🐰' : lesson.strand === 'Robotics' ? '🤖' : '📱'}
-                </div>
-              )}
-              <div className="text-center md:text-left space-y-2">
-                <span className="px-2.5 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black rounded-full uppercase tracking-wider">
-                  Mascot Speech Guide
-                </span>
-                <p className="text-sm md:text-base font-bold text-slate-800 leading-snug">
-                  &ldquo;{workbookConfig.mascotSpeech}&rdquo;
-                </p>
-                <button
-                  type="button"
-                  onClick={() => speakText(workbookConfig.mascotSpeech)}
-                  className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg text-xs active:scale-95 transition inline-flex items-center gap-1.5 cursor-pointer"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  <span>Listen to Voice 🔊</span>
-                </button>
               </div>
-            </div>
+            )}
 
             {/* Section 2: Our Big Word & Vocabulary Gate */}
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="p-1 px-2.5 bg-amber-500 text-white rounded-full text-xs font-bold">🗣️</span>
-                <h3 className="text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">Our Big Word Today</h3>
-              </div>
+            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 px-2.5 bg-amber-500 text-white rounded-full text-xs font-bold">🗣️</span>
+                  <h3 className="text-sm md:text-base font-black text-slate-900 uppercase tracking-tight">Our Big Word Today</h3>
+                </div>
 
-              <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 text-center space-y-3 shadow-md relative overflow-hidden">
-                <div className="absolute right-0 top-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
-                
-                <h4 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight leading-none uppercase filter drop-shadow-xs">
-                  {workbookConfig.bigWord}
-                </h4>
-                <p className="text-xs text-slate-300 font-medium">Say it aloud, and let&apos;s trace spelling keycodes inside our writing desk!</p>
-                
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => speakText(`The big vocabulary word is: ${workbookConfig.bigWord}. Say it out loud: ${workbookConfig.bigWord}.`)}
-                    className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold rounded-lg text-[10px] uppercase border border-amber-500/30 active:scale-95 transition cursor-pointer"
-                  >
-                    Shoutout! 🔊
-                  </button>
+                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-5 text-center space-y-3 shadow-md relative overflow-hidden">
+                  <div className="absolute right-0 top-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+                  
+                  <h4 className="text-2xl md:text-3xl font-black text-amber-400 tracking-tight leading-none uppercase filter drop-shadow-xs">
+                    {workbookConfig.bigWord}
+                  </h4>
+                  <p className="text-xs text-slate-300 font-medium">Say it aloud, and let&apos;s trace spelling keycodes inside our writing desk!</p>
+                  
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => speakText(`The big vocabulary word is: ${workbookConfig.bigWord}. Say it out loud: ${workbookConfig.bigWord}.`)}
+                      className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-extrabold rounded-lg text-[10px] uppercase border border-amber-500/30 active:scale-95 transition cursor-pointer"
+                    >
+                      Shoutout! 🔊
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Writing Desk Gate */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 space-y-3">
-                <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
-                  Writing Desk Tracing: Type the Word Here
-                </label>
-                <div className="text-[10px] text-slate-400 font-bold font-mono tracking-widest uppercase">
-                  Letter guide: {workbookConfig.bigWord.split(' ').map(w => w.split('').join('-')).join('   ')}
+                {/* Writing Desk Gate */}
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 space-y-3">
+                  <label className="block text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                    Writing Desk Tracing: Type the Word Here
+                  </label>
+                  <div className="text-[10px] text-slate-400 font-bold font-mono tracking-widest uppercase">
+                    Letter guide: {workbookConfig.bigWord.split(' ').map(w => w.split('').join('-')).join('   ')}
+                  </div>
+                  <div className="flex gap-2.5">
+                    <input
+                      type="text"
+                      value={traceInput}
+                      onChange={(e) => setTraceInput(e.target.value)}
+                      placeholder="Type our big word here..."
+                      className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-hidden focus:border-indigo-500 flex-1"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleVerifyBigWord}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs active:scale-95 transition cursor-pointer"
+                    >
+                      Check Tracing Plan ✨
+                    </button>
+                  </div>
+                  {isSection2Unlocked && (
+                    <p className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1 animate-pulse">
+                      <Check className="w-3.5 h-3.5" />
+                      Unlocked Explorer Guide! Scroll down to continue.
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2.5">
-                  <input
-                    type="text"
-                    value={traceInput}
-                    onChange={(e) => setTraceInput(e.target.value)}
-                    placeholder="Type our big word here..."
-                    className="bg-white border-2 border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 outline-hidden focus:border-indigo-500 flex-1"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleVerifyBigWord}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs active:scale-95 transition cursor-pointer"
-                  >
-                    Check Tracing Plan ✨
-                  </button>
-                </div>
-                {isSection2Unlocked && (
-                  <p className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1 animate-pulse">
-                    <Check className="w-3.5 h-3.5" />
-                    Unlocked Explorer Guide! Scroll down to continue.
-                  </p>
-                )}
               </div>
-            </div>
+            )}
 
             {/* In-Lesson Illustrated Pattern Explainer */}
-            <div className="relative">
-              {!isSection2Unlocked && (
-                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs rounded-3xl flex flex-col justify-center items-center p-6 text-center z-20 text-white space-y-3">
-                  <span className="text-3xl">🔒</span>
-                  <h4 className="font-extrabold text-sm uppercase">Explorer Guide is locked</h4>
-                  <p className="text-xs text-slate-300 max-w-xs leading-normal">
-                    Please key in and trace the big vocabulary word above first to unlock your explorer guide!
-                  </p>
-                </div>
-              )}
-              <LessonConceptExplainer 
-                lesson={lesson} 
-                speakText={speakText}
-                isCompleted={isSection3Unlocked}
-                isUnlocked={isSection2Unlocked}
-                onComplete={() => {
-                  setIsSection3Unlocked(true);
-                  playChime();
-                  
-                  let studentMission = "Complete the activity to earn your stars!";
-                  
-                  if (lesson.id === 'R-T1-W1') {
-                    studentMission = "Which color circle comes next in Sipho’s repeating sequence?";
-                  } else if (lesson.id === 'R-T1-W2') {
-                    studentMission = "Level 1: Tap all the electronic computing devices!";
-                  } else if (lesson.id === 'R-T1-W3') {
-                    studentMission = "What is the right order to wash your hands? Click the pictures in the correct order!";
-                  } else if (lesson.id === 'R-T1-W6') {
-                    studentMission = "Which set of instructions gets Baby Bot to the bottle? Click on a set to test it!";
-                  } else if (lesson.id === 'R-T1-W4' || lesson.activityType === 'grid') {
-                    studentMission = "Help Sipho Super Bunny collect the gem and reach the juicy carrot target using coded movement arrows!";
-                  } else if (lesson.id === 'R-T1-W5') {
-                    studentMission = "Select a crayon color from our palette, and click any part of the robot to paint. When you are finished, click Done Coloring!";
-                  } else if (lesson.id === 'R-T1-W7') {
-                    studentMission = "Welcome to Zola's Creative Build & Sketch Lab! Scroll down to drag and drop robot parts, draw lines, paint with crayons, and power on your creations!";
-                  } else if (lesson.id === 'R-T1-W8') {
-                    studentMission = "Listen to the sound pattern by tapping Hear Pattern, then match it: Drum, Clap, Drum, Clap!";
-                  } else if (lesson.activityType === 'robotics') {
-                    studentMission = "Mission Grade R & 1 (R.1): Select exactly all the objects below that qualify as a Robot (machines built by humans that take instructions to do repetitive work).";
-                  } else if (lesson.activityType === 'digital') {
-                    if (lesson.grade === 'R') {
+            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+              <div className="relative">
+                {!isSection2Unlocked && (
+                  <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs rounded-3xl flex flex-col justify-center items-center p-6 text-center z-20 text-white space-y-3">
+                    <span className="text-3xl">🔒</span>
+                    <h4 className="font-extrabold text-sm uppercase">Explorer Guide is locked</h4>
+                    <p className="text-xs text-slate-300 max-w-xs leading-normal">
+                      Please key in and trace the big vocabulary word above first to unlock your explorer guide!
+                    </p>
+                  </div>
+                )}
+                <LessonConceptExplainer 
+                  lesson={lesson} 
+                  speakText={speakText}
+                  isCompleted={isSection3Unlocked}
+                  isUnlocked={isSection2Unlocked}
+                  onComplete={() => {
+                    setIsSection3Unlocked(true);
+                    playChime();
+                    
+                    let studentMission = "Complete the activity to earn your stars!";
+                    
+                    if (lesson.id === 'R-T1-W1') {
+                      studentMission = "Which color circle comes next in Sipho’s repeating sequence?";
+                    } else if (lesson.id === 'R-T1-W2') {
                       studentMission = "Level 1: Tap all the electronic computing devices!";
-                    } else if (lesson.grade === '1') {
-                      studentMission = "Solve the emoji code below! Each emoji matches a letter in our secret dictionary card. Write the English word to decipher it!";
-                    } else {
-                      studentMission = "Safeguard your profile! Test your safety reflexes across digital safety scenarios.";
+                    } else if (lesson.id === 'R-T1-W3') {
+                      studentMission = "What is the right order to wash your hands? Click the pictures in the correct order!";
+                    } else if (lesson.id === 'R-T1-W6') {
+                      studentMission = "Which set of instructions gets Baby Bot to the bottle? Click on a set to test it!";
+                    } else if (lesson.id === 'R-T1-W4' || lesson.activityType === 'grid') {
+                      studentMission = "Help Sipho Super Bunny collect the gem and reach the juicy carrot target using coded movement arrows!";
+                    } else if (lesson.id === 'R-T1-W5') {
+                      studentMission = "Select a crayon color from our palette, and click any part of the robot to paint. When you are finished, click Done Coloring!";
+                    } else if (lesson.id === 'R-T1-W7') {
+                      studentMission = "Welcome to your Creative Arts Workstation! Scroll down to draw, use shapes, and connect electronic parts to design your custom creation. Add at least three items and click Submit Workstation Design to earn your stars!";
+                    } else if (lesson.id === 'R-T1-W8') {
+                      studentMission = "Listen to the sound pattern by tapping Hear Pattern, then match it: Drum, Clap, Drum, Clap!";
+                    } else if (lesson.activityType === 'robotics') {
+                      studentMission = "Mission Grade R & 1 (R.1): Select exactly all the objects below that qualify as a Robot (machines built by humans that take instructions to do repetitive work).";
+                    } else if (lesson.activityType === 'digital') {
+                      if (lesson.grade === 'R') {
+                        studentMission = "Level 1: Tap all the electronic computing devices!";
+                      } else if (lesson.grade === '1') {
+                        studentMission = "Solve the emoji code below! Each emoji matches a letter in our secret dictionary card. Write the English word to decipher it!";
+                      } else {
+                        studentMission = "Safeguard your profile! Test your safety reflexes across digital safety scenarios.";
+                      }
+                    } else if (lesson.activityType === 'pattern' && lesson.grade === '1') {
+                      studentMission = "Complete the pattern of steps by filling in the missing sequential numbers!";
                     }
-                  } else if (lesson.activityType === 'pattern' && lesson.grade === '1') {
-                    studentMission = "Complete the pattern of steps by filling in the missing sequential numbers!";
-                  }
 
-                  speakText(`Great job exploring! Please scroll down to the Interactive Sandbox. ${studentMission}`);
-                }} 
-              />
-            </div>
+                    speakText(`Great job exploring! Please scroll down to the Interactive Sandbox. ${studentMission}`);
+                  }} 
+                />
+              </div>
+            )}
 
             {/* Section 3: Re-routed Simulation Practice Space */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs space-y-4 relative">
@@ -4587,17 +4625,6 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   <p className="text-xs text-slate-300 max-w-xs leading-normal">
                     Please complete the Explorer Guide section above first to unlock your learning sandbox!
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTraceInput(workbookConfig.bigWord);
-                      setIsSection3Unlocked(true);
-                      playChime();
-                    }}
-                    className="px-3.5 py-1.5 bg-amber-500 text-slate-950 font-black rounded-lg text-[10px] uppercase cursor-pointer"
-                  >
-                    Quick Unlock ⚡
-                  </button>
                 </div>
               )}
 
@@ -4613,7 +4640,13 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                 {lesson.activityType === 'robotics' && lesson.id === 'R-T1-W5' ? (
                   <RobotSandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
                 ) : lesson.activityType === 'robotics' && lesson.id === 'R-T1-W7' ? (
-                  <CreativeDesignWorkshop speakText={speakText} onComplete={onCompleteActivitySimulation} />
+                  <CreativeWorkstationApp 
+                    onComplete={onCompleteActivitySimulation} 
+                    mode="bracelet" 
+                    speakText={speakText} 
+                    otherActivitiesCompleted={isSection3Unlocked} 
+                    activeStudentId={activeStudentId}
+                  />
                 ) : lesson.activityType === 'robotics' && (
                   <RoboticsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
                 )}
@@ -4660,7 +4693,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   <div className="flex justify-center md:justify-start pt-1">
                     {quizSubmitted ? (
                       <div className="inline-flex items-center gap-2 bg-emerald-500/25 text-emerald-300 border border-emerald-400 px-4 py-1.5 rounded-full text-xs font-black uppercase">
-                        <span>🏆 Lesson Workbook Certified</span>
+                        <span>🏆 Lesson Workbook Certified ({quizFinalScore} / {quizTotalScore} Stars)</span>
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
                     ) : (
@@ -4670,7 +4703,11 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                           onClick={() => {
                             playPop();
                             setShowHomeworkWarning(true);
-                            speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can certify this lesson and proceed!");
+                            if (lesson.id === 'R-T1-W7') {
+                              speakText("Stop, technology champion! You must complete and submit your beaded bracelet design in the workstation below first before we can certify this lesson and proceed!");
+                            } else {
+                              speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can certify this lesson and proceed!");
+                            }
                           }}
                           className="px-5 py-2.5 bg-slate-250 text-slate-500 hover:bg-slate-300 border border-slate-300 font-extrabold text-xs rounded-xl shadow-xs transition active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
                         >
@@ -4678,7 +4715,10 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                           <span>Finalise and Sign Workbook (Locked)</span>
                         </button>
                         <p className="text-[10px] font-black text-rose-500 flex items-center gap-1 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">
-                          Complete Page 2&apos;s Tech Challenge first! 🔒
+                          {lesson.id === 'R-T1-W7'
+                            ? "Complete and submit your beaded bracelet design first! 🔒"
+                            : "Complete Page 2's Tech Challenge first! 🔒"
+                          }
                         </p>
                       </div>
                     )}
@@ -4726,7 +4766,11 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                       <span>⚠️ Action Required</span>
                     </div>
                     <p className="leading-relaxed">
-                      Please go to <strong className="font-black text-pink-600">Page 2: Tech Challenge</strong> at the top, complete all worksheets, and submit for grading to unlock lesson progress!
+                      {lesson.id === 'R-T1-W7' ? (
+                        <span>Please complete and submit your beaded bracelet design in the workstation below first to unlock lesson progress!</span>
+                      ) : (
+                        <span>Please go to <strong className="font-black text-pink-600">Page 2: Tech Challenge</strong> at the top, complete all worksheets, and submit for grading to unlock lesson progress!</span>
+                      )}
                     </p>
                   </motion.div>
                 )}
@@ -4744,7 +4788,11 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                         onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
                       } else {
                         setShowHomeworkWarning(true);
-                        speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can proceed to the next lesson!");
+                        if (lesson.id === 'R-T1-W7') {
+                          speakText("Stop, technology champion! You must complete and submit your beaded bracelet design in the workstation below first before we can proceed to the next lesson!");
+                        } else {
+                          speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can proceed to the next lesson!");
+                        }
                       }
                     }}
                     className={`p-4 rounded-2xl border flex flex-col items-center gap-2.5 shadow-3xs transition-all relative cursor-pointer active:scale-95 ${

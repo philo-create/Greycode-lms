@@ -3,6 +3,21 @@ import { supabase } from '../supabase';
 export async function getSchoolAdminData(schoolId: string) {
   if (!schoolId) throw new Error('No school assigned');
 
+  if (!supabase) {
+    return {
+      school: null,
+      stats: {
+        learners: 0,
+        teachers: 0,
+        classes: 0,
+        attendance: 87, // Placeholder
+      },
+      recentClasses: [],
+      learnerProgress: 45, // Placeholder
+      outstandingAssessments: 12 // Placeholder
+    };
+  }
+
   const [
     { count: learnersCount },
     { count: teachersCount },

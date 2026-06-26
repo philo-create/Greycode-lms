@@ -1,6 +1,20 @@
 import { supabase } from '../supabase';
 
 export async function getSuperAdminData() {
+  if (!supabase) {
+    return {
+      stats: {
+        schools: 0,
+        learners: 0,
+        teachers: 0,
+        classes: 0,
+      },
+      recentSchools: [],
+      capsProgress: 65, // Placeholder
+      practicalAssessments: 42 // Placeholder
+    };
+  }
+
   const [
     { count: schoolsCount },
     { count: learnersCount },

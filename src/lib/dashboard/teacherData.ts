@@ -3,6 +3,20 @@ import { supabase } from '../supabase';
 export async function getTeacherData(teacherId: string) {
   if (!teacherId) throw new Error('No teacher ID provided');
 
+  if (!supabase) {
+    return {
+      stats: {
+        classes: 0,
+        learners: 0,
+        capsAlignment: 82, // Placeholder
+        averageCompletion: 68, // Placeholder
+      },
+      classes: [],
+      todaysLessons: [],
+      recentResults: [] // Placeholder for recent quiz results
+    };
+  }
+
   // Get classes assigned to this teacher
   const { data: classes } = await supabase
     .from('classes')

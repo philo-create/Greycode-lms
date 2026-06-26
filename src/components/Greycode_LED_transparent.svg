@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="489" height="408" viewBox="0 0 489 408" fill="none">
+  <defs>
+    <linearGradient id="bodyGrad" x1="244" y1="48" x2="244" y2="154" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F25236"/>
+      <stop offset="0.48" stop-color="#E83E5D"/>
+      <stop offset="1" stop-color="#E54A1F"/>
+    </linearGradient>
+    <linearGradient id="baseGrad" x1="246" y1="142" x2="246" y2="156" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F05A2A"/>
+      <stop offset="1" stop-color="#D9471D"/>
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(244 101) rotate(90) scale(25 24)">
+      <stop offset="0" stop-color="#C72FA5" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#C72FA5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leadGrad" x1="230" y1="153" x2="230" y2="355" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B4B4B4"/>
+      <stop offset="1" stop-color="#7F7F7F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Metal legs -->
+  <path d="M229.5 153V355" stroke="url(#leadGrad)" stroke-width="3" stroke-linecap="round"/>
+  <path d="M255.5 153L260.5 271" stroke="#8F8F8F" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- LED body -->
+  <path d="M208 83C208 63.67 223.67 48 243 48H245C264.33 48 280 63.67 280 83V144H208V83Z" fill="url(#bodyGrad)"/>
+  <path d="M204 146C204 143.79 205.79 142 208 142H284C286.21 142 288 143.79 288 146V154H204V146Z" fill="url(#baseGrad)"/>
+  <rect x="227" y="128" width="31" height="28" fill="#D93B1D" fill-opacity="0.35"/>
+  <circle cx="244" cy="101" r="27" fill="url(#innerGlow)"/>
+
+  <!-- Highlights -->
+  <path d="M270 62C272.75 66.47 274 71.97 274 80" stroke="#F59A8C" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  <path d="M271 90V104" stroke="#F4A095" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+</svg>

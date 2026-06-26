@@ -841,16 +841,6 @@ export default function Dashboard({
     }
   };
 
-  // Auto-load the first interactive lesson simulation for the selected Grade & Term
-  useEffect(() => {
-    if (termLessons.length > 0) {
-      const defaultLesson = termLessons.find(lvl => lvl.activityType !== 'exploration') || termLessons[0];
-      if (defaultLesson) {
-        setExpandedWeek(defaultLesson.id);
-      }
-    }
-  }, [grade, activeTerm]);
-
   // Calculations for CAPS grade rating scale based on Annexure B CAPS codes
   const totalWeeksForGrade = CURRICULUM_LESSONS.filter(lvl => lvl.grade === grade).length;
   const completedWeeksForGrade = CURRICULUM_LESSONS.filter(lvl => lvl.grade === grade).reduce((acc, current) => {
@@ -1085,28 +1075,90 @@ export default function Dashboard({
 
                             {(lesson.grade === 'R' || lesson.grade === '1') ? (
                               <div key={`col-workbook-${activeStudentId}-${lesson.id}-${resetCounter}`} className="pt-2">
-                                {lesson.id === '1-T1-W2' ? (
-                                  <Grade1Week2Workbook 
-                                    activeStudentId={activeStudentId}
-                                    onComplete={(stars, possible) => {
-                                      const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
-                                      updateProgress(weekKey, stars, possible);
-                                      handleUnlockNextLesson('1-T1-W2');
-                                    }} 
-                                    onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
-                                  />
-                                ) : (
-                                  <GradeR1Workbook 
-                                    activeStudentId={activeStudentId}
-                                    lesson={lesson}
-                                    onComplete={(stars, possible) => {
-                                      const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
-                                      updateProgress(weekKey, stars, possible);
-                                      handleUnlockNextLesson(lesson.id);
-                                    }}
-                                    onNextLesson={() => handleGoToNextLesson(lesson.id)}
-                                  />
-                                )}
+                                {(() => {
+                                  if (lesson.id === 'R-T1-W7' && grade === 'R') {
+                                    const actIds = ['activity_1_red_blue', 'activity_2_device_frame', 'activity_3_led_circuit', 'activity_4_house_design'];
+                                    const actNames = [
+                                      'Pattern Creator 🔴🔵',
+                                      'Shape Sorter Art 📐⏹️',
+                                      'Glowing Circuitry 🔋💡',
+                                      'Sipho\'s Shelter 🏠🤖'
+                                    ];
+                                    const completed: boolean[] = [];
+                                    let completedCount = 0;
+                                    actIds.forEach(actId => {
+                                      const isDone = typeof window !== 'undefined' && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
+                                      completed.push(isDone);
+                                      if (isDone) completedCount++;
+                                    });
+
+                                    if (completedCount < 4) {
+                                      return (
+                                        <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-3xl text-center space-y-4 max-w-2xl mx-auto my-4 shadow-inner">
+                                          <span className="text-4xl block animate-bounce">🔒</span>
+                                          <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Lesson 7 is Locked!</h3>
+                                          <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed font-semibold">
+                                            To unlock the <span className="text-indigo-600 font-extrabold">Beaded Bracelet Designer</span> lesson, you must first complete all 4 creative workstation activities in your workspace!
+                                          </p>
+                                          
+                                          {/* Checkbox checklist */}
+                                          <div className="bg-white border border-slate-200 rounded-2xl p-4 max-w-xs mx-auto text-left space-y-2.5">
+                                            {actIds.map((actId, idx) => (
+                                              <div key={actId} className="flex items-center gap-3 text-xs">
+                                                <div className={`w-5 h-5 rounded-md flex items-center justify-center border font-bold text-[10px] ${completed[idx] ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-slate-50 border-slate-300 text-slate-400'}`}>
+                                                  {completed[idx] ? '✓' : '✖'}
+                                                </div>
+                                                <span className={`font-extrabold ${completed[idx] ? 'text-emerald-700 line-through opacity-70' : 'text-slate-700'}`}>
+                                                  {actNames[idx]}
+                                                </span>
+                                              </div>
+                                            ))}
+                                          </div>
+
+                                          <div className="pt-2">
+                                            <p className="text-[10px] text-slate-400 font-bold mb-3 uppercase tracking-wider">Progress: {completedCount} / 4 tasks completed</p>
+                                            <button
+                                              onClick={() => {
+                                                if ('speechSynthesis' in window) {
+                                                  window.speechSynthesis.cancel();
+                                                  const u = new SpeechSynthesisUtterance("Stop, technology champion! Please complete all 4 activities in the Creative Workstation first before you can proceed to the Lesson 7 design challenge!");
+                                                  u.rate = 0.85;
+                                                  window.speechSynthesis.speak(u);
+                                                }
+                                              }}
+                                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition active:scale-95 cursor-pointer shadow-sm"
+                                            >
+                                              Workstation Guidance 🔊
+                                            </button>
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                  }
+
+                                  return lesson.id === '1-T1-W2' ? (
+                                    <Grade1Week2Workbook 
+                                      activeStudentId={activeStudentId}
+                                      onComplete={(stars, possible) => {
+                                        const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
+                                        updateProgress(weekKey, stars, possible);
+                                        handleUnlockNextLesson('1-T1-W2');
+                                      }} 
+                                      onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                    />
+                                  ) : (
+                                    <GradeR1Workbook 
+                                      activeStudentId={activeStudentId}
+                                      lesson={lesson}
+                                      onComplete={(stars, possible) => {
+                                        const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
+                                        updateProgress(weekKey, stars, possible);
+                                        handleUnlockNextLesson(lesson.id);
+                                      }}
+                                      onNextLesson={() => handleGoToNextLesson(lesson.id)}
+                                    />
+                                  );
+                                })()}
                               </div>
                             ) : (
                               <>
@@ -1725,28 +1777,90 @@ export default function Dashboard({
 
                   {(fullscreenLesson.grade === 'R' || fullscreenLesson.grade === '1') ? (
                     <div key={`fs-workbook-${activeStudentId}-${fullscreenLesson.id}-${resetCounter}`} className="space-y-5">
-                      {fullscreenLesson.id === '1-T1-W2' ? (
-                        <Grade1Week2Workbook 
-                          activeStudentId={activeStudentId}
-                          onComplete={(stars, possible) => {
-                            const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                            updateProgress(weekKey, stars, possible);
-                            handleUnlockNextLesson('1-T1-W2');
-                          }} 
-                          onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
-                        />
-                      ) : (
-                        <GradeR1Workbook 
-                          activeStudentId={activeStudentId}
-                          lesson={fullscreenLesson}
-                          onComplete={(stars, possible) => {
-                            const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                            updateProgress(weekKey, stars, possible);
-                            handleUnlockNextLesson(fullscreenLesson.id);
-                          }}
-                          onNextLesson={() => handleGoToNextLesson(fullscreenLesson.id)}
-                        />
-                      )}
+                      {(() => {
+                        if (fullscreenLesson.id === 'R-T1-W7' && grade === 'R') {
+                          const actIds = ['activity_1_red_blue', 'activity_2_device_frame', 'activity_3_led_circuit', 'activity_4_house_design'];
+                          const actNames = [
+                            'Pattern Creator 🔴🔵',
+                            'Shape Sorter Art 📐⏹️',
+                            'Glowing Circuitry 🔋💡',
+                            'Sipho\'s Shelter 🏠🤖'
+                          ];
+                          const completed: boolean[] = [];
+                          let completedCount = 0;
+                          actIds.forEach(actId => {
+                            const isDone = typeof window !== 'undefined' && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
+                            completed.push(isDone);
+                            if (isDone) completedCount++;
+                          });
+
+                          if (completedCount < 4) {
+                            return (
+                              <div className="p-8 bg-slate-800/40 border border-slate-700/60 rounded-3xl text-center space-y-4 max-w-2xl mx-auto my-6 shadow-2xl backdrop-blur-md">
+                                <span className="text-5xl block animate-bounce">🔒</span>
+                                <h3 className="text-xl font-black text-white uppercase tracking-tight">Immersive Mode Locked!</h3>
+                                <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed font-semibold">
+                                  You must complete all 4 creative workstation activities in your workspace before you can enter immersive mode for <span className="text-indigo-400 font-extrabold">Beaded Bracelet Designer</span>!
+                                </p>
+                                
+                                {/* Checkbox checklist */}
+                                <div className="bg-slate-900 border border-slate-700 rounded-2xl p-4 max-w-xs mx-auto text-left space-y-2.5">
+                                  {actIds.map((actId, idx) => (
+                                    <div key={actId} className="flex items-center gap-3 text-xs">
+                                      <div className={`w-5 h-5 rounded-md flex items-center justify-center border font-bold text-[10px] ${completed[idx] ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-slate-850 border-slate-750 text-slate-500'}`}>
+                                        {completed[idx] ? '✓' : '✖'}
+                                      </div>
+                                      <span className={`font-extrabold ${completed[idx] ? 'text-emerald-500 line-through opacity-70' : 'text-slate-200'}`}>
+                                        {actNames[idx]}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <div className="pt-2">
+                                  <p className="text-[10px] text-slate-400 font-bold mb-3 uppercase tracking-wider">Progress: {completedCount} / 4 tasks completed</p>
+                                  <button
+                                    onClick={() => {
+                                      if ('speechSynthesis' in window) {
+                                        window.speechSynthesis.cancel();
+                                        const u = new SpeechSynthesisUtterance("Stop, technology champion! Please complete all 4 activities in the Creative Workstation first before you can proceed to the Lesson 7 design challenge!");
+                                        u.rate = 0.85;
+                                        window.speechSynthesis.speak(u);
+                                      }
+                                    }}
+                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition active:scale-95 cursor-pointer shadow-sm"
+                                  >
+                                    Workstation Guidance 🔊
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          }
+                        }
+
+                        return fullscreenLesson.id === '1-T1-W2' ? (
+                          <Grade1Week2Workbook 
+                            activeStudentId={activeStudentId}
+                            onComplete={(stars, possible) => {
+                              const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
+                              updateProgress(weekKey, stars, possible);
+                              handleUnlockNextLesson('1-T1-W2');
+                            }} 
+                            onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                          />
+                        ) : (
+                          <GradeR1Workbook 
+                            activeStudentId={activeStudentId}
+                            lesson={fullscreenLesson}
+                            onComplete={(stars, possible) => {
+                              const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
+                              updateProgress(weekKey, stars, possible);
+                              handleUnlockNextLesson(fullscreenLesson.id);
+                            }}
+                            onNextLesson={() => handleGoToNextLesson(fullscreenLesson.id)}
+                          />
+                        );
+                      })()}
                     </div>
                   ) : (
                     <>

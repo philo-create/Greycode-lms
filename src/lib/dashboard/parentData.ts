@@ -3,6 +3,15 @@ import { supabase } from '../supabase';
 export async function getParentData(parentId: string) {
   if (!parentId) throw new Error('No parent ID provided');
 
+  if (!supabase) {
+    return {
+      children: [],
+      recentProgress: [],
+      overallAttendance: 92, // Placeholder
+      upcomingAssessments: 2, // Placeholder
+    };
+  }
+
   // Find children linked to this parent
   const { data: children } = await supabase
     .from('learners')

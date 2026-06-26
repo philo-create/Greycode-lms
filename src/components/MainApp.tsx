@@ -299,7 +299,7 @@ export default function App() {
                 transition={{ duration: 0.15 }}
                 className="w-full h-full pb-8"
               >
-                <CreativeWorkstationApp />
+                <CreativeWorkstationApp activeStudentId={activeStudent.id} />
               </motion.div>
             ) : learningView === 'progress' ? (
               <motion.div
