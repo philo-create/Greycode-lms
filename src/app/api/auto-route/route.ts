@@ -29,8 +29,98 @@ function localRuleBasedRoute(components: any[], userPrompt: string): { success: 
   const connections: any[] = [];
   let explanationParts: string[] = [];
 
-  // 1. Battery-centric designs
-  if (batteries.length > 0) {
+  // If there's an ESP32 and a Battery, power the ESP32 from the Battery
+  if (esp32s.length > 0 && batteries.length > 0) {
+    const esp = esp32s[0];
+    const battery = batteries[0];
+    connections.push({
+      startBoardId: battery.id,
+      startPin: "vcc",
+      endBoardId: esp.id,
+      endPin: "5V",
+      color: "#ef4444"
+    });
+    connections.push({
+      startBoardId: esp.id,
+      startPin: "GND_1",
+      endBoardId: battery.id,
+      endPin: "gnd",
+      color: "#3b82f6"
+    });
+    explanationParts.push("Connected the Battery to the ESP32 to provide power.");
+  }
+
+  // 1. ESP32-centric designs
+  if (esp32s.length > 0) {
+    const esp = esp32s[0];
+    explanationParts.push("Using your ESP32 Microcontroller to control the circuit 💻.");
+
+    if (leds.length > 0) {
+      leds.forEach((led, index) => {
+        const resistor = resistors[index];
+        const signalPin = index === 0 ? "18" : (index === 1 ? "5" : "4"); // digital output pins
+        const gndPin = index === 0 ? "GND_1" : "GND_2";
+
+        if (resistor) {
+          connections.push({
+            startBoardId: esp.id,
+            startPin: signalPin,
+            endBoardId: resistor.id,
+            endPin: "left",
+            color: "#8b5cf6" // Purple for signal/digital pin
+          });
+          connections.push({
+            startBoardId: resistor.id,
+            startPin: "right",
+            endBoardId: led.id,
+            endPin: "anode",
+            color: "#f59e0b"
+          });
+          explanationParts.push(`Connected ESP32 pin ${signalPin} to LED through protective resistor ${resistor.id}.`);
+        } else {
+          connections.push({
+            startBoardId: esp.id,
+            startPin: signalPin,
+            endBoardId: led.id,
+            endPin: "anode",
+            color: "#8b5cf6"
+          });
+          explanationParts.push(`Connected ESP32 pin ${signalPin} directly to LED anode. Remember that adding a resistor is best practice!`);
+        }
+
+        connections.push({
+          startBoardId: led.id,
+          startPin: "cathode",
+          endBoardId: esp.id,
+          endPin: gndPin,
+          color: "#3b82f6"
+        });
+      });
+    }
+
+    if (motors.length > 0) {
+      motors.forEach((motor, index) => {
+        const signalPin = index === 0 ? "2" : "23";
+        connections.push({
+          startBoardId: esp.id,
+          startPin: signalPin,
+          endBoardId: motor.id,
+          endPin: "term1",
+          color: "#8b5cf6"
+        });
+        connections.push({
+          startBoardId: motor.id,
+          startPin: "term2",
+          endBoardId: esp.id,
+          endPin: "GND_2",
+          color: "#3b82f6"
+        });
+        explanationParts.push(`Connected motor ${motor.id} to ESP32 control pin ${signalPin} and Ground.`);
+      });
+    }
+  } 
+  // 2. Battery-centric designs (if no ESP32 exists)
+  else if (batteries.length > 0) {
     const battery = batteries[0];
     explanationParts.push("Using your Battery as the main power source 🔋.");
 
@@ -96,75 +186,6 @@ function localRuleBasedRoute(components: any[], userPrompt: string): { success: 
           color: "#3b82f6"
         });
         explanationParts.push(`Connected motor/arm ${motor.id} directly to your power supply loop.`);
-      });
-    }
-  } 
-  // 2. ESP32-centric designs (if no battery exists)
-  else if (esp32s.length > 0) {
-    const esp = esp32s[0];
-    explanationParts.push("Using your ESP32 Microcontroller as the controller and power source 💻.");
-
-    if (leds.length > 0) {
-      leds.forEach((led, index) => {
-        const resistor = resistors[index];
-        const signalPin = index === 0 ? "18" : (index === 1 ? "5" : "4"); // digital output pins
-        const gndPin = index === 0 ? "GND_1" : "GND_2";
-
-        if (resistor) {
-          connections.push({
-            startBoardId: esp.id,
-            startPin: signalPin,
-            endBoardId: resistor.id,
-            endPin: "left",
-            color: "#8b5cf6" // Purple for signal/digital pin
-          });
-          connections.push({
-            startBoardId: resistor.id,
-            startPin: "right",
-            endBoardId: led.id,
-            endPin: "anode",
-            color: "#f59e0b"
-          });
-          explanationParts.push(`Connected ESP32 pin ${signalPin} to LED through protective resistor ${resistor.id}.`);
-        } else {
-          connections.push({
-            startBoardId: esp.id,
-            startPin: signalPin,
-            endBoardId: led.id,
-            endPin: "anode",
-            color: "#8b5cf6"
-          });
-          explanationParts.push(`Connected ESP32 pin ${signalPin} directly to LED anode. Remember that adding a resistor is best practice!`);
-        }
-
-        connections.push({
-          startBoardId: led.id,
-          startPin: "cathode",
-          endBoardId: esp.id,
-          endPin: gndPin,
-          color: "#3b82f6"
-        });
-      });
-    }
-
-    if (motors.length > 0) {
-      motors.forEach((motor, index) => {
-        const signalPin = index === 0 ? "2" : "23";
-        connections.push({
-          startBoardId: esp.id,
-          startPin: signalPin,
-          endBoardId: motor.id,
-          endPin: "term1",
-          color: "#8b5cf6"
-        });
-        connections.push({
-          startBoardId: motor.id,
-          startPin: "term2",
-          endBoardId: esp.id,
-          endPin: "GND_2",
-          color: "#3b82f6"
-        });
-        explanationParts.push(`Connected motor ${motor.id} to ESP32 control pin ${signalPin} and Ground.`);
       });
     }
   } else {

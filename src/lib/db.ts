@@ -22,14 +22,19 @@ export async function getStudentProfiles(): Promise<StudentProfile[]> {
 }
 
 export async function saveStudentProgress(studentId: string, progress: UserProgress): Promise<void> {
+  let dbSuccess = false;
+  
   if (supabase) {
     const { error } = await supabase
       .from('profiles')
       .update({ progress })
       .eq('id', studentId);
       
-    if (error) throw error;
-    return;
+    if (error) {
+      console.warn('Supabase update failed (might be missing column or RLS), falling back to local storage.', error);
+    } else {
+      dbSuccess = true;
+    }
   }
 
   // Fallback to local storage

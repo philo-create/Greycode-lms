@@ -830,7 +830,8 @@ export default function CreativeWorkstationApp({
           endCoords.x, endCoords.y,
           startDir, endDir,
           obstacles, conn.startBoardId, conn.endBoardId,
-          wireId
+          wireId,
+          [...objects.filter(o => o.type === 'circuit-wire'), ...newWires] as any[]
         );
         
         newWires.push({
@@ -921,6 +922,14 @@ export default function CreativeWorkstationApp({
       const leftPins = ['TX', 'RX', '3V3', 'GND_1', '22', '21', '23', '19', '18', '5', '4', '2', '0', 'RST', 'GND_2', 'VIN_5V'];
       if (leftPins.includes(pinName)) return 'left';
       return 'right';
+    } else if (board.componentType === 'resistor') {
+      return pinName === 'left' ? 'left' : 'right';
+    } else if (board.componentType === 'led') {
+      return 'bottom';
+    } else if (board.componentType === 'battery') {
+      return 'top';
+    } else if (board.componentType === 'motor' || board.componentType === 'wheel' || board.componentType === 'robot-arm') {
+      return 'bottom';
     }
     return 'auto';
   };
@@ -1493,7 +1502,8 @@ export default function CreativeWorkstationApp({
                 currentObj.x2 ?? 0, currentObj.y2 ?? 0,
                 startDir, endDir,
                 obstacles, currentObj.startBoardId, currentObj.endBoardId,
-                currentObj.id
+                currentObj.id,
+                prev.filter(o => o.type === 'circuit-wire') as any[]
              );
           }
         } else if (['rectangle', 'circle', 'triangle', 'oval'].includes(currentObj.type)) {
@@ -1612,7 +1622,8 @@ export default function CreativeWorkstationApp({
                       obj.x2 ?? 0, obj.y2 ?? 0,
                       startDir, endDir,
                       obstacles, obj.startBoardId, obj.endBoardId,
-                      obj.id
+                      obj.id,
+                      newObjects.filter(o => o.type === 'circuit-wire') as any[]
                    )
                  };
               }
@@ -1678,7 +1689,8 @@ export default function CreativeWorkstationApp({
                       obj.x2 ?? 0, obj.y2 ?? 0,
                       startDir, endDir,
                       obstacles, obj.startBoardId, obj.endBoardId,
-                      obj.id
+                      obj.id,
+                      newObjects.filter(o => o.type === 'circuit-wire') as any[]
                    )
                  };
               }
@@ -1732,7 +1744,8 @@ export default function CreativeWorkstationApp({
                   obj.x2 ?? 0, obj.y2 ?? 0,
                   startDir, endDir,
                   obstacles, obj.startBoardId, obj.endBoardId,
-                  obj.id
+                  obj.id,
+                  prev.filter(o => o.type === 'circuit-wire') as any[]
                )
              };
           }
@@ -2660,7 +2673,12 @@ export default function CreativeWorkstationApp({
     if (obj.type === 'circuit-wire') {
       const isSelected = selectedIds.includes(obj.id);
       const isPowered = poweredIds.has(obj.id);
-      const pointsStr = obj.waypoints && obj.waypoints.length > 0 ? obj.waypoints.map(p => `${p.x},${p.y}`).join(' ') : `${obj.x1 ?? obj.x},${obj.y1 ?? obj.y} ${obj.x2 ?? obj.x},${obj.y2 ?? obj.y}`;
+      
+      if (!obj.waypoints || obj.waypoints.length === 0) {
+        return null;
+      }
+      
+      const pointsStr = obj.waypoints.map(p => `${p.x},${p.y}`).join(' ');
       return (
         <g key={obj.id} style={!isInteractive ? { pointerEvents: 'none' } : undefined}>
           <polyline
@@ -3509,7 +3527,8 @@ export default function CreativeWorkstationApp({
                                       obj.x2 ?? 0, obj.y2 ?? 0,
                                       startDir, endDir,
                                       obstacles, obj.startBoardId, obj.endBoardId,
-                                      obj.id
+                                      obj.id,
+                                      prev.filter(o => o.type === 'circuit-wire') as any[]
                                    )
                                  };
                               }

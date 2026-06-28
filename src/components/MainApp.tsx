@@ -5,7 +5,7 @@
 
 "use client";
 
-import { localStore } from '../lib/localStore';
+import { localStore, getStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown } from 'lucide-react';
@@ -62,11 +62,14 @@ export default function App() {
 
       const newTotal = (Object.values(newStars) as number[]).reduce((sum, current) => sum + current, 0);
 
+      const workbookStates = getStudentWorkbookStates(activeStudent.id);
+
       const updated = {
         completedWeeks: newCompleted,
         starsEarned: newStars,
         totalStars: newTotal,
-        marksPossible: newPossible
+        marksPossible: newPossible,
+        workbookStates
       };
 
       // 1. Sync list profiles in Supabase

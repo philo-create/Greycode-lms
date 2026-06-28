@@ -1,4 +1,4 @@
-import { localStore } from '../lib/localStore';
+import { localStore, migrateLocalStorageProgress, getStudentWorkbookStates, mergeProgress, restoreStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, UserPlus, ArrowRight, LogIn } from 'lucide-react';
@@ -74,13 +74,57 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           return;
         }
 
+        // Migrate and merge progress to make sure work doesn't disappear
+        let localProgress: any = null;
+        try {
+          const localProfilesStr = localStorage.getItem('caps_student_profiles_v1');
+          if (localProfilesStr) {
+            const localProfiles = JSON.parse(localProfilesStr);
+            const found = localProfiles.find((p: any) => p.id === 'default') || localProfiles[0];
+            if (found && found.progress) {
+              localProgress = found.progress;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not parse local profiles:', e);
+        }
+
+        // 1. Migrate detailed workbook states from 'default' to their real logged-in ID
+        migrateLocalStorageProgress(profile.id);
+
+        // 2. Fetch the newly copied workbook states for this student
+        const localWorkbookStates = getStudentWorkbookStates(profile.id);
+
+        // 3. Construct local progress with those states and any high-level progress found
+        const fullLocalProgress = {
+          completedWeeks: localProgress?.completedWeeks || {},
+          starsEarned: localProgress?.starsEarned || {},
+          marksPossible: localProgress?.marksPossible || {},
+          totalStars: localProgress?.totalStars || 0,
+          workbookStates: localWorkbookStates
+        };
+
+        // 4. Merge this local progress with what was returned from the database
+        const merged = mergeProgress(fullLocalProgress, profile.progress);
+
+        // 5. Restore the merged detailed workbook states into local storage
+        if (merged.workbookStates) {
+          restoreStudentWorkbookStates(profile.id, merged.workbookStates);
+        }
+
+        // 6. Save the merged progress back to the database so it's durable in the cloud
+        const { saveStudentProgress } = await import('../lib/db');
+        await saveStudentProgress(profile.id, merged).catch(err => {
+          console.error('Failed to update merged progress in DB:', err);
+        });
+
         onLogin({
           id: profile.id,
           name: profile.full_name || profile.first_name || 'Student',
           grade: actualGrade as any,
           avatar: '🦁',
           pin: '',
-          progress: profile.progress || { completedWeeks: {}, starsEarned: {}, totalStars: 0 },
+          progress: merged,
           role: profile.role as 'student' | 'teacher' | 'admin' | 'learner' || 'student'
         });
       }

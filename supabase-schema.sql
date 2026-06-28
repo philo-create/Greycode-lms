@@ -1,11 +1,20 @@
 -- Supabase Schema for Greycode LMS
 
+-- NOTE FOR EXISTING DATABASES:
+-- If your app is already live and you are missing student progress columns on your "profiles" table,
+-- please copy and paste the following commands into your Supabase SQL Editor and run them:
+--
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS progress JSONB DEFAULT '{"completedWeeks": {}, "starsEarned": {}, "totalStars": 0, "marksPossible": {}}'::jsonb;
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
+
 -- 1. Create Profiles Table (Linked to Auth)
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   role TEXT CHECK (role IN ('student', 'teacher', 'admin')) DEFAULT 'student',
   first_name TEXT,
   last_name TEXT,
+  full_name TEXT,
+  progress JSONB DEFAULT '{"completedWeeks": {}, "starsEarned": {}, "totalStars": 0, "marksPossible": {}}'::jsonb,
   school_id UUID,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
