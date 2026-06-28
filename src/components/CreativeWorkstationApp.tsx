@@ -1611,24 +1611,35 @@ export default function CreativeWorkstationApp({
         // Recalculate routes for circuit-wire
         if (originalObjects.some(o => o.type === 'component')) {
            const obstacles = newObjects.filter(o => o.type === 'component' && o.componentType !== 'wire');
-           newObjects = newObjects.map(obj => {
-              if (obj.type === 'circuit-wire') {
-                 const startDir = getPinDirection(obj.startBoardId, obj.startPin);
-                 const endDir = getPinDirection(obj.endBoardId, obj.endPin);
-                 return {
-                   ...obj,
-                   waypoints: routeWireManhattan(
-                      obj.x1 ?? 0, obj.y1 ?? 0,
-                      obj.x2 ?? 0, obj.y2 ?? 0,
-                      startDir, endDir,
-                      obstacles, obj.startBoardId, obj.endBoardId,
-                      obj.id,
-                      newObjects.filter(o => o.type === 'circuit-wire') as any[]
-                   )
-                 };
-              }
-              return obj;
-           });
+           
+           const wiresToRoute = [...newObjects.filter(o => o.type === 'circuit-wire')]
+             .sort((a, b) => (a.x1 ?? 0) - (b.x1 ?? 0) || (a.y1 ?? 0) - (b.y1 ?? 0));
+             
+           const routedWiresAcc: any[] = [];
+           const routedWiresMap = new Map<string, any>();
+           
+           for (const wire of wiresToRoute) {
+               const startDir = getPinDirection(wire.startBoardId, wire.startPin);
+               const endDir = getPinDirection(wire.endBoardId, wire.endPin);
+               
+               const routedWire = {
+                 ...wire,
+                 waypoints: routeWireManhattan(
+                    wire.x1 ?? 0, wire.y1 ?? 0,
+                    wire.x2 ?? 0, wire.y2 ?? 0,
+                    startDir, endDir,
+                    obstacles, wire.startBoardId, wire.endBoardId,
+                    wire.id,
+                    routedWiresAcc
+                 )
+               };
+               routedWiresAcc.push(routedWire);
+               routedWiresMap.set(wire.id, routedWire);
+           }
+           
+           newObjects = newObjects.map(obj => 
+             obj.type === 'circuit-wire' ? routedWiresMap.get(obj.id) : obj
+           );
         }
 
         return newObjects;
@@ -1678,24 +1689,34 @@ export default function CreativeWorkstationApp({
 
         if (originalObject.type === 'circuit-wire') {
            const obstacles = newObjects.filter(o => o.type === 'component' && o.componentType !== 'wire');
-           newObjects = newObjects.map(obj => {
-              if (selectedIds.includes(obj.id)) {
-                 const startDir = getPinDirection(obj.startBoardId, obj.startPin); 
-                 const endDir = getPinDirection(obj.endBoardId, obj.endPin);
-                 return {
-                   ...obj,
-                   waypoints: routeWireManhattan(
-                      obj.x1 ?? 0, obj.y1 ?? 0,
-                      obj.x2 ?? 0, obj.y2 ?? 0,
-                      startDir, endDir,
-                      obstacles, obj.startBoardId, obj.endBoardId,
-                      obj.id,
-                      newObjects.filter(o => o.type === 'circuit-wire') as any[]
-                   )
-                 };
-              }
-              return obj;
-           });
+           
+           const routedWiresAcc = newObjects.filter(o => o.type === 'circuit-wire' && !selectedIds.includes(o.id));
+           const wiresToRoute = [...newObjects.filter(o => o.type === 'circuit-wire' && selectedIds.includes(o.id))]
+             .sort((a, b) => (a.x1 ?? 0) - (b.x1 ?? 0) || (a.y1 ?? 0) - (b.y1 ?? 0));
+             
+           const routedWiresMap = new Map<string, any>();
+           
+           for (const wire of wiresToRoute) {
+               const startDir = getPinDirection(wire.startBoardId, wire.startPin); 
+               const endDir = getPinDirection(wire.endBoardId, wire.endPin);
+               const routedWire = {
+                 ...wire,
+                 waypoints: routeWireManhattan(
+                    wire.x1 ?? 0, wire.y1 ?? 0,
+                    wire.x2 ?? 0, wire.y2 ?? 0,
+                    startDir, endDir,
+                    obstacles, wire.startBoardId, wire.endBoardId,
+                    wire.id,
+                    routedWiresAcc
+                 )
+               };
+               routedWiresAcc.push(routedWire);
+               routedWiresMap.set(wire.id, routedWire);
+           }
+           
+           newObjects = newObjects.map(obj => 
+              routedWiresMap.has(obj.id) ? routedWiresMap.get(obj.id) : obj
+           );
         }
         
         return newObjects;

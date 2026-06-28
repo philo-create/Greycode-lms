@@ -8,14 +8,8 @@ function getAi() {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not defined");
   }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      }
-    }
-  });
+  console.log("API Key starts with:", apiKey.substring(0, 5));
+  return new GoogleGenAI({ apiKey });
 }
 
 // A robust local deterministic circuit router as a ultimate fail-safe if the API is experiencing 503 errors
@@ -306,10 +300,10 @@ export async function POST(req: NextRequest) {
     required: ["success", "connections", "explanation"]
   };
 
-  // Tier 1: Try gemini-2.5-flash (primary recommended model)
+  // Tier 1: Try gemini-3.5-flash (primary recommended model)
   try {
     const response = await getAi().models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -322,12 +316,12 @@ export async function POST(req: NextRequest) {
     const parsed = JSON.parse(resultText);
     return NextResponse.json(parsed);
   } catch (error1: any) {
-    console.warn("Primary model (gemini-2.5-flash) failed or high demand. Trying backup model...", error1);
+    console.warn("Primary model (gemini-3.5-flash) failed or high demand. Trying backup model...", error1);
 
-    // Tier 2: Try gemini-1.5-flash (highly reliable secondary model)
+    // Tier 2: Try gemini-3.1-pro-preview (highly reliable secondary model)
     try {
       const response = await getAi().models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-3.1-pro-preview",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -340,7 +334,7 @@ export async function POST(req: NextRequest) {
       const parsed = JSON.parse(resultText);
       return NextResponse.json(parsed);
     } catch (error2: any) {
-      console.warn("Backup model (gemini-1.5-flash) also failed. Running local rule-based router as fail-safe.", error2);
+      console.warn("Backup model (gemini-3.1-pro-preview) also failed. Running local rule-based router as fail-safe.", error2);
 
       // Tier 3: Run the local deterministic rule-based fail-safe
       try {
