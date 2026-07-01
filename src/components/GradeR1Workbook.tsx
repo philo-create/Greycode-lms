@@ -331,8 +331,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     bigWord: "PATTERN",
     tracePrompt: "P-A-T-T-E-R-N",
     questions: [
-      { q: "Which of these is a simple repeating colour pattern?", opts: ["Red, Blue, Red, Blue 🔴🔵🔴🔵", "Red, Red, Blue, Blue 🔴🔴🔵🔵", "Red, Yellow, Blue 🔴🟡🔵"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." },
-      { q: "Look at the pattern: 🟡🟢🟡🟢___ What comes next?", opts: ["Yellow! 🟡", "Green! 🟢", "Blue! 🔵"], correct: 0, hint: "The pattern repeats Yellow then Green." }
+      { q: "Which of these is a simple repeating colour pattern?", opts: ["🔴🔵🔴🔵", "🔴🔴🔴🔵🔵", "🔴🟡🔵🟢"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." }
     ]
   },
   'R-T1-W2': {
@@ -410,9 +409,9 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     bigWord: "SAFETY",
     tracePrompt: "S-A-F-E",
     questions: [
-      { q: "What should we do before using a tablet or computer?", opts: ["Wash and dry our hands 🧼💦", "Eat sticky candy 🍬🍫", "Play in the mud 🌱🪱"], correct: 0, hint: "Clean and dry hands keep devices working perfectly!" },
-      { q: "Can we have a glass of water right next to our device?", opts: ["Yes, the device might get thirsty! 🚰", "No, water can spill and break it! 🚫🥤", "Only if it is juice. 🧃"], correct: 1, hint: "Keep liquids far away to protect the electronics." },
-      { q: "How should we treat our school devices?", opts: ["Throw them when we are done ☄️", "Hold them gently and be careful 🧸❤️", "Leave them outside in the sun ☀️"], correct: 1, hint: "Always be gentle with delicate devices!" }
+      { q: "What should we do before using a tablet or computer?", opts: ["Wash and dry our hands 🧼", "Eat sticky candy 🍬", "Play in the mud 🌱"], correct: 0, hint: "Clean and dry hands keep devices working perfectly!" },
+      { q: "Can we have a glass of water right next to our device?", opts: ["Yes, the device might get thirsty!", "No, water can spill and break it! 🚫🥤", "Only if it is juice."], correct: 1, hint: "Keep liquids far away to protect the electronics." },
+      { q: "How should we treat our school devices?", opts: ["Throw them when we are done", "Hold them gently and be careful 🧸", "Leave them outside in the sun"], correct: 1, hint: "Always be gentle with delicate devices!" }
     ]
   },
   'R-T1-W10': {
@@ -6581,7 +6580,7 @@ export default function GradeR1Workbook({
                     >
                       <div className="flex items-start gap-3">
                         <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
-                          {lesson.id === 'R-T1-W1' ? qIdx + 3 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
+                          {lesson.id === 'R-T1-W1' ? qIdx + 4 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
                         </span>
                         <div className="space-y-1">
                           <p className="text-sm md:text-base font-bold text-slate-900 leading-normal mb-1">

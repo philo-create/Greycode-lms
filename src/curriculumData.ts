@@ -5,7 +5,7 @@ export const CURRICULUM_LESSONS: Lesson[] = [
   // --- GRADE R ---
   // TERM 1
   {
-    id: 'R-T1-W9',
+    id: 'R-T1-W1',
     grade: 'R',
     term: 1,
     week: 1,
@@ -18,7 +18,7 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'digital'
   },
   {
-    id: 'R-T1-W1',
+    id: 'R-T1-W2',
     grade: 'R',
     term: 1,
     week: 2,
@@ -31,10 +31,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'pattern'
   },
   {
-    id: 'R-T1-W2',
+    id: 'R-T1-W3',
     grade: 'R',
     term: 1,
-    week: 2,
+    week: 3,
     strand: 'Digital',
     title: 'Devices Around the World',
     capsCode: ['D.3'],
@@ -44,10 +44,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'digital'
   },
   {
-    id: 'R-T1-W3',
+    id: 'R-T1-W4',
     grade: 'R',
     term: 1,
-    week: 3,
+    week: 4,
     strand: 'Coding',
     title: 'Picture Stories — Beginning, Middle and End',
     capsCode: ['C.1', 'C.3'],
@@ -57,10 +57,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'sequence'
   },
   {
-    id: 'R-T1-W4',
+    id: 'R-T1-W5',
     grade: 'R',
     term: 1,
-    week: 4,
+    week: 5,
     strand: 'Coding',
     title: 'Introduction to Arrow Cards',
     capsCode: ['C.1', 'C.3'],
@@ -70,10 +70,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'grid'
   },
   {
-    id: 'R-T1-W5',
+    id: 'R-T1-W6',
     grade: 'R',
     term: 1,
-    week: 5,
+    week: 6,
     strand: 'Robotics',
     title: 'What is a Robot?',
     capsCode: ['R.1'],
@@ -83,10 +83,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'robotics'
   },
   {
-    id: 'R-T1-W6',
+    id: 'R-T1-W7',
     grade: 'R',
     term: 1,
-    week: 6,
+    week: 7,
     strand: 'Robotics',
     title: 'Baby Bot Code Cards',
     capsCode: ['R.6', 'C.3'],
@@ -96,10 +96,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'grid'
   },
   {
-    id: 'R-T1-W7',
+    id: 'R-T1-W8',
     grade: 'R',
     term: 1,
-    week: 7,
+    week: 8,
     strand: 'Robotics',
     title: 'Beaded Bracelet Designer',
     capsCode: ['R.5', 'C.6'],
@@ -109,10 +109,10 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     activityType: 'robotics'
   },
   {
-    id: 'R-T1-W8',
+    id: 'R-T1-W9',
     grade: 'R',
     term: 1,
-    week: 8,
+    week: 9,
     strand: 'Coding',
     title: 'Drum Pad Rhythm Patterns',
     capsCode: ['C.6'],
