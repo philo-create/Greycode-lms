@@ -10,6 +10,11 @@ export default function DashboardIndex() {
 
   useEffect(() => {
     async function routeUser() {
+      if (!supabase) {
+        console.warn('Supabase is not configured.');
+        router.push('/');
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -35,10 +40,12 @@ export default function DashboardIndex() {
         'teacher': '/dashboard/teacher',
         'facilitator': '/dashboard/facilitator',
         'learner': '/dashboard/learner',
+        'student': '/dashboard/learner',
         'parent': '/dashboard/parent',
       };
 
-      router.push(rolePaths[data.role] || '/');
+      const normalizedRole = (data.role as string)?.toLowerCase();
+      router.push(rolePaths[normalizedRole] || '/');
     }
 
     routeUser();

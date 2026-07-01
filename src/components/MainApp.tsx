@@ -31,6 +31,35 @@ export default function App() {
   // We handle Supabase session in LoginGate, so if activeStudent is set, we are logged in.
   // When activeStudent is set, it means we fetched their profile successfully.
   
+  useEffect(() => {
+    if (activeStudent && activeStudent.email === 'mapilam2@gmail.com') {
+      const hasReset = localStorage.getItem('reset_progress_mapilam_mainapp_v1');
+      if (!hasReset) {
+        // Clear all workstation and workbook related keys
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('gr_wb_') || key.startsWith('w7_act_') || key.startsWith('g1w2_hw_') || key.startsWith('w7_started_'))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        
+        // Clear DB progress
+        import('../lib/supabase').then(async ({ supabase }) => {
+          if (supabase) {
+            const emptyProgress = { completedWeeks: {}, starsEarned: {}, totalStars: 0, marksPossible: {} };
+            await supabase.from('profiles').update({ progress: emptyProgress }).eq('id', activeStudent.id);
+            await supabase.from('progress').delete().eq('student_id', activeStudent.id);
+          }
+        });
+
+        localStorage.setItem('reset_progress_mapilam_mainapp_v1', 'true');
+        window.location.reload();
+      }
+    }
+  }, [activeStudent]);
+
   const handleLogin = (student: StudentProfile) => {
     setActiveStudent(student);
     setProgress(student.progress);

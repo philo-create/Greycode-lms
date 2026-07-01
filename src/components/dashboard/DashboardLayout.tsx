@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import { RoleSidebar, UserRole } from './RoleSidebar';
 import { supabase } from '@/lib/supabase';
@@ -15,8 +17,15 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
   const [profile, setProfile] = useState<any>(null);
   const router = useRouter();
 
+  const allowedRolesKey = allowedRoles?.join(',') || '';
+
   useEffect(() => {
     async function checkAuth() {
+      if (!supabase) {
+        console.warn('Supabase is not configured.');
+        router.push('/');
+        return;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -39,7 +48,38 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
       setProfile(data);
       setRole(data.role as UserRole);
 
-      if (allowedRoles && !allowedRoles.includes(data.role as UserRole)) {
+      // Sync user_metadata with database profile role & attributes to ensure RLS policies work correctly
+      const metadata = session.user.user_metadata || {};
+      if (
+        metadata.role !== data.role || 
+        metadata.school_id !== data.school_id ||
+        metadata.grade !== data.grade ||
+        metadata.first_name !== data.first_name ||
+        metadata.last_name !== data.last_name
+      ) {
+        console.log('Syncing user auth metadata with profile table data to align RLS context...');
+        try {
+          await supabase.auth.updateUser({
+            data: { 
+              role: data.role,
+              school_id: data.school_id,
+              grade: data.grade,
+              first_name: data.first_name,
+              last_name: data.last_name
+            }
+          });
+          // Force refresh the session to get a new JWT containing the updated metadata immediately
+          await supabase.auth.refreshSession();
+          console.log('Auth user metadata synced and session refreshed successfully.');
+        } catch (syncErr) {
+          console.warn('Failed to sync auth user metadata:', syncErr);
+        }
+      }
+
+      const normalizedRole = (data.role as string)?.toLowerCase();
+      const normalizedAllowedRoles = allowedRoles?.map(r => r.toLowerCase());
+
+      if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(normalizedRole)) {
         // Redirect to their proper dashboard if they access the wrong one
         const base = '/dashboard';
         const rolePaths: Record<string, string> = {
@@ -48,9 +88,10 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
           'teacher': `${base}/teacher`,
           'facilitator': `${base}/facilitator`,
           'learner': `${base}/learner`,
+          'student': `${base}/learner`,
           'parent': `${base}/parent`,
         };
-        router.push(rolePaths[data.role] || '/');
+        router.push(rolePaths[normalizedRole] || '/');
         return;
       }
 
@@ -58,7 +99,8 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
     }
 
     checkAuth();
-  }, [router, allowedRoles]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, allowedRolesKey]);
 
   if (loading || !role) {
     return (

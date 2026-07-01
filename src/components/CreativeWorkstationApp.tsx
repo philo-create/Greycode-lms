@@ -112,10 +112,9 @@ export const TERM_WORKSTATION_ACTIVITIES: WorkstationActivity[] = [
     description: 'Use the circle tool to draw a pattern of alternating red and blue beads! Needs at least 3 circles.',
     targetDescription: '3+ Alternating Red & Blue Circles',
     validate: (objects: CanvasObject[]) => {
-      // Lenient: 3+ circles, drawings, or other shapes total, with at least one red and one blue item
-      const validItems = objects.filter(obj => ['circle', 'draw', 'rectangle', 'triangle'].includes(obj.type));
-      if (validItems.length < 3) return false;
-      const colors = validItems.map(i => i.color.toLowerCase());
+      const circles = objects.filter(obj => obj.type === 'circle');
+      if (circles.length < 3) return false;
+      const colors = circles.map(i => i.color.toLowerCase());
       const hasRed = colors.some(c => c === '#ef4444' || c.includes('ef44') || c.includes('red') || c === '#f59e0b');
       const hasBlue = colors.some(c => c === '#3b82f6' || c.includes('3b82') || c.includes('blue') || c === '#8b5cf6');
       return hasRed && hasBlue;
@@ -128,9 +127,9 @@ export const TERM_WORKSTATION_ACTIVITIES: WorkstationActivity[] = [
     description: 'Draw 2 rectangles and 2 triangles on your canvas using the shape tools!',
     targetDescription: '2 Rectangles + 2 Triangles',
     validate: (objects: CanvasObject[]) => {
-      // Lenient: at least 3 items on the canvas, containing at least one rectangle, triangle or custom drawing
-      const validItems = objects.filter(obj => ['rectangle', 'triangle', 'circle', 'draw'].includes(obj.type));
-      return validItems.length >= 3;
+      const rectangles = objects.filter(obj => obj.type === 'rectangle');
+      const triangles = objects.filter(obj => obj.type === 'triangle');
+      return rectangles.length >= 2 && triangles.length >= 2;
     }
   },
   {
@@ -140,11 +139,9 @@ export const TERM_WORKSTATION_ACTIVITIES: WorkstationActivity[] = [
     description: 'Place a Battery component and an LED Light component onto the canvas.',
     targetDescription: '1 Battery + 1 LED component',
     validate: (objects: CanvasObject[]) => {
-      // Lenient: Has a battery and an led, or has at least one electronic component and 2+ total items
       const hasBattery = objects.some(obj => obj.type === 'component' && (obj.componentType === 'battery' || obj.componentType === 'esp32'));
       const hasLED = objects.some(obj => obj.type === 'component' && (obj.componentType === 'led' || obj.componentType === 'light'));
-      const hasAnyComponent = objects.some(obj => obj.type === 'component');
-      return (hasBattery && hasLED) || (hasAnyComponent && objects.length >= 2) || objects.length >= 3;
+      return hasBattery && hasLED;
     }
   },
   {
@@ -154,18 +151,22 @@ export const TERM_WORKSTATION_ACTIVITIES: WorkstationActivity[] = [
     description: 'Draw a house for Sipho using a rectangle for the base, a triangle for the roof, and a line for the ground.',
     targetDescription: '1 Rectangle + 1 Triangle + 1 Line',
     validate: (objects: CanvasObject[]) => {
-      // Lenient: At least 3 elements of any type (shapes, lines, drawings) to represent a house structure
-      return objects.length >= 3;
+      const hasRectangle = objects.some(obj => obj.type === 'rectangle');
+      const hasTriangle = objects.some(obj => obj.type === 'triangle');
+      const hasLine = objects.some(obj => obj.type === 'line' || obj.type === 'draw');
+      return hasRectangle && hasTriangle && hasLine;
     }
   }
 ];
 
 interface CreativeWorkstationAppProps {
-  onComplete?: (stars: number) => void;
+  onComplete?: (stars: number, possible?: number, aiFeedback?: string) => void;
   mode?: 'bracelet' | 'general';
   speakText?: (text: string) => void;
   otherActivitiesCompleted?: boolean;
   activeStudentId?: string;
+  isLocked?: boolean;
+  certifiedScore?: number | null;
 }
 
 export default function CreativeWorkstationApp({ 
@@ -173,24 +174,49 @@ export default function CreativeWorkstationApp({
   mode = 'general', 
   speakText, 
   otherActivitiesCompleted = true,
-  activeStudentId
+  activeStudentId,
+  isLocked = false,
+  certifiedScore = null
 }: CreativeWorkstationAppProps) {
   const [activeTool, setActiveTool] = useState<Tool>('select');
   const [activeComponent, setActiveComponent] = useState<ComponentType | null>(null);
   const [currentColor, setCurrentColor] = useState('#4f46e5');
   const [currentStrokeWidth, setCurrentStrokeWidth] = useState(4);
-  const [objects, setObjects] = useState<CanvasObject[]>([]);
+  const [objects, setObjects] = useState<CanvasObject[]>(() => {
+    if (typeof window !== 'undefined' && mode === 'bracelet') {
+      const saved = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W7_bracelet_objects`);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && mode === 'bracelet') {
+      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W7_bracelet_objects`, JSON.stringify(objects));
+    }
+  }, [objects, mode, activeStudentId]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSimulatedFullscreen, setIsSimulatedFullscreen] = useState(false);
   const [showActivities, setShowActivities] = useState(true);
   const [checkingActivityId, setCheckingActivityId] = useState<string | null>(null);
+  const [isSubmittingWorkstation, setIsSubmittingWorkstation] = useState(false);
   const [inlineTextPos, setInlineTextPos] = useState<{ x: number; y: number } | null>(null);
   const [inlineTextVal, setInlineTextVal] = useState('');
   const [history, setHistory] = useState<CanvasObject[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
   const commitObjects = (newObjectsOrUpdater: CanvasObject[] | ((prev: CanvasObject[]) => CanvasObject[])) => {
+    if (isLocked) {
+      setValidationError("🔒 This design is certified and locked by the AI Tutor!");
+      return;
+    }
     setObjects(prev => {
       const newObjects = typeof newObjectsOrUpdater === 'function' ? newObjectsOrUpdater(prev) : newObjectsOrUpdater;
       
@@ -209,6 +235,7 @@ export default function CreativeWorkstationApp({
   };
 
   const pushCurrentStateToHistory = () => {
+    if (isLocked) return;
     if (history.length > 0 && history[historyIndex] === objects) return;
     setHistory(prev => {
       const nextHistory = prev.slice(0, historyIndex + 1);
@@ -220,6 +247,7 @@ export default function CreativeWorkstationApp({
   };
 
   const undo = () => {
+    if (isLocked) return;
     if (historyIndex > 0) {
       const nextState = history[historyIndex - 1];
       if (nextState) {
@@ -231,6 +259,7 @@ export default function CreativeWorkstationApp({
   };
 
   const redo = () => {
+    if (isLocked) return;
     if (historyIndex < history.length - 1) {
       const nextState = history[historyIndex + 1];
       if (nextState) {
@@ -305,46 +334,89 @@ export default function CreativeWorkstationApp({
       setCheckingActivityId(actId);
       setValidationError("🤖 AI Tutor is evaluating your creative design...");
       
-      fetch("/api/check-workstation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: act.id,
-          title: act.title,
-          description: act.description,
-          targetDescription: act.targetDescription,
-          objects: objects.map(obj => {
-            if (obj.type === 'draw') {
-              return { ...obj, points: '...omitted to save bandwidth...' };
+      const triggerAIEvaluation = async (imgData: string | null) => {
+        try {
+          const res = await fetch("/api/check-workstation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              activityId: act.id,
+              title: act.title,
+              description: act.description,
+              targetDescription: act.targetDescription,
+              imageData: imgData,
+              objects: objects.map(obj => {
+                if (obj.type === 'draw') {
+                  return { ...obj, points: '...omitted to save bandwidth...' };
+                }
+                return obj;
+              })
+            })
+          });
+          const data = await res.json();
+          setCheckingActivityId(null);
+          if (data.success) {
+            setValidationError(null);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem(`w7_act_${studentId}_${actId}`, 'true');
+              triggerSuccessEffects();
             }
-            return obj;
-          })
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        setCheckingActivityId(null);
-        if (data.success) {
-          setValidationError(null);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`w7_act_${studentId}_${actId}`, 'true');
-            triggerSuccessEffects();
+            setCompletedActivityIds(prev => [...prev, actId]);
+            speakTextLocal(data.feedback || `Amazing! You completed the ${act.title} activity!`);
+          } else {
+            speakTextLocal(data.feedback);
+            setValidationError(`❌ ${data.feedback}`);
+            setTimeout(() => setValidationError(null), 8000);
           }
-          setCompletedActivityIds(prev => [...prev, actId]);
-          speakTextLocal(data.feedback || `Amazing! You completed the ${act.title} activity!`);
-        } else {
-          speakTextLocal(data.feedback);
-          setValidationError(`❌ ${data.feedback}`);
-          setTimeout(() => setValidationError(null), 8000);
+        } catch (err) {
+          console.error(err);
+          setCheckingActivityId(null);
+          speakTextLocal("AI feature not available. Please try again later.");
+          setValidationError("❌ AI feature not available. Please try again later.");
+          setTimeout(() => setValidationError(null), 5000);
         }
-      })
-      .catch(err => {
-        console.error(err);
-        setCheckingActivityId(null);
-        speakTextLocal(`Keep trying! Your canvas does not have the items needed for ${act.title} yet.`);
-        setValidationError(`❌ Requirements not met yet! Need: ${act.targetDescription}`);
-        setTimeout(() => setValidationError(null), 5000);
-      });
+      };
+
+      // Extract image data from the SVG canvas
+      try {
+        const svgElement = canvasRef.current?.querySelector('svg');
+        if (svgElement) {
+          const serializer = new XMLSerializer();
+          const svgString = serializer.serializeToString(svgElement);
+          const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(svgBlob);
+          const img = new Image();
+          img.onload = () => {
+            const tempCanvas = document.createElement('canvas');
+            // Scale down to 800x800 for quick upload and token efficiency
+            tempCanvas.width = 800;
+            tempCanvas.height = 800;
+            const tempCtx = tempCanvas.getContext('2d');
+            if (tempCtx) {
+              tempCtx.fillStyle = '#ffffff';
+              tempCtx.fillRect(0, 0, 800, 800);
+              // Draw scaled image of SVG
+              tempCtx.drawImage(img, 0, 0, 1500, 1500, 0, 0, 800, 800);
+              const dataUrl = tempCanvas.toDataURL('image/png');
+              URL.revokeObjectURL(url);
+              triggerAIEvaluation(dataUrl);
+            } else {
+              URL.revokeObjectURL(url);
+              triggerAIEvaluation(null);
+            }
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            triggerAIEvaluation(null);
+          };
+          img.src = url;
+        } else {
+          triggerAIEvaluation(null);
+        }
+      } catch (e) {
+        console.error("Failed to capture workstation snapshot:", e);
+        triggerAIEvaluation(null);
+      }
     }
   };
 
@@ -1351,6 +1423,10 @@ export default function CreativeWorkstationApp({
   }, [actionState]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (isLocked) {
+      setValidationError("🔒 This design is certified and locked by the AI Tutor!");
+      return;
+    }
     setHasDragged(false);
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -2931,17 +3007,102 @@ export default function CreativeWorkstationApp({
         patternDescription = isAlignedX ? 'Horizontal Alternating Pattern' : 'Vertical Alternating Pattern';
       }
     }
+
+    // Circular / Ring Pattern Check: Sort by polar angle relative to the center of all beads
+    if (!hasPattern && beadShapes.length >= 3) {
+      const centerX = beadShapes.reduce((sum, b) => sum + b.x, 0) / beadShapes.length;
+      const centerY = beadShapes.reduce((sum, b) => sum + b.y, 0) / beadShapes.length;
+      
+      const sortedBeadsAngle = [...beadShapes].sort((a, b) => {
+        const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+        const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+        return angleA - angleB;
+      });
+      
+      const colorsAngle = sortedBeadsAngle.map(b => b.color);
+      let alternatingAngle = true;
+      for (let i = 2; i < colorsAngle.length; i++) {
+        if (colorsAngle[i] !== colorsAngle[i - 2] || colorsAngle[i] === colorsAngle[i - 1]) {
+          alternatingAngle = false;
+          break;
+        }
+      }
+      if (alternatingAngle && colorsAngle.length >= 3 && colorsAngle[0] !== colorsAngle[1]) {
+        hasPattern = true;
+        patternDescription = 'Circular Alternating Pattern';
+      }
+    }
+
+    // General Adjacent/Nearest-Neighbor Path Pattern Check: Traces any general loop, curve, or wave
+    if (!hasPattern && beadShapes.length >= 3) {
+      const buildNearestNeighborPath = (startIdx: number, beads: typeof beadShapes) => {
+        const path = [beads[startIdx]];
+        const visited = new Set<number>([startIdx]);
+        while (visited.size < beads.length) {
+          const last = path[path.length - 1];
+          let nearestIdx = -1;
+          let minDist = Infinity;
+          for (let i = 0; i < beads.length; i++) {
+            if (!visited.has(i)) {
+              const dx = beads[i].x - last.x;
+              const dy = beads[i].y - last.y;
+              const dist = dx * dx + dy * dy;
+              if (dist < minDist) {
+                minDist = dist;
+                nearestIdx = i;
+              }
+            }
+          }
+          if (nearestIdx !== -1) {
+            path.push(beads[nearestIdx]);
+            visited.add(nearestIdx);
+          } else {
+            break;
+          }
+        }
+        return path;
+      };
+
+      for (let i = 0; i < beadShapes.length; i++) {
+        const path = buildNearestNeighborPath(i, beadShapes);
+        const colors = path.map(b => b.color);
+        let alternating = true;
+        for (let j = 2; j < colors.length; j++) {
+          if (colors[j] !== colors[j - 2] || colors[j] === colors[j - 1]) {
+            alternating = false;
+            break;
+          }
+        }
+        if (alternating && colors.length >= 3 && colors[0] !== colors[1]) {
+          hasPattern = true;
+          patternDescription = mode === 'bracelet' ? 'Circular Bracelet Pattern' : 'Alternating Pattern';
+          break;
+        }
+      }
+    }
   }
 
   // Real-time Stars calculation
   let earnedStars = 0;
   if (objectCount >= 3) {
-    earnedStars = 1;
-    if (uniqueColors.length >= 3) {
-      earnedStars = 2;
-    }
-    if (hasPattern || hasElectronics) {
+    if (mode === 'bracelet') {
       earnedStars = 3;
+      if (uniqueColors.length === 2) {
+        earnedStars = 7;
+        if (hasPattern) {
+          earnedStars = 10;
+        }
+      } else if (hasPattern) {
+        earnedStars = 10;
+      }
+    } else {
+      earnedStars = 1;
+      if (uniqueColors.length >= 3) {
+        earnedStars = 2;
+      }
+      if (hasPattern || hasElectronics) {
+        earnedStars = 3;
+      }
     }
   }
 
@@ -3120,7 +3281,7 @@ export default function CreativeWorkstationApp({
             type="button"
             onClick={() => {
               const textToSpeak = mode === 'bracelet'
-                ? "Welcome to your Beaded Bracelet Designer Workstation! Add at least three beads—like circles, rectangles, or triangles—in an alternating color pattern to design your beautiful bracelet and earn maximum stars!"
+                ? "Welcome to your Beaded Bracelet Designer! Place circular beads in a row and alternate exactly two colors to design your beautiful bracelet and create a perfect AB repeating pattern!"
                 : "Welcome to your Creative Arts Workstation! Draw freely, place shapes, and assemble electronic circuits with batteries and LEDs to power your robot designs!";
               speakTextLocal(textToSpeak);
             }}
@@ -3150,6 +3311,7 @@ export default function CreativeWorkstationApp({
           
           {onComplete && (
             <button
+              disabled={isSubmittingWorkstation}
               onClick={() => {
                 if (!otherActivitiesCompleted) {
                   setValidationError("⚠️ Finish typing your big vocabulary word and exploring the guide first before submitting!");
@@ -3162,12 +3324,113 @@ export default function CreativeWorkstationApp({
                   setTimeout(() => setValidationError(null), 4000);
                   return;
                 }
-                onComplete(earnedStars);
+
+                if (mode === 'bracelet') {
+                  setIsSubmittingWorkstation(true);
+                  setValidationError("🤖 AI Tutor is carefully verifying your beaded bracelet pattern... Please wait! 🌟");
+                  speakTextLocal("AI Tutor is verifying your beaded bracelet design pattern... Let's see your beautiful bracelet!");
+
+                  const triggerAIVerifySubmit = async (imgData: string | null) => {
+                    try {
+                      const res = await fetch("/api/check-workstation", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          activityId: "R-T1-W7-bracelet",
+                          title: "Beaded Bracelet Design",
+                          description: "Place colorful circular beads in a row and alternate exactly two colors to create a repeating AB pattern (e.g. Red, Blue, Red, Blue).",
+                          targetDescription: "Must be circular beads placed in a pattern alternating exactly two colors (such as Red and Blue, or Orange and Yellow). They must have drawn actual beads (circles or freehand circular shapes) and they must be colored in an alternating pattern. Look at the image to confirm they didn't just place random lines or non-patterned/single-color elements. If they have extra items or used more than 2 colors without a repeating pattern, fail them with an encouraging message.",
+                          imageData: imgData,
+                          objects: objects.map(obj => {
+                            if (obj.type === 'draw') {
+                              return { ...obj, points: '...omitted to save bandwidth...' };
+                            }
+                            return obj;
+                          })
+                        })
+                      });
+                      const data = await res.json();
+                      setIsSubmittingWorkstation(false);
+                      if (data.score !== undefined && data.score !== null) {
+                        setValidationError(null);
+                        speakTextLocal(data.feedback || "Wonderful! Your pattern has been approved by the AI Tutor!");
+                        onComplete(data.score, 10, data.feedback);
+                      } else if (data.success) {
+                        setValidationError(null);
+                        speakTextLocal("Wonderful! Your pattern has been approved by the AI Tutor!");
+                        onComplete(data.score || earnedStars, 10, data.feedback);
+                      } else {
+                        speakTextLocal(data.feedback || "Please try again!");
+                        setValidationError(`❌ ${data.feedback || "Please try again!"}`);
+                        setTimeout(() => setValidationError(null), 10000);
+                      }
+                    } catch (err) {
+                      console.error("AI verify submit failed:", err);
+                      setIsSubmittingWorkstation(false);
+                      // Fallback to local evaluation on error so they are not blocked
+                      setValidationError(null);
+                      onComplete(earnedStars, 10);
+                    }
+                  };
+
+                  // Capture screenshot from the SVG canvas
+                  try {
+                    const svgElement = canvasRef.current?.querySelector('svg');
+                    if (svgElement) {
+                      const serializer = new XMLSerializer();
+                      const svgString = serializer.serializeToString(svgElement);
+                      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                      const url = URL.createObjectURL(svgBlob);
+                      const img = new Image();
+                      img.onload = () => {
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = 800;
+                        tempCanvas.height = 800;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        if (tempCtx) {
+                          tempCtx.fillStyle = '#ffffff';
+                          tempCtx.fillRect(0, 0, 800, 800);
+                          tempCtx.drawImage(img, 0, 0, 1500, 1500, 0, 0, 800, 800);
+                          const dataUrl = tempCanvas.toDataURL('image/png');
+                          URL.revokeObjectURL(url);
+                          triggerAIVerifySubmit(dataUrl);
+                        } else {
+                          URL.revokeObjectURL(url);
+                          triggerAIVerifySubmit(null);
+                        }
+                      };
+                      img.onerror = () => {
+                        URL.revokeObjectURL(url);
+                        triggerAIVerifySubmit(null);
+                      };
+                      img.src = url;
+                    } else {
+                      triggerAIVerifySubmit(null);
+                    }
+                  } catch (e) {
+                    console.error("Failed to capture workstation snapshot:", e);
+                    triggerAIVerifySubmit(null);
+                  }
+
+                } else {
+                  onComplete(earnedStars);
+                }
               }}
               id="btn-complete-workstation"
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer border-b-4 border-emerald-700 active:border-b-0 active:translate-y-0.5"
+              className={`px-4 py-2 text-white font-extrabold rounded-xl text-xs flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer border-b-4 ${
+                isSubmittingWorkstation 
+                  ? 'bg-slate-400 border-slate-600 cursor-not-allowed opacity-75' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 border-emerald-700 active:border-b-0 active:translate-y-0.5'
+              }`}
             >
-              Submit Workstation Design ✨
+              {isSubmittingWorkstation ? (
+                <span className="flex items-center gap-1">
+                  <span className="animate-spin inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full mr-1" />
+                  Verifying Pattern...
+                </span>
+              ) : (
+                <>Submit Workstation Design ✨</>
+              )}
             </button>
           )}
 
@@ -3178,7 +3441,7 @@ export default function CreativeWorkstationApp({
           )}
         </div>
         
-        <div className="flex items-center space-x-2 sm:space-x-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 bg-white p-2 rounded-2xl shadow-sm border border-slate-200 max-w-full justify-center sm:justify-start">
           <button 
             onClick={() => { setActiveTool('select'); setActiveComponent(null); }}
             className={`p-2 sm:p-3 rounded-xl transition-colors ${activeTool === 'select' ? 'bg-indigo-100 text-indigo-700' : 'hover:bg-slate-50 text-slate-500'}`}
@@ -3201,10 +3464,10 @@ export default function CreativeWorkstationApp({
             <PaintBucket className="w-5 h-5" />
           </button>
           
-          <div className="w-px h-8 bg-slate-200 mx-1"></div>
+          <div className="w-px h-8 bg-slate-200 mx-0.5"></div>
           
           {/* Stroke Width Slider */}
-          <div className="hidden sm:flex items-center space-x-2 px-2 border-r border-slate-200 pr-4">
+          <div className="hidden sm:flex items-center gap-1.5 px-2 border-r border-slate-200 pr-3">
             <span className="text-xs text-slate-500 font-medium">Size</span>
             <input 
               type="range" 
@@ -3217,12 +3480,12 @@ export default function CreativeWorkstationApp({
                   commitObjects(prev => prev.map(obj => selectedIds.includes(obj.id) ? { ...obj, strokeWidth: width } : obj));
                 }
               }}
-              className="w-20 accent-indigo-600"
+              className="w-16 sm:w-20 accent-indigo-600"
             />
           </div>
 
           {/* Color picker */}
-          <div className="flex space-x-1 sm:space-x-2 px-1 sm:px-2">
+          <div className="flex flex-wrap gap-1 px-1">
             {['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#1e293b'].map(color => (
               <button
                 key={color}
@@ -3234,13 +3497,13 @@ export default function CreativeWorkstationApp({
                     setActiveTool('draw');
                   }
                 }}
-                className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 transition-transform ${currentColor === color ? 'scale-125 border-slate-800' : 'border-transparent'}`}
+                className={`w-5 h-5 sm:w-7 sm:h-7 rounded-full border-2 transition-transform ${currentColor === color ? 'scale-110 border-slate-800' : 'border-transparent'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
           </div>
           
-          <div className="w-px h-8 bg-slate-200 mx-1"></div>
+          <div className="w-px h-8 bg-slate-200 mx-0.5"></div>
           
           <button onClick={deleteSelected} disabled={selectedIds.length === 0} className={`p-2 sm:p-3 rounded-xl transition-colors ${selectedIds.length > 0 ? 'hover:bg-red-50 text-red-500' : 'text-slate-300 cursor-not-allowed'}`} title="Delete Selected">
             <Trash2 className="w-5 h-5" />
@@ -3250,7 +3513,7 @@ export default function CreativeWorkstationApp({
             <Copy className="w-5 h-5" />
           </button>
           
-          <div className="w-px h-8 bg-slate-200 mx-1 hidden sm:block"></div>
+          <div className="w-px h-8 bg-slate-200 mx-0.5 hidden sm:block"></div>
           
           <button onClick={undo} disabled={historyIndex <= 0} className={`p-2 sm:p-3 rounded-xl transition-colors ${historyIndex > 0 ? 'hover:bg-indigo-50 text-indigo-600' : 'text-slate-300 cursor-not-allowed'}`} title="Undo">
             <Undo2 className="w-5 h-5" />
@@ -3268,10 +3531,7 @@ export default function CreativeWorkstationApp({
             <Eraser className="w-5 h-5" />
           </button>
 
-          <button onClick={undo} className="p-2 sm:p-3 rounded-xl hover:bg-slate-50 text-slate-500" title="Undo">
-            <Undo2 className="w-5 h-5" />
-          </button>
-          <button onClick={clearCanvas} className="p-2 sm:p-3 rounded-xl hover:bg-red-50 text-red-500 font-medium text-sm border border-red-100 ml-2" title="Clear All">
+          <button onClick={clearCanvas} className="p-2 sm:p-3 rounded-xl hover:bg-red-50 text-red-500 font-medium text-sm border border-red-100" title="Clear All">
             Clear
           </button>
         </div>
@@ -3436,9 +3696,9 @@ export default function CreativeWorkstationApp({
             <p className="font-bold text-xs mb-1">💡 Pro Tips:</p>
             {mode === 'bracelet' ? (
               <ul className="list-disc pl-4 space-y-1.5 mt-2 text-[11px] font-medium leading-relaxed">
-                <li>Select a shape (circle, rectangle, triangle) and drag on the canvas to draw a bead.</li>
-                <li>Click a color to dye your beads and create custom combinations!</li>
-                <li>Place your beads in a straight row (horizontal or vertical) and alternate colors (e.g. Red, Blue, Red) to unlock the 3-star grade!</li>
+                <li>Select the circle shape and drag on the canvas to draw a bead.</li>
+                <li>Click a color to dye your beads. Remember to use exactly 2 colors!</li>
+                <li>Place your beads in a row and alternate colors (e.g. Red, Blue, Red, Blue) to unlock the 3-star AB pattern!</li>
                 <li>Click "Select & Move" to click on any bead to move or scale it.</li>
               </ul>
             ) : (
@@ -3752,16 +4012,20 @@ export default function CreativeWorkstationApp({
 
               {/* Dynamic Star Meter */}
               <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-5 text-center">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Estimated CAPS Grade</p>
-                <div className="flex justify-center gap-1 mb-2">
-                  {[1, 2, 3].map((starVal) => {
-                    const isActive = earnedStars >= starVal;
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">
+                  {isLocked && certifiedScore !== null ? 'AI Tutor Final Grade' : 'Estimated CAPS Grade'}
+                </p>
+                <div className="flex justify-center flex-wrap gap-1 mb-2">
+                  {(mode === 'bracelet' ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [1, 2, 3]).map((starVal) => {
+                    const isActive = (isLocked && certifiedScore !== null ? certifiedScore : earnedStars) >= starVal;
                     return (
                       <Star 
                         key={starVal} 
-                        className={`w-10 h-10 transition-all ${
+                        className={`transition-all ${
+                          mode === 'bracelet' ? 'w-5 h-5 sm:w-6 sm:h-6' : 'w-10 h-10 scale-110'
+                        } ${
                           isActive 
-                          ? 'fill-amber-400 text-amber-500 scale-110 drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]' 
+                          ? 'fill-amber-400 text-amber-500 drop-shadow-[0_2px_8px_rgba(245,158,11,0.3)]' 
                           : 'text-slate-200 fill-transparent'
                         }`} 
                       />
@@ -3769,14 +4033,28 @@ export default function CreativeWorkstationApp({
                   })}
                 </div>
                 <p className="text-xs font-black text-slate-700">
-                  {earnedStars === 3 ? (
-                    <span className="text-emerald-600 font-black">✨ 3-Star (Gold Excellence!) ✨</span>
-                  ) : earnedStars === 2 ? (
-                    <span className="text-amber-600 font-black">⭐ 2-Star (Great Progress!)</span>
-                  ) : earnedStars === 1 ? (
-                    <span className="text-indigo-600 font-black">⭐ 1-Star (Basic Design)</span>
+                  {isLocked && certifiedScore !== null ? (
+                    <span className="text-emerald-600 font-black">✨ {certifiedScore}-Star (Grade Certified!) ✨</span>
+                  ) : mode === 'bracelet' ? (
+                    earnedStars === 10 ? (
+                      <span className="text-emerald-600 font-black">✨ 10-Star (Gold Excellence!) ✨</span>
+                    ) : earnedStars >= 7 ? (
+                      <span className="text-amber-600 font-black">⭐ {earnedStars}-Star (Great Progress!)</span>
+                    ) : earnedStars >= 3 ? (
+                      <span className="text-indigo-600 font-black">⭐ {earnedStars}-Star (Basic Design)</span>
+                    ) : (
+                      <span className="text-slate-400 font-bold">Place items to start grading!</span>
+                    )
                   ) : (
-                    <span className="text-slate-400 font-bold">Place items to start grading!</span>
+                    earnedStars === 3 ? (
+                      <span className="text-emerald-600 font-black">✨ 3-Star (Gold Excellence!) ✨</span>
+                    ) : earnedStars === 2 ? (
+                      <span className="text-amber-600 font-black">⭐ 2-Star (Great Progress!)</span>
+                    ) : earnedStars === 1 ? (
+                      <span className="text-indigo-600 font-black">⭐ 1-Star (Basic Design)</span>
+                    ) : (
+                      <span className="text-slate-400 font-bold">Place items to start grading!</span>
+                    )
                   )}
                 </p>
               </div>
@@ -3788,8 +4066,12 @@ export default function CreativeWorkstationApp({
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${objectCount >= 3 ? 'text-emerald-600 fill-emerald-100' : 'text-slate-300'}`} />
                     <div className="flex-1">
-                      <p className="text-xs font-extrabold text-slate-900">Shape Creator (1 Star)</p>
-                      <p className="text-[11px] opacity-80 mt-0.5">Add 3 or more shapes, lines, or parts to your canvas.</p>
+                      <p className="text-xs font-extrabold text-slate-900">
+                        {mode === 'bracelet' ? 'Bead Collector (3 Stars)' : 'Shape Creator (1 Star)'}
+                      </p>
+                      <p className="text-[11px] opacity-80 mt-0.5">
+                        {mode === 'bracelet' ? 'Add 3 or more beads to your bracelet design.' : 'Add 3 or more shapes, lines, or parts to your canvas.'}
+                      </p>
                       <p className="text-[10px] font-bold uppercase tracking-wider mt-1.5 bg-black/5 inline-block px-1.5 py-0.5 rounded text-slate-800">
                         Progress: {objectCount} / 3 items
                       </p>
@@ -3797,27 +4079,48 @@ export default function CreativeWorkstationApp({
                   </div>
                 </div>
 
-                {/* Rule 2: Color Variety */}
-                <div className={`p-3 rounded-xl border transition-all ${uniqueColors.length >= 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}`}>
-                  <div className="flex items-start gap-3">
-                    <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${uniqueColors.length >= 3 ? 'text-emerald-600 fill-emerald-100' : 'text-slate-300'}`} />
-                    <div className="flex-1">
-                      <p className="text-xs font-extrabold text-slate-900">Master Artist (2 Stars)</p>
-                      <p className="text-[11px] opacity-80 mt-0.5">Use 3 or more different colors in your designs.</p>
-                      <p className="text-[10px] font-bold uppercase tracking-wider mt-1.5 bg-black/5 inline-block px-1.5 py-0.5 rounded text-slate-800">
-                        Progress: {uniqueColors.length} / 3 colors
-                      </p>
+                {/* Rule 2: Color Variety or AB Color Pairing */}
+                {mode === 'bracelet' ? (
+                  <div className={`p-3 rounded-xl border transition-all ${uniqueColors.length === 2 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}`}>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${uniqueColors.length === 2 ? 'text-emerald-600 fill-emerald-100' : 'text-slate-300'}`} />
+                      <div className="flex-1">
+                        <p className="text-xs font-extrabold text-slate-900">AB Color Pairing (7 Stars)</p>
+                        <p className="text-[11px] opacity-80 mt-0.5">Use exactly 2 alternating colors (A and B) on your bracelet (e.g. Red and Blue).</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mt-1.5 bg-black/5 inline-block px-1.5 py-0.5 rounded text-slate-800">
+                          Progress: {uniqueColors.length} / 2 colors {uniqueColors.length === 2 ? '✨ Perfect!' : uniqueColors.length > 2 ? '❌ Too many colors for AB pattern!' : ''}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className={`p-3 rounded-xl border transition-all ${uniqueColors.length >= 3 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}`}>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${uniqueColors.length >= 3 ? 'text-emerald-600 fill-emerald-100' : 'text-slate-300'}`} />
+                      <div className="flex-1">
+                        <p className="text-xs font-extrabold text-slate-900">Master Artist (2 Stars)</p>
+                        <p className="text-[11px] opacity-80 mt-0.5">Use 3 or more different colors in your designs.</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider mt-1.5 bg-black/5 inline-block px-1.5 py-0.5 rounded text-slate-800">
+                          Progress: {uniqueColors.length} / 3 colors
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Rule 3: Pattern Maker (For Bracelet Design!) */}
                 <div className={`p-3 rounded-xl border transition-all ${hasPattern ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-white border-slate-200 text-slate-600'}`}>
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${hasPattern ? 'text-emerald-600 fill-emerald-100' : 'text-slate-300'}`} />
                     <div className="flex-1">
-                      <p className="text-xs font-extrabold text-slate-900">Pattern Maker (3 Stars!)</p>
-                      <p className="text-[11px] opacity-80 mt-0.5">Place 3+ beads (circles, squares, or triangles) in a row with alternating colors (e.g. Red, Blue, Red).</p>
+                      <p className="text-xs font-extrabold text-slate-900">
+                        {mode === 'bracelet' ? 'AB Pattern Maker (10 Stars!)' : 'Pattern Maker (3 Stars!)'}
+                      </p>
+                      <p className="text-[11px] opacity-80 mt-0.5">
+                        {mode === 'bracelet' 
+                          ? 'Place 3+ beads in a row with alternating colors to create a repeating AB pattern (e.g. Red, Blue, Red).'
+                          : 'Place 3+ beads (circles, squares, or triangles) in a row with alternating colors (e.g. Red, Blue, Red).'}
+                      </p>
                       {hasPattern ? (
                         <p className="text-[10px] font-bold uppercase tracking-wider mt-1.5 text-emerald-700 bg-emerald-100/60 inline-block px-1.5 py-0.5 rounded">
                           Pattern Found: {patternDescription} 🎉

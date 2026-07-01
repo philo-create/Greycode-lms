@@ -51,9 +51,17 @@ interface Grade1Week2WorkbookProps {
   activeStudentId?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
+  isSuperAdmin?: boolean;
+  superAdminBypass?: boolean;
 }
 
-export default function Grade1Week2Workbook({ activeStudentId, onComplete, onNextLesson }: Grade1Week2WorkbookProps) {
+export default function Grade1Week2Workbook({ 
+  activeStudentId, 
+  onComplete, 
+  onNextLesson,
+  isSuperAdmin = false,
+  superAdminBypass = false
+}: Grade1Week2WorkbookProps) {
   const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
 
   // --- INTERACTIVE STATE: SECTION 1 (Let's Remember) ---
@@ -325,7 +333,7 @@ export default function Grade1Week2Workbook({ activeStudentId, onComplete, onNex
           type="button"
           onClick={() => {
             playPop();
-            if (!submittedAll && !hwSubmitted) {
+            if (!submittedAll && !hwSubmitted && !(isSuperAdmin && superAdminBypass)) {
               setShowHomeworkWarning(true);
               speakText("Wait champion! You must complete the Discovery Guide Study on Page 1 first.");
               return;
@@ -337,11 +345,11 @@ export default function Grade1Week2Workbook({ activeStudentId, onComplete, onNex
             currentPage === 2 
               ? 'bg-pink-600 text-white shadow-md' 
               : 'text-slate-650 hover:bg-slate-200'
-          } ${(!submittedAll && !hwSubmitted) ? 'opacity-50' : ''}`}
+          } ${(!submittedAll && !hwSubmitted && !(isSuperAdmin && superAdminBypass)) ? 'opacity-50' : ''}`}
         >
           <Award className="w-4 h-4 shrink-0" />
           <span className="whitespace-nowrap">Page 2: Tech Challenge</span>
-          {(!submittedAll && !hwSubmitted) && <span className="ml-1">🔒</span>}
+          {(!submittedAll && !hwSubmitted && !(isSuperAdmin && superAdminBypass)) && <span className="ml-1">🔒</span>}
           {(!hwSubmitted && (submittedAll || hwSubmitted)) && (
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse border border-white"></span>
           )}

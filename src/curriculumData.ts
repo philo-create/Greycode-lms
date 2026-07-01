@@ -5,10 +5,23 @@ export const CURRICULUM_LESSONS: Lesson[] = [
   // --- GRADE R ---
   // TERM 1
   {
-    id: 'R-T1-W1',
+    id: 'R-T1-W9',
     grade: 'R',
     term: 1,
     week: 1,
+    strand: 'Digital',
+    title: 'How to Keep Devices Safe',
+    capsCode: ['D.4'],
+    description: 'Learn the rules and guidelines for keeping computing devices safe, such as keeping them dry and far from food.',
+    highlights: ['Learn safe-use guidelines for devices', 'Keep devices dry and sit properly', 'No eating while using devices'],
+    suggestedActivity: 'Identify safe and unsafe behaviors when using digital devices.',
+    activityType: 'digital'
+  },
+  {
+    id: 'R-T1-W1',
+    grade: 'R',
+    term: 1,
+    week: 2,
     strand: 'Coding',
     title: 'Rudimentary Patterns',
     capsCode: ['C.6'],
@@ -107,19 +120,6 @@ export const CURRICULUM_LESSONS: Lesson[] = [
     highlights: ['Auditory repeating patterns', 'Drum pad and clapping patterns', 'Extend repeating beats'],
     suggestedActivity: 'Replicate auditory percussion rhythms like Drum, Clap, Drum, Clap.',
     activityType: 'pattern'
-  },
-  {
-    id: 'R-T1-W9',
-    grade: 'R',
-    term: 1,
-    week: 9,
-    strand: 'Digital',
-    title: 'How to Keep Devices Safe',
-    capsCode: ['D.4'],
-    description: 'Learn the rules and guidelines for keeping computing devices safe, such as keeping them dry and far from food.',
-    highlights: ['Learn safe-use guidelines for devices', 'Keep devices dry and sit properly', 'No eating while using devices'],
-    suggestedActivity: 'Identify safe and unsafe behaviors when using digital devices.',
-    activityType: 'digital'
   },
   {
     id: 'R-T1-W10',

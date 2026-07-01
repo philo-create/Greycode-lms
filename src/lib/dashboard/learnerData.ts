@@ -19,38 +19,44 @@ export async function getLearnerData(userId: string) {
   }
 
   // First get learner profile
-  const { data: learner } = await supabase
-    .from('learners')
-    .select('*, classes(grade, class_name)')
-    .eq('profile_id', userId)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
     .single();
 
-  if (!learner) return null;
+  if (!profile) return null;
+
+  // Get class mapping
+  const { data: scData } = await supabase
+    .from('students_classes')
+    .select('classes(grade, class_name)')
+    .eq('student_id', userId)
+    .maybeSingle();
+
+  const learner = {
+    ...profile,
+    classes: scData?.classes || (profile.grade ? { grade: profile.grade, class_name: `Grade ${profile.grade}` } : null)
+  };
 
   // Get progress
   const { data: progress } = await supabase
-    .from('lesson_progress')
+    .from('progress')
     .select('*')
-    .eq('learner_id', learner.id);
+    .eq('student_id', userId);
 
-  // Get badges
-  const { data: badges } = await supabase
-    .from('learner_badges')
-    .select('*, badges(*)')
-    .eq('learner_id', learner.id);
-
-  const totalPoints = progress?.reduce((acc, curr) => acc + (curr.points_earned || 0), 0) || 0;
-  const completedLessons = progress?.filter(p => p.status === 'completed').length || 0;
+  const totalPoints = (profile.progress as any)?.totalStars || progress?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
+  const completedLessons = progress?.filter(p => p.status === 'completed').length || Object.keys((profile.progress as any)?.completedWeeks || {}).length || 0;
 
   return {
     learner,
     stats: {
       points: totalPoints,
       completedLessons,
-      badgesCount: badges?.length || 0,
+      badgesCount: 0,
       currentProgress: 42 // Placeholder percentage
     },
-    recentBadges: badges || [],
+    recentBadges: [],
     upcomingActivities: [], // Placeholder
     continueLesson: null // Placeholder for next lesson
   };

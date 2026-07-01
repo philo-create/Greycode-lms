@@ -1,0 +1,270 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { DashboardCard } from '@/components/dashboard/DashboardCard';
+import { Users, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+
+export default function AdminUsersPage() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [schools, setSchools] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchSchools(), fetchUsers()]);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  const fetchSchools = async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from('schools')
+        .select('id, name')
+        .order('name');
+      if (error) throw error;
+      if (data) setSchools(data);
+    } catch (err) {
+      console.error('Failed to load schools:', err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    if (!supabase) return;
+    try {
+      // Fetch latest schools to build an up-to-date map
+      const { data: schoolsData, error: schoolsError } = await supabase
+        .from('schools')
+        .select('id, name');
+      
+      const schoolsMap = new Map<string, { id: string, name: string }>();
+      if (!schoolsError && schoolsData) {
+        schoolsData.forEach(s => schoolsMap.set(s.id, s));
+        setSchools(schoolsData);
+      }
+
+      // Fetch users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (profilesError) {
+        console.error('Supabase query error in AdminUsersPage:', profilesError);
+        return;
+      }
+      
+      if (profiles) {
+        // Map schools to users
+        const mappedUsers = profiles.map(user => {
+          const matchedSchool = user.school_id ? schoolsMap.get(user.school_id) : null;
+          return {
+            ...user,
+            schools: matchedSchool ? { id: matchedSchool.id, name: matchedSchool.name } : null,
+            school: matchedSchool ? { id: matchedSchool.id, name: matchedSchool.name } : null
+          };
+        });
+        setUsers(mappedUsers);
+      }
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  };
+
+  const handleStatusChange = async (userId: string, newStatus: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ enrollment_status: newStatus })
+        .eq('id', userId);
+        
+      if (updateError) throw updateError;
+      await fetchUsers();
+    } catch (err: any) {
+      console.error('Failed to update status:', err);
+      let msg = 'Unknown error';
+      if (err?.message) msg = err.message;
+      else if (err?.details) msg = err.details;
+      else if (typeof err === 'object') msg = JSON.stringify(err);
+      else if (typeof err === 'string') msg = err;
+      
+      alert(`Failed to update status: ${msg}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleSchoolChange = async (userId: string, schoolId: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const targetSchoolId = schoolId === '' ? null : schoolId;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ school_id: targetSchoolId })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(prev => prev.map(user => {
+        if (user.id === userId) {
+          const matchedSchool = schools.find(s => s.id === targetSchoolId);
+          return {
+            ...user,
+            school_id: targetSchoolId,
+            schools: matchedSchool ? { id: matchedSchool.id, name: matchedSchool.name } : null
+          };
+        }
+        return user;
+      }));
+    } catch (err) {
+      console.error('Failed to update school:', err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleGradeChange = async (userId: string, grade: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const targetGrade = grade === '' ? null : grade;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ grade: targetGrade })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(prev => prev.map(user => {
+        if (user.id === userId) {
+          return {
+            ...user,
+            grade: targetGrade
+          };
+        }
+        return user;
+      }));
+    } catch (err) {
+      console.error('Failed to update grade:', err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  return (
+    <DashboardLayout allowedRoles={['super_admin']}>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-3">
+          <Users className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-2xl font-bold text-slate-800">User Management</h1>
+        </div>
+        <Link 
+          href="/dashboard/admin/users/new"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2"
+        >
+          <UserPlus className="w-4 h-4" />
+          Add User
+        </Link>
+      </div>
+
+      <DashboardCard title="All Users & Enrollments">
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">Loading users...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">Name</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">Role</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">School</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">Grade</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">Status</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {users.map(user => (
+                  <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="font-medium text-slate-800">{user.first_name} {user.last_name}</div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-semibold capitalize">
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {user.schools?.name || user.school?.name || '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-slate-600">
+                      {user.grade ? `Grade ${user.grade}` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-sm">
+                      {(() => {
+                        const userStatus = user.enrollment_status || 
+                          ((user.role === 'student' || user.role === 'learner') ? 'pending' : 'approved');
+                        return (
+                          <span className={`px-2 py-1 rounded text-xs font-semibold capitalize ${
+                            userStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
+                            userStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                            'bg-rose-100 text-rose-700'
+                          }`}>
+                            {userStatus}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {(() => {
+                        const userStatus = user.enrollment_status || 
+                          ((user.role === 'student' || user.role === 'learner') ? 'pending' : 'approved');
+                        return userStatus === 'pending' && (
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => handleStatusChange(user.id, 'approved')}
+                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                              title="Approve"
+                            >
+                              <CheckCircle className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(user.id, 'rejected')}
+                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                              title="Reject"
+                            >
+                              <XCircle className="w-5 h-5" />
+                            </button>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-500">
+                      No users found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </DashboardCard>
+    </DashboardLayout>
+  );
+}

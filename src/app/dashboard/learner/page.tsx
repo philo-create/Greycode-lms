@@ -17,12 +17,37 @@ export default function LearnerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     async function loadData() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
+        
+        setUserEmail(session.user.email || '');
+
+        if (session.user.email === 'mapilam2@gmail.com') {
+          const hasReset = localStorage.getItem('reset_progress_mapilam_v3');
+          if (!hasReset) {
+            const emptyProgress = { completedWeeks: {}, starsEarned: {}, totalStars: 0, marksPossible: {} };
+            await supabase.from('profiles').update({ progress: emptyProgress }).eq('id', session.user.id);
+            await supabase.from('progress').delete().eq('student_id', session.user.id);
+            
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+              const key = localStorage.key(i);
+              if (key && (key.startsWith('gr_wb_') || key.startsWith('w7_act_') || key.startsWith('g1w2_hw_') || key.startsWith('w7_started_'))) {
+                keysToRemove.push(key);
+              }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            
+            localStorage.setItem('reset_progress_mapilam_v3', 'true');
+            window.location.reload();
+            return;
+          }
+        }
 
         const { data: userProfile } = await supabase
           .from('profiles')

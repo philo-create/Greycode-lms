@@ -28,7 +28,7 @@ export async function getTeacherData(teacherId: string) {
   let learnersCount = 0;
   if (classIds.length > 0) {
     const { count } = await supabase
-      .from('learners')
+      .from('students_classes')
       .select('*', { count: 'exact', head: true })
       .in('class_id', classIds);
     learnersCount = count || 0;

@@ -1,47 +1,79 @@
 import { supabase } from '../supabase';
 
 export async function getSuperAdminData() {
-  if (!supabase) {
-    return {
-      stats: {
-        schools: 0,
-        learners: 0,
-        teachers: 0,
-        classes: 0,
-      },
-      recentSchools: [],
-      capsProgress: 65, // Placeholder
-      practicalAssessments: 42 // Placeholder
-    };
-  }
-
-  const [
-    { count: schoolsCount },
-    { count: learnersCount },
-    { count: teachersCount },
-    { count: classesCount }
-  ] = await Promise.all([
-    supabase.from('schools').select('*', { count: 'exact', head: true }),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'learner'),
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
-    supabase.from('classes').select('*', { count: 'exact', head: true })
-  ]);
-
-  const { data: recentSchools } = await supabase
-    .from('schools')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  return {
+  const defaultData = {
     stats: {
-      schools: schoolsCount || 0,
-      learners: learnersCount || 0,
-      teachers: teachersCount || 0,
-      classes: classesCount || 0,
+      schools: 0,
+      learners: 0,
+      teachers: 0,
+      classes: 0,
     },
-    recentSchools: recentSchools || [],
+    recentSchools: [],
     capsProgress: 65, // Placeholder
     practicalAssessments: 42 // Placeholder
   };
+
+  if (!supabase) {
+    return defaultData;
+  }
+
+  try {
+    async function safeCount(query: any) {
+      try {
+        const { count, error } = await query;
+        if (error) {
+          console.warn('Database count query error:', error);
+          return 0;
+        }
+        return count || 0;
+      } catch (e) {
+        console.warn('Database count exception:', e);
+        return 0;
+      }
+    }
+
+    const [
+      schoolsCount,
+      learnersCount,
+      teachersCount,
+      classesCount
+    ] = await Promise.all([
+      safeCount(supabase.from('schools').select('*', { count: 'exact', head: true })),
+      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['learner', 'student'])),
+      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher')),
+      safeCount(supabase.from('classes').select('*', { count: 'exact', head: true }))
+    ]);
+
+    let recentSchoolsList: any[] = [];
+    try {
+      const { data, error } = await supabase
+        .from('schools')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        console.warn('Error fetching recent schools:', error);
+      } else if (data) {
+        recentSchoolsList = data;
+      }
+    } catch (e) {
+      console.warn('Exception fetching recent schools:', e);
+    }
+
+    return {
+      stats: {
+        schools: schoolsCount,
+        learners: learnersCount,
+        teachers: teachersCount,
+        classes: classesCount,
+      },
+      recentSchools: recentSchoolsList,
+      capsProgress: 65,
+      practicalAssessments: 42
+    };
+  } catch (err) {
+    console.error('Failed in getSuperAdminData, returning default stats:', err);
+    return defaultData;
+  }
 }

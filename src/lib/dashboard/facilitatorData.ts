@@ -18,7 +18,7 @@ export async function getFacilitatorData(facilitatorId: string) {
 
   const { data: classes } = await supabase
     .from('classes')
-    .select('*, schools(name, location)')
+    .select('*, schools:school_id(name, location)')
     .eq('facilitator_id', facilitatorId);
 
   return {

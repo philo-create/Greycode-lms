@@ -162,6 +162,8 @@ interface JuniorLessonViewProps {
   resetCounter: number;
   setResetCounter: React.Dispatch<React.SetStateAction<number>>;
   onNextLesson?: () => void;
+  isSuperAdmin?: boolean;
+  superAdminBypass?: boolean;
 }
 
 function JuniorLessonView({
@@ -173,7 +175,9 @@ function JuniorLessonView({
   setChecklistAnswers,
   resetCounter,
   setResetCounter,
-  onNextLesson
+  onNextLesson,
+  isSuperAdmin,
+  superAdminBypass
 }: JuniorLessonViewProps) {
   const [activeTab, setActiveTab] = useState<'story' | 'words' | 'play' | 'teacher'>('story');
   const mascotInfo = getMascotForGrade(lesson.grade, lesson.title);
@@ -198,7 +202,7 @@ function JuniorLessonView({
     return '✨';
   };
 
-  const isChecklistCompleted = [0, 1, 2, 3].every(idx => checklistAnswers[`${lesson.id}-${idx}`] === 'yes');
+  const isChecklistCompleted = (isSuperAdmin && superAdminBypass) ? true : [0, 1, 2, 3].every(idx => checklistAnswers[`${lesson.id}-${idx}`] === 'yes');
 
   return (
     <div className="space-y-5 text-left">
@@ -406,6 +410,8 @@ function JuniorLessonView({
                           updateProgress(weekKey, stars, possible);
                         }} 
                         onNextLesson={onNextLesson}
+                        isSuperAdmin={isSuperAdmin}
+                        superAdminBypass={superAdminBypass}
                       />
                     ) : (
                       <GradeR1Workbook 
@@ -415,6 +421,8 @@ function JuniorLessonView({
                           updateProgress(weekKey, stars, possible);
                         }}
                         onNextLesson={onNextLesson}
+                        isSuperAdmin={isSuperAdmin}
+                        superAdminBypass={superAdminBypass}
                       />
                     )}
                   </div>
@@ -662,7 +670,9 @@ export default function Dashboard({
   grade,
   progress,
   updateProgress,
-  onExit
+  onExit,
+  initialLessonId,
+  isSuperAdmin
 }: {
   activeStudentId: string;
   grade: GradeType;
@@ -670,6 +680,8 @@ export default function Dashboard({
   className?: string; // Adding optional className as per guidelines
   updateProgress: (weekKey: string, stars: number, possible?: number) => void;
   onExit: () => void;
+  initialLessonId?: string;
+  isSuperAdmin?: boolean;
 }) {
   const isGradeR = (grade as string) === 'R';
   const [activeTerm, setActiveTerm] = useState<number>(1);
@@ -678,6 +690,22 @@ export default function Dashboard({
   const [checklistAnswers, setChecklistAnswers] = useState<Record<string, 'yes' | 'partly' | 'not'>>({});
   const [fullscreenLesson, setFullscreenLesson] = useState<Lesson | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [superAdminBypass, setSuperAdminBypass] = useState<boolean>(true);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (initialLessonId) {
+      const lesson = CURRICULUM_LESSONS.find(l => l.id === initialLessonId);
+      if (lesson) {
+        setFullscreenLesson(lesson);
+        setActiveTerm(lesson.term);
+      }
+    }
+  }, [initialLessonId]);
 
   const expandedLesson = CURRICULUM_LESSONS.find(lvl => lvl.grade === grade && lvl.id === expandedWeek);
 
@@ -790,6 +818,7 @@ export default function Dashboard({
   const prevLesson = currentIndex > 0 ? gradeLessons[currentIndex - 1] : null;
   const nextLesson = currentIndex !== -1 && currentIndex < gradeLessons.length - 1 ? gradeLessons[currentIndex + 1] : null;
   const isChecklistCompletedForLesson = (lessonId: string) => {
+    if (isSuperAdmin && superAdminBypass) return true;
     return [0, 1, 2, 3].every(idx => checklistAnswers[`${lessonId}-${idx}`] === 'yes');
   };
   const isCurrentLessonChecklistCompleted = fullscreenLesson
@@ -884,8 +913,33 @@ export default function Dashboard({
     }
   };
 
+  if (!isMounted) {
+    return <div className="p-8 text-center text-slate-500">Loading Dashboard...</div>;
+  }
+
   return (
     <div className="flex-1 flex flex-col gap-6 w-full" id={`dashboard-grade-${grade}`}>
+      {isSuperAdmin && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between mb-2">
+          <div>
+            <h4 className="font-bold text-amber-800 text-sm">Super Admin Lesson Controls</h4>
+            <p className="text-amber-600 text-xs mt-1">
+              {superAdminBypass ? 'All lessons are unlocked. Assessment constraints are bypassed.' : 'Lessons follow standard locking rules based on assessment checks.'}
+            </p>
+          </div>
+          <button
+            onClick={() => setSuperAdminBypass(!superAdminBypass)}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+              superAdminBypass 
+                ? 'bg-amber-200 text-amber-900 hover:bg-amber-300' 
+                : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+            }`}
+          >
+            {superAdminBypass ? '🔓 Bypass ON' : '🔒 Bypass OFF'}
+          </button>
+        </div>
+      )}
+      
       {/* Quick Stats Grid representing the 4 polished cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 shrink-0" id="stats-grid">
         {/* Card 1: Progress percentage */}
@@ -1087,12 +1141,12 @@ export default function Dashboard({
                                     const completed: boolean[] = [];
                                     let completedCount = 0;
                                     actIds.forEach(actId => {
-                                      const isDone = typeof window !== 'undefined' && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
+                                      const isDone = isMounted && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
                                       completed.push(isDone);
                                       if (isDone) completedCount++;
                                     });
 
-                                    if (completedCount < 4) {
+                                    if (completedCount < 4 && !(isSuperAdmin && superAdminBypass)) {
                                       return (
                                         <div className="p-6 bg-slate-50 border-2 border-dashed border-slate-300 rounded-3xl text-center space-y-4 max-w-2xl mx-auto my-4 shadow-inner">
                                           <span className="text-4xl block animate-bounce">🔒</span>
@@ -1145,6 +1199,8 @@ export default function Dashboard({
                                         handleUnlockNextLesson('1-T1-W2');
                                       }} 
                                       onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                      isSuperAdmin={isSuperAdmin}
+                                      superAdminBypass={superAdminBypass}
                                     />
                                   ) : (
                                     <GradeR1Workbook 
@@ -1156,6 +1212,8 @@ export default function Dashboard({
                                         handleUnlockNextLesson(lesson.id);
                                       }}
                                       onNextLesson={() => handleGoToNextLesson(lesson.id)}
+                                      isSuperAdmin={isSuperAdmin}
+                                      superAdminBypass={superAdminBypass}
                                     />
                                   );
                                 })()}
@@ -1427,6 +1485,8 @@ export default function Dashboard({
                                             handleUnlockNextLesson('1-T1-W2');
                                           }} 
                                           onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                          isSuperAdmin={isSuperAdmin}
+                                          superAdminBypass={superAdminBypass}
                                         />
                                       ) : (
                                         <DigitalConceptsActivity grade={grade} onComplete={(stars, possible) => {
@@ -1789,12 +1849,12 @@ export default function Dashboard({
                           const completed: boolean[] = [];
                           let completedCount = 0;
                           actIds.forEach(actId => {
-                            const isDone = typeof window !== 'undefined' && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
+                            const isDone = isMounted && localStorage.getItem(`w7_act_${activeStudentId || 'default'}_${actId}`) === 'true';
                             completed.push(isDone);
                             if (isDone) completedCount++;
                           });
 
-                          if (completedCount < 4) {
+                          if (completedCount < 4 && !(isSuperAdmin && superAdminBypass)) {
                             return (
                               <div className="p-8 bg-slate-800/40 border border-slate-700/60 rounded-3xl text-center space-y-4 max-w-2xl mx-auto my-6 shadow-2xl backdrop-blur-md">
                                 <span className="text-5xl block animate-bounce">🔒</span>
@@ -1847,6 +1907,8 @@ export default function Dashboard({
                               handleUnlockNextLesson('1-T1-W2');
                             }} 
                             onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                            isSuperAdmin={isSuperAdmin}
+                            superAdminBypass={superAdminBypass}
                           />
                         ) : (
                           <GradeR1Workbook 
@@ -1858,6 +1920,8 @@ export default function Dashboard({
                               handleUnlockNextLesson(fullscreenLesson.id);
                             }}
                             onNextLesson={() => handleGoToNextLesson(fullscreenLesson.id)}
+                            isSuperAdmin={isSuperAdmin}
+                            superAdminBypass={superAdminBypass}
                           />
                         );
                       })()}
@@ -2129,6 +2193,8 @@ export default function Dashboard({
                                   handleUnlockNextLesson('1-T1-W2');
                                 }} 
                                 onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                isSuperAdmin={isSuperAdmin}
+                                superAdminBypass={superAdminBypass}
                               />
                             ) : (
                               <DigitalConceptsActivity grade={grade} onComplete={(stars, possible) => {

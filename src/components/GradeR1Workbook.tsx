@@ -1,5 +1,6 @@
 import { localStore } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Volume2, 
@@ -31,7 +32,8 @@ import {
   UserCheck,
   Globe,
   Shield,
-  Play
+  Play,
+  RotateCcw
 } from 'lucide-react';
 import { GradeType, Lesson } from '../types';
 import PatternActivity from './PatternActivity';
@@ -58,6 +60,19 @@ import regeneratedMascotImgW4 from '../assets/images/regenerated_image_178178289
 import regeneratedMascotImgW5 from '../assets/images/regenerated_image_1781787379025.png';
 // @ts-ignore
 import regeneratedMascotImgW8 from '../assets/images/regenerated_image_1781975348509.png';
+// @ts-ignore
+import regeneratedMascotImgW7 from '../assets/images/regenerated_image_1782886931115.png';
+// @ts-ignore
+import regeneratedMascotImgW9 from '../assets/images/regenerated_image_1782888733687.png';
+// @ts-ignore
+import braceletDesignImg1 from '../assets/images/regenerated_image_1782800047094.jpg';
+// @ts-ignore
+import braceletDesignImg2 from '../assets/images/regenerated_image_1782800048375.jpg';
+// @ts-ignore
+import braceletDesignImg3 from '../assets/images/regenerated_image_1782800049266.jpg';
+// @ts-ignore
+import braceletDesignImg4 from '../assets/images/regenerated_image_1782800049988.jpg';
+
 
 const isLenientMatch = (input: string, targetBigWord: string, targetTracePrompt?: string): boolean => {
   if (!input) return false;
@@ -290,6 +305,8 @@ interface GradeR1WorkbookProps {
   activeStudentId?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
+  isSuperAdmin?: boolean;
+  superAdminBypass?: boolean;
 }
 
 interface Question {
@@ -314,7 +331,8 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     bigWord: "PATTERN",
     tracePrompt: "P-A-T-T-E-R-N",
     questions: [
-      { q: "Which of these is a simple repeating colour pattern?", opts: ["🔴🔵🔴🔵", "🔴🔴🔴🔵🔵", "🔴🟡🔵🟢"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." }
+      { q: "Which of these is a simple repeating colour pattern?", opts: ["Red, Blue, Red, Blue 🔴🔵🔴🔵", "Red, Red, Blue, Blue 🔴🔴🔵🔵", "Red, Yellow, Blue 🔴🟡🔵"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." },
+      { q: "Look at the pattern: 🟡🟢🟡🟢___ What comes next?", opts: ["Yellow! 🟡", "Green! 🟢", "Blue! 🔵"], correct: 0, hint: "The pattern repeats Yellow then Green." }
     ]
   },
   'R-T1-W2': {
@@ -368,7 +386,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     ]
   },
   'R-T1-W7': {
-    mascotSpeech: "Patterns are everywhere! Let's look at these beautiful bracelets and spot the repeating patterns.",
+    mascotSpeech: "Today, you are going to design your own bracelet using a repeating color pattern with round beads. Your bracelet design will be graded to earn up to 10 stars!",
     bigWord: "BRACELET",
     tracePrompt: "B-E-A-D-S",
     questions: [
@@ -392,9 +410,9 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     bigWord: "SAFETY",
     tracePrompt: "S-A-F-E",
     questions: [
-      { q: "What should we do before using a tablet or computer?", opts: ["Wash and dry our hands 🧼", "Eat sticky candy 🍬", "Play in the mud 🌱"], correct: 0, hint: "Clean and dry hands keep devices working perfectly!" },
-      { q: "Can we have a glass of water right next to our device?", opts: ["Yes, the device might get thirsty!", "No, water can spill and break it! 🚫🥤", "Only if it is juice."], correct: 1, hint: "Keep liquids far away to protect the electronics." },
-      { q: "How should we treat our school devices?", opts: ["Throw them when we are done", "Hold them gently and be careful 🧸", "Leave them outside in the sun"], correct: 1, hint: "Always be gentle with delicate devices!" }
+      { q: "What should we do before using a tablet or computer?", opts: ["Wash and dry our hands 🧼💦", "Eat sticky candy 🍬🍫", "Play in the mud 🌱🪱"], correct: 0, hint: "Clean and dry hands keep devices working perfectly!" },
+      { q: "Can we have a glass of water right next to our device?", opts: ["Yes, the device might get thirsty! 🚰", "No, water can spill and break it! 🚫🥤", "Only if it is juice. 🧃"], correct: 1, hint: "Keep liquids far away to protect the electronics." },
+      { q: "How should we treat our school devices?", opts: ["Throw them when we are done ☄️", "Hold them gently and be careful 🧸❤️", "Leave them outside in the sun ☀️"], correct: 1, hint: "Always be gentle with delicate devices!" }
     ]
   },
   'R-T1-W10': {
@@ -402,9 +420,13 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
     bigWord: "VICTORY",
     tracePrompt: "C-H-A-M-P",
     questions: [
-      { q: "What is a program?", opts: ["A set of ordered instructions for computers 📋", "A kind of sweet candy 🍬", "A big cardboard box 📦"], correct: 0, hint: "All coding templates compile commands sequentially." },
-      { q: "We use arrows to guide a sprite on a grid. What is 'debugging'?", opts: ["Fixing mistakes in our code 🛠️", "Catching grasshoppers 🦗", "Painting tiles pink 🎨"], correct: 0, hint: "Debugging removes sequence mistakes or 'bugs'." },
-      { q: "How do you feel about completing your Term 1 Coding badge?", opts: ["Ready for Grade 1! 🏆", "Tired 💤", "A bit confused 🤷"], correct: 0, hint: "Congratulate yourself!" }
+      { q: "What comes next in the pattern: Red, Blue, Red, Blue, ___?", opts: ["Red! 🔴", "Yellow! 🟡", "Green! 🟢"], correct: 0, hint: "Look at the first color in the repeating sequence." },
+      { q: "Which of these is a computing device?", opts: ["A laptop computer 💻", "An apple 🍎", "A wooden block 🪵"], correct: 0, hint: "Which one uses electricity and follows instructions?" },
+      { q: "What is the correct order for a picture story?", opts: ["Beginning, Middle, End 🌱🪴🌻", "End, Middle, Beginning 🌻🌱🪴", "Just the End 🌻🔚"], correct: 0, hint: "Every good story starts at the beginning!" },
+      { q: "What do we use to tell a robot which way to move on a grid?", opts: ["Arrow code cards ⬆️➡️⬇️", "Magic wands 🪄✨", "Paintbrushes 🖌️🎨"], correct: 0, hint: "We use symbols that point in a direction." },
+      { q: "What is a robot?", opts: ["A machine built by humans to follow instructions 🤖", "A friendly pet dog 🐶", "A wild animal 🦁"], correct: 0, hint: "It is built with parts like wires and batteries." },
+      { q: "If we clap our hands and tap a drum over and over, what are we making?", opts: ["A rhythm pattern 🥁👏", "A messy room 🌪️", "A quiet whisper 🤫"], correct: 0, hint: "Repeating sounds create this!" },
+      { q: "How should we treat our school devices?", opts: ["Hold them gently with clean, dry hands 🧸", "Eat sticky candy while using them 🍬", "Wash them in a bucket of water 🪣"], correct: 0, hint: "We must be careful to keep them safe and working." }
     ]
   },
   'R-T2-W5': {
@@ -635,9 +657,9 @@ function InteractiveSequenceViewer({
   };
 
   const getContainerClass = (stepId: number) => {
-    const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer";
+    const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer relative";
     if (stepId === progress) {
-      return `${base} bg-white ring-4 ring-amber-400 animate-pulse shadow-xl scale-105 border-2 border-indigo-400 z-10 relative`;
+      return `${base} bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] scale-105 border-2 border-indigo-400 z-10`;
     } else if (stepId < progress) {
       return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-emerald-400`;
     } else {
@@ -647,16 +669,82 @@ function InteractiveSequenceViewer({
 
   return (
     <div className="flex-1 w-full space-y-4">
-      <div className="text-center md:text-left">
-        {titleText && <p className="text-sm font-bold text-indigo-700 uppercase tracking-widest leading-none">{titleText}</p>}
-        {subtitleText && <p className="text-base font-black text-slate-800 tracking-tight">{subtitleText}</p>}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-2 text-center md:text-left">
+        <div>
+          {titleText && <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest leading-none mb-1">{titleText}</p>}
+          {subtitleText && <p className="text-sm font-black text-slate-800 tracking-tight">{subtitleText}</p>}
+        </div>
+        {/* Real-time animated progress badge */}
+        <div className="shrink-0 text-right">
+          <span className="text-[10px] font-black text-indigo-650 bg-indigo-50 border border-indigo-150 px-2.5 py-1 rounded-full shadow-2xs">
+            🌟 Progress: {progress} / {steps.length} Clicked
+          </span>
+        </div>
       </div>
-      <div className={`grid grid-cols-1 sm:grid-cols-2 ${steps.length >= 4 ? 'lg:grid-cols-4 md:grid-cols-2 xl:grid-cols-4' : 'lg:grid-cols-3'} gap-3`}>
-        {steps.map((step) => (
-          <div key={step.id} onClick={() => handleTourClick(step.id)} className={getContainerClass(step.id)}>
-             {step.renderItem(step.id < progress, step.id === progress)}
-          </div>
-        ))}
+
+      {/* Animated Gradient Progress Bar */}
+      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden relative shadow-inner">
+        <motion.div
+          className="h-full bg-gradient-to-r from-amber-400 via-indigo-500 to-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]"
+          initial={{ width: 0 }}
+          animate={{ width: `${(progress / steps.length) * 100}%` }}
+          transition={{ type: "spring", stiffness: 80, damping: 15 }}
+        />
+      </div>
+
+      <div className={`grid grid-cols-1 ${steps.length === 1 ? 'sm:grid-cols-1 lg:grid-cols-1' : steps.length >= 4 ? 'sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3'} gap-4 pt-1`}>
+        {steps.map((step) => {
+          const isCompleted = step.id < progress;
+          const isActive = step.id === progress;
+          const isLocked = step.id > progress;
+
+          return (
+            <motion.div
+              key={step.id}
+              onClick={() => handleTourClick(step.id)}
+              className={getContainerClass(step.id)}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                scale: isActive ? [1, 1.02, 1] : 1,
+              }}
+              whileHover={!isLocked ? { 
+                scale: isActive ? 1.03 : 1.04, 
+                y: -3, 
+                boxShadow: isActive 
+                  ? "0 10px 25px -5px rgba(251, 191, 36, 0.45), 0 0 15px rgba(251, 191, 36, 0.3)"
+                  : "0 10px 20px -5px rgba(0, 0, 0, 0.08)" 
+              } : undefined}
+              whileTap={!isLocked ? { scale: 0.98 } : undefined}
+              transition={{ 
+                y: { type: "spring", stiffness: 350, damping: 20 },
+                scale: isActive 
+                  ? { repeat: Infinity, duration: 2, ease: "easeInOut" }
+                  : { type: "spring", stiffness: 350, damping: 20 }
+              }}
+            >
+              {/* Animated checkmark overlay that scales when completed */}
+              {isCompleted && (
+                <motion.div 
+                  initial={{ scale: 0, rotate: -30 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  className="absolute -top-2.5 -right-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-black shadow-md border-2 border-white z-25"
+                >
+                  ✓
+                </motion.div>
+              )}
+
+              {/* Glowing active outline loop effect */}
+              {isActive && (
+                <span className="absolute inset-0 rounded-2xl ring-4 ring-amber-400/50 animate-ping pointer-events-none opacity-30" />
+              )}
+
+              {step.renderItem(isCompleted, isActive)}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1004,6 +1092,932 @@ function RobotIdentificationActivity({ speakText, onComplete }: { speakText: (t:
   );
 }
 
+function DeviceSafetySandboxStage({ speakText, onComplete }: { speakText: (t: string) => void; onComplete?: (stars: number) => void }) {
+  const [currentScenario, setCurrentScenario] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState(0);
+  const [gameFinished, setGameFinished] = useState(false);
+
+  const scenarios = [
+    {
+      id: 0,
+      title: "Clean Hands Challenge 🧼",
+      intro: "Sipho's hands are muddy and sticky! What should he do before using his school tablet?",
+      opts: [
+        { 
+          text: "Wash hands with soap and water first!", 
+          visual: "🧼 💦 🙌 ✨", 
+          caption: "Clean Hands First! 🧼",
+          bgColor: "bg-sky-100 border-sky-200 text-sky-950",
+          isSafe: true, 
+          feedback: "Great choice! Washing hands keeps dirt and sticky mud off the screen!" 
+        },
+        { 
+          text: "Wipe hands on trousers and tap immediately!", 
+          visual: "💩 👐 📱 ⚠️", 
+          caption: "Use Muddy Hands! 💩",
+          bgColor: "bg-amber-100 border-amber-200 text-amber-950",
+          isSafe: false, 
+          feedback: "Oh no! Sticky mud and grit can scratch or ruin the tablet screen." 
+        }
+      ],
+      correctIndex: 0,
+      mascotVoice: "Sipho's hands are muddy and sticky! What should he do before using his school tablet?"
+    },
+    {
+      id: 1,
+      title: "No Liquids Challenge 🚫🥤",
+      intro: "You have a sweet, wet cup of juice. Where is the safest place to keep it while you learn on the computer?",
+      opts: [
+        { 
+          text: "Keep the juice far away on another table!", 
+          visual: "🥤 ↔️ 💻 ✅", 
+          caption: "Keep Juice Far Away! 🥤",
+          bgColor: "bg-sky-100 border-sky-200 text-sky-950",
+          isSafe: true, 
+          feedback: "Perfect choice! Keeping drinks far away prevents any bad spills from breaking your computer!" 
+        },
+        { 
+          text: "Keep juice right next to the keyboard!", 
+          visual: "🥤 ⌨️ 💥 ❌", 
+          caption: "Juice Next to Keys! ⌨️",
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          isSafe: false, 
+          feedback: "Yikes! Even a tiny splash of juice can make the computer short out and break forever." 
+        }
+      ],
+      correctIndex: 0,
+      mascotVoice: "You have a sweet, wet cup of juice. Where is the safest place to keep it while you learn on the computer?"
+    },
+    {
+      id: 2,
+      title: "Happy Screen Challenge 🧸",
+      intro: "How should we touch the screen and press the buttons on our tablets?",
+      opts: [
+        { 
+          text: "Pound buttons hard and slam the laptop down!", 
+          visual: "🔨 💥 📱 😭", 
+          caption: "Slam and Bash! 🔨",
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          isSafe: false, 
+          feedback: "Oh dear! Slapping or slamming can crack the delicate glass screens." 
+        },
+        { 
+          text: "Press buttons gently and touch softly like a teddy bear!", 
+          visual: "🧸 👆 💻 ✨", 
+          caption: "Touch Very Gently! 🧸",
+          bgColor: "bg-emerald-100 border-emerald-200 text-emerald-950",
+          isSafe: true, 
+          feedback: "Wonderful! Touching gently keeps the keys and screen working perfectly!" 
+        }
+      ],
+      correctIndex: 1,
+      mascotVoice: "How should we touch the screen and press the buttons on our tablets?"
+    },
+    {
+      id: 3,
+      title: "Screen Time Break Challenge 🌳",
+      intro: "You have been playing educational screen games for a long time. What is the best idea now?",
+      opts: [
+        { 
+          text: "Put the tablet away, go outside, and run around!", 
+          visual: "🌳 ☀️ ⚽ 🏃", 
+          caption: "Go Play Outside! 🌳",
+          bgColor: "bg-emerald-100 border-emerald-200 text-emerald-950",
+          isSafe: true, 
+          feedback: "Fantastic! Playing outside and running around rests your eyes and keeps your body strong!" 
+        },
+        { 
+          text: "Keep staring at the bright screen in a dark room!", 
+          visual: "📱 🌑 🧟 👁️", 
+          caption: "Stare in the Dark! 📺",
+          bgColor: "bg-amber-100 border-amber-200 text-amber-950",
+          isSafe: false, 
+          feedback: "Oh no! Staring at screens for too long can give you sore, tired eyes and headaches." 
+        }
+      ],
+      correctIndex: 0,
+      mascotVoice: "You have been playing educational screen games for a long time. What is the best idea now?"
+    }
+  ];
+
+  useEffect(() => {
+    speakText(scenarios[currentScenario].mascotVoice);
+  }, [currentScenario]);
+
+  // Self-contained sound engine
+  const playLocalSound = (type: 'chime' | 'boop' | 'pop') => {
+    if (typeof window === 'undefined') return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'chime') {
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } else if (type === 'boop') {
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } else if (type === 'pop') {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+      }
+    } catch (e) {}
+  };
+
+  const handleSelectOption = (idx: number) => {
+    if (checked) return;
+    setSelectedOption(idx);
+    playLocalSound('pop');
+    speakText(scenarios[currentScenario].opts[idx].text);
+  };
+
+  const handleCheck = () => {
+    if (selectedOption === null || checked) return;
+    setChecked(true);
+    const isCorrect = selectedOption === scenarios[currentScenario].correctIndex;
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+      playLocalSound('chime');
+      speakText(scenarios[currentScenario].opts[selectedOption].feedback);
+    } else {
+      playLocalSound('boop');
+      speakText(scenarios[currentScenario].opts[selectedOption].feedback);
+    }
+  };
+
+  const handleNext = () => {
+    setSelectedOption(null);
+    setChecked(false);
+    if (currentScenario + 1 < scenarios.length) {
+      setCurrentScenario(prev => prev + 1);
+    } else {
+      setGameFinished(true);
+      const finalStars = Math.round((score / scenarios.length) * 3) || 1;
+      if (onComplete) {
+        onComplete(finalStars);
+      }
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentScenario(0);
+    setSelectedOption(null);
+    setChecked(false);
+    setScore(0);
+    setGameFinished(false);
+  };
+
+  return (
+    <div className="bg-gradient-to-b from-amber-50/50 to-emerald-50/50 border-2 border-emerald-200 rounded-3xl p-5 md:p-6 min-h-[420px] flex flex-col justify-between" id="device-safety-game-stage">
+      <div>
+        {/* Game Header */}
+        <div className="flex items-center justify-between border-b-2 border-emerald-100/50 pb-3 mb-5">
+          <div className="flex items-center gap-2">
+            <span className="p-1 px-3 bg-emerald-500 text-white rounded-full text-xs font-black uppercase tracking-wider shadow-xs">
+              Mimi's Safety Lesson {currentScenario + 1} of {scenarios.length}
+            </span>
+            <h4 className="text-sm md:text-base font-black text-emerald-900 uppercase tracking-tight hidden sm:block">
+              {scenarios[currentScenario].title}
+            </h4>
+          </div>
+          <span className="text-xs md:text-sm font-extrabold text-slate-700 bg-white border-2 border-emerald-100 px-3 py-1 rounded-full shadow-2xs">
+            ⭐ Stars: {score}
+          </span>
+        </div>
+
+        {!gameFinished ? (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            {/* Mascot & Intro Instruction Card */}
+            <div className="bg-white p-4 rounded-2xl border-2 border-emerald-100 shadow-sm flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative shrink-0">
+                <span className="text-4xl md:text-5xl block animate-bounce duration-1000">🐰</span>
+                <span className="absolute -bottom-1 -right-1 text-base">🔊</span>
+              </div>
+              <div className="text-center sm:text-left flex-1 space-y-1.5 w-full">
+                <p className="text-slate-800 text-sm md:text-base font-extrabold leading-relaxed">
+                  {scenarios[currentScenario].intro}
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playLocalSound('pop');
+                      speakText(scenarios[currentScenario].mascotVoice);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-full text-xs font-bold text-emerald-700 cursor-pointer transition-all active:scale-95"
+                  >
+                    🔊 Hear Sipho Again
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                    Tap a picture below to choose!
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Huge Visual Choices Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              {scenarios[currentScenario].opts.map((opt, oIdx) => {
+                const isSelected = selectedOption === oIdx;
+                const isCorrect = oIdx === scenarios[currentScenario].correctIndex;
+                
+                // Styling classes
+                let cardStyle = "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/10 shadow-sm hover:shadow-md";
+                
+                if (isSelected) {
+                  cardStyle = "border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-500/20 shadow-md transform scale-[1.01]";
+                }
+                
+                if (checked) {
+                  if (isCorrect) {
+                    cardStyle = "border-emerald-500 bg-emerald-50/80 ring-4 ring-emerald-500/20 text-emerald-950 font-bold pointer-events-none";
+                  } else if (isSelected) {
+                    cardStyle = "border-rose-500 bg-rose-50 ring-4 ring-rose-500/20 text-rose-950 pointer-events-none";
+                  } else {
+                    cardStyle = "border-slate-100 bg-slate-50 text-slate-400 opacity-50 pointer-events-none";
+                  }
+                }
+
+                return (
+                  <button
+                    key={oIdx}
+                    type="button"
+                    disabled={checked}
+                    onClick={() => handleSelectOption(oIdx)}
+                    className={`group relative p-4 rounded-3xl border-3 text-center transition-all duration-200 cursor-pointer active:scale-98 flex flex-col items-center justify-between min-h-[180px] md:min-h-[220px] ${cardStyle}`}
+                  >
+                    {/* Visual Check / Cross Badge Overlay */}
+                    {checked && isCorrect && (
+                      <span className="absolute -top-3 -right-3 bg-emerald-500 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center font-black text-lg shadow-md animate-bounce">
+                        ✅
+                      </span>
+                    )}
+                    {checked && isSelected && !isCorrect && (
+                      <span className="absolute -top-3 -right-3 bg-rose-500 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center font-black text-lg shadow-md animate-shake">
+                        ❌
+                      </span>
+                    )}
+
+                    {/* Short Caption */}
+                    <span className="text-xs md:text-sm font-black text-slate-700 tracking-tight uppercase group-hover:text-indigo-600 transition-colors mb-2">
+                      {opt.caption}
+                    </span>
+
+                    {/* Giant Graphic Container */}
+                    <div className={`w-full max-w-[180px] aspect-video rounded-2xl flex items-center justify-center border-2 shadow-inner transition-transform group-hover:scale-105 duration-300 ${opt.bgColor || 'bg-slate-50'}`}>
+                      <span className="text-4xl md:text-5xl tracking-widest drop-shadow-md select-none">
+                        {opt.visual}
+                      </span>
+                    </div>
+
+                    {/* Read Option Text / Action Bar */}
+                    <div className="w-full mt-3 pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5">
+                      <span className="text-[11px] md:text-xs font-bold leading-snug">
+                        {opt.text}
+                      </span>
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playLocalSound('pop');
+                          speakText(opt.text);
+                        }}
+                        className="p-1 hover:bg-slate-200/50 rounded-lg text-xs shrink-0 cursor-pointer"
+                        title="Read option out loud"
+                      >
+                        🔊
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Answer Feedback Banner */}
+            {checked && (
+              <div className="mt-4 p-4 rounded-2xl bg-white border-2 border-emerald-100 flex items-start gap-3 shadow-xs animate-in slide-in-from-bottom-3 duration-300">
+                <span className="text-3xl shrink-0 animate-pulse">
+                  {selectedOption === scenarios[currentScenario].correctIndex ? "🎉" : "💡"}
+                </span>
+                <div className="space-y-1">
+                  <span className={`text-xs uppercase font-black tracking-wider block ${
+                    selectedOption === scenarios[currentScenario].correctIndex ? 'text-emerald-600' : 'text-amber-600'
+                  }`}>
+                    {selectedOption === scenarios[currentScenario].correctIndex ? 'Awesome Answer! ⭐' : 'Let\'s Learn! 💡'}
+                  </span>
+                  <p className="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">
+                    {scenarios[currentScenario].opts[selectedOption || 0].feedback}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8 space-y-5 animate-in scale-in duration-300">
+            <span className="text-6xl block animate-bounce">🏆</span>
+            <div className="space-y-2">
+              <h5 className="text-lg md:text-xl font-black text-emerald-950 uppercase tracking-tight">
+                Mimi's Safety Master Badge! 🐰✨
+              </h5>
+              <p className="text-xs md:text-sm text-slate-600 font-bold max-w-sm mx-auto leading-relaxed">
+                Splendid job! You identified all the smart ways to keep your tablets, laptops, and smart screens neat and safe! You got <span className="text-emerald-600 font-black text-base">{score} out of {scenarios.length}</span> correct!
+              </p>
+            </div>
+            <div className="flex justify-center gap-2 pt-3">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wide active:scale-95 transition cursor-pointer shadow-md"
+              >
+                🔄 Play Again
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Control Buttons */}
+      {!gameFinished && (
+        <div className="flex justify-end pt-4 mt-4 border-t-2 border-emerald-100/30">
+          {!checked ? (
+            <button
+              type="button"
+              disabled={selectedOption === null}
+              onClick={handleCheck}
+              className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
+                selectedOption !== null 
+                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md active:scale-95' 
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <span>Verify Answer 🚀</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 animate-pulse"
+            >
+              <span>{currentScenario + 1 === scenarios.length ? 'Finish Game 🏆' : 'Next Lesson ➡️'}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Term1RecapSimulationStage({ speakText, onComplete }: { speakText: (t: string) => void; onComplete?: (stars: number) => void }) {
+  const [currentChallenge, setCurrentChallenge] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState(0);
+  const [gameFinished, setGameFinished] = useState(false);
+
+  // Self-contained sound engine
+  const playLocalSound = (type: 'chime' | 'boop' | 'pop') => {
+    if (typeof window === 'undefined') return;
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'chime') {
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.4);
+      } else if (type === 'boop') {
+        osc.frequency.setValueAtTime(150, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.25);
+      } else if (type === 'pop') {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.08);
+      }
+    } catch (e) {}
+  };
+
+  const challenges = [
+    {
+      id: 0,
+      topic: "Repeating Patterns 🔴🔵",
+      question: "Help Mimi finish her bead pattern! Look at the row: Red, Blue, Red, Blue... What color bead comes next?",
+      visual: (
+        <div className="flex justify-center items-center gap-3.5 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl drop-shadow-xs animate-bounce" style={{ animationDelay: '0s' }}>🔴</span>
+          <span className="text-4xl md:text-5xl drop-shadow-xs animate-bounce" style={{ animationDelay: '0.1s' }}>🔵</span>
+          <span className="text-4xl md:text-5xl drop-shadow-xs animate-bounce" style={{ animationDelay: '0.2s' }}>🔴</span>
+          <span className="text-4xl md:text-5xl drop-shadow-xs animate-bounce" style={{ animationDelay: '0.3s' }}>🔵</span>
+          <span className="text-4xl md:text-5xl font-black text-indigo-600 animate-pulse bg-indigo-50 border-2 border-indigo-200 rounded-full w-14 h-14 flex items-center justify-center shadow-xs">❓</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "Red bead comes next!", 
+          emoji: "🔴", 
+          caption: "Red Bead 🔴",
+          isCorrect: true, 
+          bgColor: "bg-rose-100 border-rose-200 text-rose-950",
+          feedback: "Wonderful job! Red comes next to continue our repeating pattern: Red, Blue, Red, Blue, Red!" 
+        },
+        { 
+          text: "Yellow bead comes next!", 
+          emoji: "🟡", 
+          caption: "Yellow Bead 🟡",
+          isCorrect: false, 
+          bgColor: "bg-amber-100 border-amber-200 text-amber-950",
+          feedback: "Oops! We want to repeat our Red and Blue pattern. Tap Red to keep it repeating!" 
+        }
+      ],
+      correctIndex: 0,
+      narration: "Help Mimi finish her bead pattern! Look at the row: Red, Blue, Red, Blue. What color bead comes next?"
+    },
+    {
+      id: 1,
+      topic: "Devices Around the World 💻",
+      question: "Which of these is a computing device?",
+      visual: (
+        <div className="flex justify-center items-center gap-5 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl animate-pulse">💻</span>
+          <span className="text-xl font-bold text-slate-400">vs</span>
+          <span className="text-4xl md:text-5xl animate-pulse">🍎</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "An Apple!", 
+          emoji: "🍎", 
+          caption: "Apple 🍎",
+          isCorrect: false, 
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          feedback: "Oh silly! An apple is a healthy snack, not a machine!" 
+        },
+        { 
+          text: "A Laptop Computer!", 
+          emoji: "💻", 
+          caption: "Laptop 💻",
+          isCorrect: true, 
+          bgColor: "bg-sky-100 border-sky-200 text-sky-950",
+          feedback: "Spot on! A laptop is a computing device that follows our instructions!" 
+        }
+      ],
+      correctIndex: 1,
+      narration: "Which of these is a computing device? A laptop or an apple?"
+    },
+    {
+      id: 2,
+      topic: "Picture Stories 📖",
+      question: "A seed needs to grow. What is the correct order of the story?",
+      visual: (
+        <div className="flex justify-center items-center gap-2 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl">🌱</span>
+          <span className="text-lg font-bold text-slate-400">➡️</span>
+          <span className="text-4xl md:text-5xl">🪴</span>
+          <span className="text-lg font-bold text-slate-400">➡️</span>
+          <span className="text-4xl md:text-5xl">🌻</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "Seed, then Sprout, then Flower!", 
+          emoji: "🌱 🪴 🌻", 
+          caption: "Seed to Flower",
+          isCorrect: true, 
+          bgColor: "bg-emerald-100 border-emerald-200 text-emerald-950",
+          feedback: "Excellent! First we plant a seed, then it sprouts, and finally it becomes a beautiful flower!" 
+        },
+        { 
+          text: "Flower, then Seed, then Sprout!", 
+          emoji: "🌻 🌱 🪴", 
+          caption: "Flower to Sprout",
+          isCorrect: false, 
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          feedback: "Oops! We have to start with the seed first before we get a flower!" 
+        }
+      ],
+      correctIndex: 0,
+      narration: "A seed needs to grow. What is the correct order of the story: Seed then sprout then flower, or flower then seed then sprout?"
+    },
+    {
+      id: 3,
+      topic: "Arrow Cards ➡️",
+      question: "Help Mimi's bunny robot reach the sweet carrot! Guide it: Right, Right, and then...?",
+      visual: (
+        <div className="bg-slate-50 border-2 border-dashed border-slate-200 p-4 rounded-2xl w-full max-w-sm mx-auto shadow-inner flex flex-col items-center">
+          <div className="grid grid-cols-4 gap-2 w-full max-w-[240px]">
+            <div className="aspect-square bg-white border border-slate-100 rounded-xl flex items-center justify-center text-3xl shadow-xs">🐰</div>
+            <div className="aspect-square bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-xl text-slate-400">➡️</div>
+            <div className="aspect-square bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-xl text-slate-400">➡️</div>
+            <div className="aspect-square bg-emerald-100 border-2 border-emerald-300 rounded-xl flex items-center justify-center text-3xl animate-bounce">🥕</div>
+          </div>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "Go Right again! ➡️", 
+          emoji: "➡️", 
+          caption: "Walk Right ➡️",
+          isCorrect: true, 
+          bgColor: "bg-emerald-100 border-emerald-200 text-emerald-950",
+          feedback: "Excellent coding! Moving right one more time lets our bunny robot eat the delicious carrot!" 
+        },
+        { 
+          text: "Go Down! ⬇️", 
+          emoji: "⬇️", 
+          caption: "Walk Down ⬇️",
+          isCorrect: false, 
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          feedback: "Oops! Moving down takes the bunny off the path. Guide the bunny right to get the carrot!" 
+        }
+      ],
+      correctIndex: 0,
+      narration: "Help Mimi's bunny robot reach the sweet carrot! Guide it: Right, Right, and then what?"
+    },
+    {
+      id: 4,
+      topic: "What is a Robot? 🤖",
+      question: "Which of these is a machine built by humans to follow instructions?",
+      visual: (
+        <div className="flex justify-center items-center gap-5 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl animate-pulse">🤖</span>
+          <span className="text-xl font-bold text-slate-400">vs</span>
+          <span className="text-4xl md:text-5xl animate-pulse">🐶</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "A friendly Dog!", 
+          emoji: "🐶", 
+          caption: "Dog 🐶",
+          isCorrect: false, 
+          bgColor: "bg-amber-100 border-amber-200 text-amber-950",
+          feedback: "A dog is a wonderful pet, but it is a living animal, not a machine!" 
+        },
+        { 
+          text: "A Mechanical Robot!", 
+          emoji: "🤖", 
+          caption: "Robot 🤖",
+          isCorrect: true, 
+          bgColor: "bg-violet-100 border-violet-200 text-violet-950",
+          feedback: "Correct! A robot is a machine made of parts like batteries and wires to help us." 
+        }
+      ],
+      correctIndex: 1,
+      narration: "Which of these is a machine built by humans to follow instructions? A friendly dog or a mechanical robot?"
+    },
+    {
+      id: 5,
+      topic: "Rhythm Patterns 🥁",
+      question: "Listen to the beat: Drum, Clap, Drum, Clap. What comes next?",
+      visual: (
+        <div className="flex justify-center items-center gap-3 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl">🥁</span>
+          <span className="text-4xl md:text-5xl">👏</span>
+          <span className="text-4xl md:text-5xl">🥁</span>
+          <span className="text-4xl md:text-5xl">👏</span>
+          <span className="text-4xl md:text-5xl font-black text-indigo-600 animate-pulse bg-indigo-50 border-2 border-indigo-200 rounded-full w-14 h-14 flex items-center justify-center shadow-xs">❓</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "Another Clap! 👏", 
+          emoji: "👏", 
+          caption: "Clap 👏",
+          isCorrect: false, 
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          feedback: "Oops! After a clap, we need a drum to keep our pattern going: Drum, Clap, Drum, Clap, Drum!" 
+        },
+        { 
+          text: "A Drum! 🥁", 
+          emoji: "🥁", 
+          caption: "Drum 🥁",
+          isCorrect: true, 
+          bgColor: "bg-amber-100 border-amber-200 text-amber-950",
+          feedback: "Great job! A drum comes next in our rhythm pattern!" 
+        }
+      ],
+      correctIndex: 1,
+      narration: "Listen to the beat: Drum, Clap, Drum, Clap. What comes next? Another clap or a drum?"
+    },
+    {
+      id: 6,
+      topic: "Keeping Devices Safe 🛡️",
+      question: "Your school tablet screen is dusty. What is the safest way to clean the glass?",
+      visual: (
+        <div className="flex justify-center items-center gap-4 bg-slate-50 border-2 border-dashed border-slate-200 p-5 rounded-2xl w-full max-w-sm mx-auto shadow-inner">
+          <span className="text-4xl md:text-5xl animate-bounce">📱</span>
+          <span className="text-xl text-slate-400">✨</span>
+          <span className="text-4xl md:text-5xl font-black text-indigo-600 animate-pulse bg-indigo-50 border-2 border-indigo-200 rounded-full w-14 h-14 flex items-center justify-center shadow-xs">❓</span>
+        </div>
+      ),
+      opts: [
+        { 
+          text: "Use a soft, dry cloth gently!", 
+          emoji: "🧼 ✨ 🙌", 
+          caption: "Soft Dry Cloth 🧼",
+          isCorrect: true, 
+          bgColor: "bg-emerald-100 border-emerald-200 text-emerald-950",
+          feedback: "Splendid choice! A soft, dry cloth wipes dust off safely without scratching or water damage!" 
+        },
+        { 
+          text: "Wash it with a big bucket of soapy water!", 
+          emoji: "🪣 💦 🚫", 
+          caption: "Soapy Water! 🪣",
+          isCorrect: false, 
+          bgColor: "bg-rose-50 border-rose-100 text-rose-950",
+          feedback: "Yikes! Water will leak inside and break the tablet completely. Never use liquid!" 
+        }
+      ],
+      correctIndex: 0,
+      narration: "Your school tablet screen is dusty. What is the safest way to clean the glass?"
+    }
+  ];
+
+  useEffect(() => {
+    speakText(challenges[currentChallenge].narration);
+  }, [currentChallenge]);
+
+  const handleSelectOption = (idx: number) => {
+    if (checked) return;
+    setSelectedOption(idx);
+    playLocalSound('pop');
+    speakText(challenges[currentChallenge].opts[idx].text);
+  };
+
+  const handleCheck = () => {
+    if (selectedOption === null || checked) return;
+    setChecked(true);
+    const isCorrect = selectedOption === challenges[currentChallenge].correctIndex;
+    if (isCorrect) {
+      setScore(prev => prev + 1);
+      playLocalSound('chime');
+      speakText(challenges[currentChallenge].opts[selectedOption].feedback);
+    } else {
+      playLocalSound('boop');
+      speakText(challenges[currentChallenge].opts[selectedOption].feedback);
+    }
+  };
+
+  const handleNext = () => {
+    setSelectedOption(null);
+    setChecked(false);
+    if (currentChallenge + 1 < challenges.length) {
+      setCurrentChallenge(prev => prev + 1);
+    } else {
+      setGameFinished(true);
+      const finalStars = Math.round((score / challenges.length) * 3) || 1;
+      if (onComplete) {
+        onComplete(finalStars);
+      }
+    }
+  };
+
+  const handleReset = () => {
+    setCurrentChallenge(0);
+    setSelectedOption(null);
+    setChecked(false);
+    setScore(0);
+    setGameFinished(false);
+  };
+
+  return (
+    <div className="bg-gradient-to-b from-indigo-50/50 to-emerald-50/50 border-2 border-indigo-200 rounded-3xl p-5 md:p-6 min-h-[420px] flex flex-col justify-between" id="term1-recap-game-stage">
+      <div>
+        {/* Game Header */}
+        <div className="flex items-center justify-between border-b-2 border-indigo-100/50 pb-3 mb-5">
+          <div className="flex items-center gap-2">
+            <span className="p-1 px-3 bg-indigo-500 text-white rounded-full text-xs font-black uppercase tracking-wider shadow-xs animate-pulse">
+              🏆 Term 1 Graduation Quest {currentChallenge + 1} of {challenges.length}
+            </span>
+          </div>
+          <span className="text-xs md:text-sm font-extrabold text-slate-700 bg-white border-2 border-indigo-100 px-3 py-1 rounded-full shadow-2xs">
+            ⭐ Gold Stars: {score}
+          </span>
+        </div>
+
+        {!gameFinished ? (
+          <div className="space-y-5 animate-in fade-in duration-300">
+            {/* Mascot Speak Card */}
+            <div className="bg-white p-4 rounded-2xl border-2 border-indigo-100 shadow-sm flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative shrink-0">
+                <span className="text-4xl md:text-5xl block animate-bounce duration-1000">🐰</span>
+                <span className="absolute -bottom-1 -right-1 text-base">🔊</span>
+              </div>
+              <div className="text-center sm:text-left flex-1 space-y-1.5 w-full">
+                <p className="text-slate-800 text-sm md:text-base font-extrabold leading-relaxed">
+                  {challenges[currentChallenge].question}
+                </p>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playLocalSound('pop');
+                      speakText(challenges[currentChallenge].narration);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-full text-xs font-bold text-indigo-700 cursor-pointer transition-all active:scale-95"
+                  >
+                    🔊 Hear Quest Again
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">
+                    Tap a picture choice below!
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Giant Graphic Question Visual */}
+            <div className="w-full py-1">
+              {challenges[currentChallenge].visual}
+            </div>
+
+            {/* Huge Visual Choices Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {challenges[currentChallenge].opts.map((opt, oIdx) => {
+                const isSelected = selectedOption === oIdx;
+                const isCorrect = oIdx === challenges[currentChallenge].correctIndex;
+                
+                let cardStyle = "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/10 shadow-sm hover:shadow-md";
+                
+                if (isSelected) {
+                  cardStyle = "border-indigo-500 bg-indigo-50/50 ring-4 ring-indigo-500/20 shadow-md transform scale-[1.01]";
+                }
+                
+                if (checked) {
+                  if (isCorrect) {
+                    cardStyle = "border-emerald-500 bg-emerald-50/80 ring-4 ring-emerald-500/20 text-emerald-950 font-bold pointer-events-none";
+                  } else if (isSelected) {
+                    cardStyle = "border-rose-500 bg-rose-50 ring-4 ring-rose-500/20 text-rose-950 pointer-events-none";
+                  } else {
+                    cardStyle = "border-slate-100 bg-slate-50 text-slate-400 opacity-50 pointer-events-none";
+                  }
+                }
+
+                return (
+                  <button
+                    key={oIdx}
+                    type="button"
+                    disabled={checked}
+                    onClick={() => handleSelectOption(oIdx)}
+                    className={`group relative p-4 rounded-3xl border-3 text-center transition-all duration-200 cursor-pointer active:scale-98 flex flex-col items-center justify-between min-h-[170px] md:min-h-[200px] ${cardStyle}`}
+                  >
+                    {/* Visual Check / Cross Badge Overlay */}
+                    {checked && isCorrect && (
+                      <span className="absolute -top-3 -right-3 bg-emerald-500 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center font-black text-lg shadow-md animate-bounce">
+                        ✅
+                      </span>
+                    )}
+                    {checked && isSelected && !isCorrect && (
+                      <span className="absolute -top-3 -right-3 bg-rose-500 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center font-black text-lg shadow-md animate-shake">
+                        ❌
+                      </span>
+                    )}
+
+                    {/* Short Caption */}
+                    <span className="text-xs md:text-sm font-black text-slate-700 tracking-tight uppercase group-hover:text-indigo-600 transition-colors mb-2">
+                      {opt.caption}
+                    </span>
+
+                    {/* Giant Graphic Container */}
+                    <div className={`w-full max-w-[180px] aspect-video rounded-2xl flex items-center justify-center border-2 shadow-inner transition-transform group-hover:scale-105 duration-300 ${opt.bgColor || 'bg-slate-50'}`}>
+                      <span className="text-4xl md:text-5xl tracking-widest drop-shadow-md select-none">
+                        {opt.emoji}
+                      </span>
+                    </div>
+
+                    {/* Read Option Text / Action Bar */}
+                    <div className="w-full mt-3 pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5">
+                      <span className="text-[11px] md:text-xs font-bold leading-snug">
+                        {opt.text}
+                      </span>
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          playLocalSound('pop');
+                          speakText(opt.text);
+                        }}
+                        className="p-1 hover:bg-slate-200/50 rounded-lg text-xs shrink-0 cursor-pointer"
+                        title="Read option out loud"
+                      >
+                        🔊
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Answer Feedback Banner */}
+            {checked && (
+              <div className="mt-4 p-4 rounded-2xl bg-white border-2 border-indigo-100 flex items-start gap-3 shadow-xs animate-in slide-in-from-bottom-3 duration-300">
+                <span className="text-3xl shrink-0 animate-pulse">
+                  {selectedOption === challenges[currentChallenge].correctIndex ? "🎉" : "💡"}
+                </span>
+                <div className="space-y-1">
+                  <span className={`text-xs uppercase font-black tracking-wider block ${
+                    selectedOption === challenges[currentChallenge].correctIndex ? 'text-emerald-600' : 'text-amber-600'
+                  }`}>
+                    {selectedOption === challenges[currentChallenge].correctIndex ? 'Correct! ⭐' : 'Try Again! 💡'}
+                  </span>
+                  <p className="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">
+                    {challenges[currentChallenge].opts[selectedOption || 0].feedback}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-8 space-y-6 animate-in scale-in duration-300">
+            <span className="text-7xl block animate-bounce">🎓🏆🎖️</span>
+            <div className="space-y-2">
+              <h5 className="text-xl md:text-2xl font-black text-indigo-950 uppercase tracking-tight">
+                TERM 1 GRADUATE BADGE! 🎓✨
+              </h5>
+              <p className="text-xs md:text-sm text-slate-600 font-bold max-w-sm mx-auto leading-relaxed">
+                Outstanding! You successfully conquered all four Term 1 recap quests: patterns, inputs, coding pathways, and screen safety! You are a fully certified coding star.
+              </p>
+              <div className="inline-block mt-3 bg-emerald-100 text-emerald-950 border-2 border-emerald-300 rounded-2xl px-5 py-3 shadow-md transform rotate-1">
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-800">⭐ QUEST COMPLETE ⭐</p>
+                <p className="text-2xl font-black text-emerald-950 leading-tight">Score: {score} / {challenges.length}</p>
+              </div>
+            </div>
+            <div className="flex justify-center gap-2 pt-3">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wide active:scale-95 transition cursor-pointer shadow-md"
+              >
+                🔄 Play Quest Again
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Control Buttons */}
+      {!gameFinished && (
+        <div className="flex justify-end pt-4 mt-4 border-t-2 border-indigo-100/30">
+          {!checked ? (
+            <button
+              type="button"
+              disabled={selectedOption === null}
+              onClick={handleCheck}
+              className={`px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all ${
+                selectedOption !== null 
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95' 
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <span>Verify Answer 🚀</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNext}
+              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 animate-pulse"
+            >
+              <span>{currentChallenge + 1 === challenges.length ? 'Get Badge! 🏆' : 'Next Quest ➡️'}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RobotLabConceptGuide({
   speakText,
   stepProgress,
@@ -1274,9 +2288,9 @@ function RobotLabConceptGuide({
   };
 
   const getContainerClass = (stepId: number) => {
-    const base = "p-3 rounded-2xl flex items-center justify-start transition-all cursor-pointer border-2 bg-white";
+    const base = "p-3 rounded-2xl flex items-center justify-start transition-all cursor-pointer border-2 bg-white relative";
     if (stepId === progress) {
-      return `${base} bg-white ring-4 ring-amber-400 animate-pulse shadow-xl scale-105 border-indigo-400 z-10 relative`;
+      return `${base} bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] scale-105 border-indigo-400 z-10`;
     } else if (stepId < progress) {
       return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-emerald-400`;
     } else {
@@ -1755,9 +2769,9 @@ function ArrowMazeConceptGuide({
   };
 
   const getContainerClass = (stepId: number) => {
-    const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer";
+    const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer relative";
     if (stepId === progress) {
-      return `${base} bg-white ring-4 ring-amber-400 animate-pulse shadow-xl scale-105 border-2 border-indigo-400 z-10 relative`;
+      return `${base} bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] scale-105 border-2 border-indigo-400 z-10`;
     } else if (stepId < progress) {
       return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-emerald-400`;
     } else {
@@ -2363,7 +3377,7 @@ function BabyBotCodeCards({
                 btnClass = 'bg-indigo-600 border-indigo-800 text-white shadow-[0_0_15px_#6366f1] ring-4 ring-indigo-400 z-10';
               }
             } else if (isSelectableGlow) {
-              btnClass = 'bg-white ring-4 ring-amber-400 animate-pulse shadow-xl scale-105 border-2 border-indigo-400 z-10 relative text-slate-800';
+              btnClass = 'bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] scale-105 border-2 border-indigo-400 z-10 relative text-slate-800';
             } else if (isCompleted) {
               btnClass = 'bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-emerald-400 text-slate-800';
             } else {
@@ -2397,6 +3411,250 @@ function BabyBotCodeCards({
         💡 Click the code cards to test them! They move until finding a wall.
       </p>
       </div>
+    </div>
+  );
+}
+
+function AnimatedTerm1RecapExplorer({ speakText, onComplete }: { speakText: (t: string, b?: any, end?: () => void) => void; onComplete: () => void }) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
+
+  const slides = [
+    {
+      text: "First, we learned how to keep our devices clean, safe, and happy!",
+      emoji: (
+        <div className="flex items-center justify-center gap-4">
+          <motion.span animate={{ rotate: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 2 }} className="text-6xl">📱</motion.span>
+          <motion.span animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1 }} className="text-4xl">✨</motion.span>
+          <motion.span animate={{ x: [-5, 5, -5] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-5xl">🧼</motion.span>
+        </div>
+      ),
+      title: "Device Safety",
+      bgColor: "bg-sky-100",
+      textColor: "text-sky-700"
+    },
+    {
+      text: "Next, we learned about repeating patterns with colors and shapes!",
+      emoji: (
+        <div className="flex gap-2">
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0 }} className="text-5xl">🔴</motion.span>
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} className="text-5xl">🔵</motion.span>
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.6 }} className="text-5xl">🔴</motion.span>
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.9 }} className="text-5xl">🔵</motion.span>
+        </div>
+      ),
+      title: "Repeating Patterns",
+      bgColor: "bg-rose-100",
+      textColor: "text-rose-700"
+    },
+    {
+      text: "Then, we explored different devices like computers, smartphones, and microwaves around the world!",
+      emoji: (
+        <div className="flex items-center justify-center gap-3">
+          <motion.span animate={{ rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="text-5xl">💻</motion.span>
+          <motion.span animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.3 }} className="text-6xl">🌍</motion.span>
+          <motion.span animate={{ rotate: [0, -5, 5, 0] }} transition={{ repeat: Infinity, duration: 2, delay: 0.5 }} className="text-5xl">⌚</motion.span>
+        </div>
+      ),
+      title: "Devices Around the World",
+      bgColor: "bg-indigo-100",
+      textColor: "text-indigo-700"
+    },
+    {
+      text: "We ordered picture stories with a beginning, middle, and an end!",
+      emoji: (
+        <div className="flex gap-4">
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-5xl">🌱</motion.span>
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2, delay: 0.5 }} className="text-5xl">🪴</motion.span>
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2, delay: 1 }} className="text-5xl">🌻</motion.span>
+        </div>
+      ),
+      title: "Picture Stories",
+      bgColor: "bg-orange-100",
+      textColor: "text-orange-700"
+    },
+    {
+      text: "We learned about direction with arrow code!",
+      emoji: (
+        <div className="flex items-center justify-center gap-2">
+          <motion.span animate={{ x: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-5xl">➡️</motion.span>
+          <motion.span animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.3 }} className="text-5xl">⬆️</motion.span>
+          <motion.span animate={{ x: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.6 }} className="text-5xl">⬅️</motion.span>
+        </div>
+      ),
+      title: "Arrow Cards",
+      bgColor: "bg-emerald-100",
+      textColor: "text-emerald-700"
+    },
+    {
+      text: "We discovered what makes a machine a real robot!",
+      emoji: (
+        <div className="flex items-center justify-center gap-4">
+          <motion.span animate={{ y: [0, -20, 0] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-6xl">🤖</motion.span>
+          <motion.span animate={{ rotate: [0, 360] }} transition={{ repeat: Infinity, duration: 3, ease: "linear" }} className="text-5xl">⚙️</motion.span>
+        </div>
+      ),
+      title: "What is a Robot?",
+      bgColor: "bg-violet-100",
+      textColor: "text-violet-700"
+    },
+    {
+      text: "We programmed Baby Bot using code cards to move around the grid!",
+      emoji: (
+        <div className="flex items-center justify-center gap-2">
+          <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-5xl bg-emerald-200 rounded-lg p-1">▶️</motion.span>
+          <motion.span animate={{ x: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-5xl">➡️</motion.span>
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 0.8 }} className="text-6xl">🐰</motion.span>
+        </div>
+      ),
+      title: "Baby Bot Code",
+      bgColor: "bg-teal-100",
+      textColor: "text-teal-700"
+    },
+    {
+      text: "We got creative and designed our own beautiful beaded bracelets!",
+      emoji: (
+        <div className="flex items-center justify-center gap-2">
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2 }} className="text-5xl">💎</motion.span>
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.3 }} className="text-5xl">📿</motion.span>
+          <motion.span animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.6 }} className="text-5xl">✨</motion.span>
+        </div>
+      ),
+      title: "Bracelet Designer",
+      bgColor: "bg-pink-100",
+      textColor: "text-pink-700"
+    },
+    {
+      text: "We even made music by tapping out rhythm patterns on the drum pad!",
+      emoji: (
+        <div className="flex items-center justify-center gap-3">
+          <motion.span animate={{ scale: [1, 1.2, 1], y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 0.5 }} className="text-5xl">🥁</motion.span>
+          <motion.span animate={{ y: [0, -20, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="text-5xl">🎵</motion.span>
+          <motion.span animate={{ y: [0, -20, 0] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="text-4xl">🎶</motion.span>
+        </div>
+      ),
+      title: "Rhythm Patterns",
+      bgColor: "bg-yellow-100",
+      textColor: "text-yellow-700"
+    },
+    {
+      text: "You are a fully certified Term 1 Coding Star! Grab your shiny graduation badge!",
+      emoji: (
+        <div className="flex items-center justify-center gap-4">
+          <motion.span animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="text-6xl">🎓</motion.span>
+          <motion.span animate={{ y: [0, -15, 0] }} transition={{ repeat: Infinity, duration: 1.5, delay: 0.5 }} className="text-7xl">🏆</motion.span>
+          <motion.span animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2, delay: 0.2 }} className="text-6xl">🎖️</motion.span>
+        </div>
+      ),
+      title: "Graduation",
+      bgColor: "bg-amber-100",
+      textColor: "text-amber-700"
+    }
+  ];
+
+  const startRecap = () => {
+    if (isPlaying) return;
+    setIsPlaying(true);
+    setCurrentSlide(0);
+    setHasCompleted(false);
+
+    let step = 0;
+    
+    const playSlide = (idx: number) => {
+      setCurrentSlide(idx);
+      
+      const onSpeechEnd = () => {
+        setTimeout(() => {
+          if (idx < slides.length - 1) {
+            playSlide(idx + 1);
+          } else {
+            setIsPlaying(false);
+            setHasCompleted(true);
+            onComplete();
+          }
+        }, 1000); // 1-second pause between slides for a natural flow
+      };
+
+      speakText(slides[idx].text, undefined, onSpeechEnd);
+    };
+    
+    playSlide(0);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[300px] w-full bg-slate-50 border-2 border-slate-200 rounded-3xl p-6 relative overflow-hidden">
+      {!isPlaying && !hasCompleted ? (
+        <div className="text-center space-y-6">
+          <div className="text-6xl animate-bounce">🎬</div>
+          <div>
+            <h4 className="text-xl font-black text-slate-800">Ready for the Term 1 Recap?</h4>
+            <p className="text-sm font-bold text-slate-500 mt-2">Watch and listen as we review everything we've learned!</p>
+          </div>
+          <button
+            onClick={startRecap}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto"
+          >
+            <span>▶️ Start Recap Presentation</span>
+          </button>
+        </div>
+      ) : (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentSlide}
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 1.1, y: -20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              className={`w-full max-w-lg p-8 rounded-3xl shadow-xl flex flex-col items-center text-center space-y-8 ${slides[currentSlide].bgColor}`}
+            >
+              <h3 className={`text-2xl font-black uppercase tracking-widest ${slides[currentSlide].textColor}`}>
+                {slides[currentSlide].title}
+              </h3>
+              
+              <div className="py-6 flex items-center justify-center">
+                {slides[currentSlide].emoji}
+              </div>
+              
+              <p className="text-lg md:text-xl font-bold text-slate-800 leading-relaxed bg-white/60 p-4 rounded-2xl backdrop-blur-sm">
+                "{slides[currentSlide].text}"
+              </p>
+            </motion.div>
+          </AnimatePresence>
+          
+          {/* Progress dots */}
+          <div className="flex items-center justify-center gap-2 mt-8 flex-wrap max-w-full">
+            {slides.map((_, i) => (
+              <div 
+                key={i} 
+                className={`h-2.5 rounded-full transition-all duration-500 ${
+                  i === currentSlide 
+                    ? 'w-8 bg-indigo-600' 
+                    : i < currentSlide
+                      ? 'w-2.5 bg-indigo-300'
+                      : 'w-2.5 bg-slate-300'
+                }`} 
+              />
+            ))}
+          </div>
+
+          {!isPlaying && hasCompleted && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-6"
+            >
+              <button
+                onClick={startRecap}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold uppercase rounded-xl active:scale-95 transition-all text-xs"
+              >
+                🔄 Replay Recap
+              </button>
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2537,9 +3795,9 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       };
 
       const getR1W1Class = (stepId: number) => {
-        const base = "p-4 rounded-2xl flex flex-col gap-3 transition-all cursor-pointer text-left w-full h-full";
+        const base = "p-4 rounded-2xl flex flex-col gap-3 transition-all cursor-pointer text-left w-full h-full relative";
         if (stepId === r1w1Progress) {
-          return `${base} bg-white ring-4 ring-amber-400 animate-pulse shadow-xl border-2 border-indigo-400 z-10 relative`;
+          return `${base} bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] border-2 border-indigo-400 z-10`;
         } else if (stepId < r1w1Progress) {
           return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-indigo-150 hover:border-indigo-400`;
         } else {
@@ -2587,7 +3845,35 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
               </div>
               <div className="flex flex-col gap-4 bg-indigo-50/20 p-2 rounded-2xl">
                 {/* CARD 1 */}
-                <div onClick={() => handleR1W1Click(0)} className={getR1W1Class(0)}>
+                <motion.div 
+                  onClick={() => handleR1W1Click(0)} 
+                  className={getR1W1Class(0)}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    scale: r1w1Progress === 0 ? [1, 1.02, 1] : 1
+                  }}
+                  whileHover={r1w1Progress >= 0 ? { scale: r1w1Progress === 0 ? 1.03 : 1.04, y: -3 } : undefined}
+                  whileTap={r1w1Progress >= 0 ? { scale: 0.98 } : undefined}
+                  transition={{ 
+                    y: { type: "spring", stiffness: 350, damping: 20 },
+                    scale: r1w1Progress === 0 ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : { type: "spring", stiffness: 350, damping: 20 }
+                  }}
+                >
+                  {/* Completed star overlay */}
+                  {r1w1Progress > 0 && (
+                    <motion.div 
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      className="absolute -top-2.5 -right-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-black shadow-md border-2 border-white z-25"
+                    >
+                      ✓
+                    </motion.div>
+                  )}
+                  {r1w1Progress === 0 && (
+                    <span className="absolute inset-0 rounded-2xl ring-4 ring-amber-400/50 animate-ping pointer-events-none opacity-30" />
+                  )}
                   <div className="flex items-center justify-between">
                     <h5 className="text-base font-black text-slate-800 leading-tight">1. Repeating Patterns!</h5>
                     <span className="text-xs font-extrabold uppercase px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100 shrink-0">
@@ -2617,10 +3903,38 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
                       {card1PatternBColors.map((color, idx) => renderBigBall(0, idx + 6, color))}
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* CARD 2 */}
-                <div onClick={() => handleR1W1Click(1)} className={getR1W1Class(1)}>
+                <motion.div 
+                  onClick={() => handleR1W1Click(1)} 
+                  className={getR1W1Class(1)}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ 
+                    opacity: r1w1Progress >= 1 ? 1 : 0.4, 
+                    y: 0,
+                    scale: r1w1Progress === 1 ? [1, 1.02, 1] : 1
+                  }}
+                  whileHover={r1w1Progress >= 1 ? { scale: r1w1Progress === 1 ? 1.03 : 1.04, y: -3 } : undefined}
+                  whileTap={r1w1Progress >= 1 ? { scale: 0.98 } : undefined}
+                  transition={{ 
+                    y: { type: "spring", stiffness: 350, damping: 20 },
+                    scale: r1w1Progress === 1 ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : { type: "spring", stiffness: 350, damping: 20 }
+                  }}
+                >
+                  {/* Completed star overlay */}
+                  {r1w1Progress > 1 && (
+                    <motion.div 
+                      initial={{ scale: 0, rotate: -30 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      className="absolute -top-2.5 -right-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-black shadow-md border-2 border-white z-25"
+                    >
+                      ✓
+                    </motion.div>
+                  )}
+                  {r1w1Progress === 1 && (
+                    <span className="absolute inset-0 rounded-2xl ring-4 ring-amber-400/50 animate-ping pointer-events-none opacity-30" />
+                  )}
                   <div className="flex items-center justify-between">
                     <h5 className="text-base md:text-lg font-black text-slate-800 leading-tight">2. Not a Pattern!</h5>
                     <span className="text-xs md:text-sm font-extrabold uppercase px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full border border-rose-100 shrink-0">
@@ -2641,7 +3955,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
                       {card2WrongColors.map((color, idx) => renderBigBall(1, idx, color))}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
@@ -2675,9 +3989,9 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       };
 
       const getDeviceClass = (stepId: number) => {
-        const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer";
+        const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer relative";
         if (stepId === r1w2Progress) {
-          return `${base} bg-white ring-4 ring-amber-400 animate-pulse shadow-xl scale-105 border-2 border-indigo-400 z-10 relative`;
+          return `${base} bg-white ring-4 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] scale-105 border-2 border-indigo-400 z-10`;
         } else if (stepId < r1w2Progress) {
           return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-indigo-150 hover:border-indigo-400`;
         } else {
@@ -2694,60 +4008,71 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
                 <h4 className="text-sm font-bold text-indigo-800 uppercase tracking-wider">Devices Around the World</h4>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div onClick={() => handleTourClick(0)} className={getDeviceClass(0)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.6] origin-center -ml-2">
-                    <ColorfulDesktop />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Computers</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Desk computers for learning</p>
-                  </div>
-                </div>
-                <div onClick={() => handleTourClick(1)} className={getDeviceClass(1)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.7] origin-center -ml-1">
-                    <ColorfulSmartphone />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Smartphones</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Pocket computers for games</p>
-                  </div>
-                </div>
-                <div onClick={() => handleTourClick(2)} className={getDeviceClass(2)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.6] origin-center -ml-2">
-                    <ColorfulLaptop />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Laptops</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Folding computers for learning</p>
-                  </div>
-                </div>
-                <div onClick={() => handleTourClick(3)} className={getDeviceClass(3)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.6] origin-center -ml-2">
-                    <ColorfulMicrowave />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Microwaves</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Quickly heats up food</p>
-                  </div>
-                </div>
-                <div onClick={() => handleTourClick(4)} className={getDeviceClass(4)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.6] origin-center -ml-2 text-2xl drop-shadow-sm">
-                    <ColorfulSmartwatch />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Smartwatches</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Tiny wrist computers</p>
-                  </div>
-                </div>
-                <div onClick={() => handleTourClick(5)} className={getDeviceClass(5)}>
-                  <div className="w-12 h-12 flex items-center justify-center shrink-0 transform scale-[0.7] origin-center -ml-1">
-                    <ColorfulTablet />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h5 className="text-sm font-black text-slate-800 leading-tight truncate">Tablets</h5>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">Flat touchscreen computers</p>
-                  </div>
-                </div>
+                {[
+                  { id: 0, title: "Computers", desc: "Desk computers for learning", node: <ColorfulDesktop />, scale: "scale-[0.6] -ml-2" },
+                  { id: 1, title: "Smartphones", desc: "Pocket computers for games", node: <ColorfulSmartphone />, scale: "scale-[0.7] -ml-1" },
+                  { id: 2, title: "Laptops", desc: "Folding computers for learning", node: <ColorfulLaptop />, scale: "scale-[0.6] -ml-2" },
+                  { id: 3, title: "Microwaves", desc: "Quickly heats up food", node: <ColorfulMicrowave />, scale: "scale-[0.6] -ml-2" },
+                  { id: 4, title: "Smartwatches", desc: "Tiny wrist computers", node: <ColorfulSmartwatch />, scale: "scale-[0.6] -ml-2" },
+                  { id: 5, title: "Tablets", desc: "Flat touchscreen computers", node: <ColorfulTablet />, scale: "scale-[0.7] -ml-1" },
+                ].map((device) => {
+                  const isActive = device.id === r1w2Progress;
+                  const isCompleted = device.id < r1w2Progress;
+                  const isLocked = device.id > r1w2Progress;
+
+                  return (
+                    <motion.div
+                      key={device.id}
+                      onClick={() => handleTourClick(device.id)}
+                      className={getDeviceClass(device.id)}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ 
+                        opacity: isLocked ? 0.5 : 1, 
+                        y: 0,
+                        scale: isActive ? [1, 1.02, 1] : 1
+                      }}
+                      whileHover={!isLocked ? { 
+                        scale: isActive ? 1.03 : 1.04, 
+                        y: -3, 
+                        boxShadow: isActive 
+                          ? "0 10px 25px -5px rgba(251, 191, 36, 0.45), 0 0 15px rgba(251, 191, 36, 0.3)"
+                          : "0 10px 20px -5px rgba(0, 0, 0, 0.08)" 
+                      } : undefined}
+                      whileTap={!isLocked ? { scale: 0.98 } : undefined}
+                      transition={{ 
+                        y: { type: "spring", stiffness: 350, damping: 20 },
+                        scale: isActive 
+                          ? { repeat: Infinity, duration: 2, ease: "easeInOut" }
+                          : { type: "spring", stiffness: 350, damping: 20 }
+                      }}
+                    >
+                      {/* Completed checkmark badge */}
+                      {isCompleted && (
+                        <motion.div 
+                          initial={{ scale: 0, rotate: -30 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                          className="absolute -top-2 -right-2 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-black shadow-md border-2 border-white z-25"
+                        >
+                          ✓
+                        </motion.div>
+                      )}
+
+                      {/* Glowing ring */}
+                      {isActive && (
+                        <span className="absolute inset-0 rounded-2xl ring-4 ring-amber-400/50 animate-ping pointer-events-none opacity-30" />
+                      )}
+
+                      <div className={`w-12 h-12 flex items-center justify-center shrink-0 transform ${device.scale} origin-center`}>
+                        {device.node}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h5 className="text-sm font-black text-slate-800 leading-tight truncate">{device.title}</h5>
+                        <p className="text-[10px] font-bold text-slate-500 mt-0.5 break-words line-clamp-2">{device.desc}</p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -2863,65 +4188,41 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       break;
 
     case 'R-T1-W7':
-      title = "Two-Element Core Patterns";
+      title = "Bracelet Design Challenge";
       pose = "pointing_idea";
-      speechText = "Let's explore simple alternating patterns! A pattern core has two parts that repeat again and again. Tap on each pattern to see how color, shape, and rhythm repeat!";
+      speechText = "A bracelet is a beautiful piece of jewelry we wear around our wrists! Today, you are going to design your own bracelet using a repeating color pattern with round beads. Tap to see the design you need to build!";
       visualNode = (
         <InteractiveSequenceViewer
           speakText={speakText}
           onStepProgress={(p) => setR1W7Progress(p)}
-          titleText="Simple Alternating Patterns"
-          subtitleText="A two-element pattern core repeats again and again:"
+          titleText="Your Bracelet Design Challenge"
+          subtitleText="We will design a bracelet with an alternating color pattern."
           steps={[
             {
               id: 0,
-              title: "Color Pattern",
-              text: "A repeating color pattern alternates two colors! Red, Blue, Red, Blue, Red, Blue...",
-              renderItem: () => (
-                <div className="flex flex-col gap-1 flex-1 bg-amber-50/50 p-2.5 rounded-xl border border-amber-100">
-                  <h5 className="text-[10px] font-black text-amber-850 uppercase">COLOR CORE (AB)</h5>
-                  <div className="flex gap-2 items-center mt-1">
-                    <span className="w-5 h-5 rounded-full bg-red-500 shadow-sm animate-bounce" style={{ animationDelay: '0ms', animationDuration: '2s' }}></span>
-                    <span className="w-5 h-5 rounded-full bg-blue-500 shadow-sm animate-bounce" style={{ animationDelay: '300ms', animationDuration: '2s' }}></span>
-                    <span className="w-5 h-5 rounded-full bg-red-500 shadow-sm animate-bounce" style={{ animationDelay: '600ms', animationDuration: '2s' }}></span>
-                    <span className="w-5 h-5 rounded-full bg-blue-500 shadow-sm animate-bounce" style={{ animationDelay: '900ms', animationDuration: '2s' }}></span>
-                    <span className="text-[10px] font-black text-slate-400">...</span>
+              title: "The Alternating Color Pattern",
+              text: "A bracelet is a beautiful piece of jewelry we wear around our wrists! , typically used for decorative purposes, as an accessory, or to hold charms. They come in a wide variety of styles and materials  and this  are just examples.",
+              renderItem: () => {
+                return (
+                  <div className="flex flex-col items-center justify-center gap-4 flex-1 bg-amber-50/50 p-4 sm:p-6 rounded-xl border border-amber-100 min-h-[300px] w-full overflow-hidden">
+                    <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-4 p-2">
+                      <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-white group">
+                        <Image src={braceletDesignImg1} alt="Beaded bracelets" fill className="object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-white group">
+                        <Image src={braceletDesignImg2} alt="Kid wearing bracelets" fill className="object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-white group">
+                        <Image src={braceletDesignImg3} alt="Colorful beads" fill className="object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                      </div>
+                      <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-md border-2 border-white group">
+                        <Image src={braceletDesignImg4} alt="Child making bracelet" fill className="object-cover group-hover:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                      </div>
+                    </div>
+                    <h5 className="text-[12px] sm:text-sm font-black text-amber-850 uppercase text-center mt-2 tracking-wide shrink-0">Inspiration: Beaded Bracelets</h5>
                   </div>
-                </div>
-              )
-            },
-            {
-              id: 1,
-              title: "Shape Pattern",
-              text: "A repeating shape pattern alternates two shapes! Circle, Triangle, Circle, Triangle...",
-              renderItem: () => (
-                <div className="flex flex-col gap-1 flex-1 bg-pink-50/50 p-2.5 rounded-xl border border-pink-100">
-                  <h5 className="text-[10px] font-black text-pink-850 uppercase">SHAPE CORE (AB)</h5>
-                  <div className="flex gap-2 items-center mt-1">
-                    <div className="w-5 h-5 rounded-full bg-fuchsia-400 shadow-sm"></div>
-                    <div className="w-5 h-5 shadow-sm"><svg viewBox="0 0 100 100" className="w-full h-full fill-indigo-400"><polygon points="50,10 90,90 10,90" /></svg></div>
-                    <div className="w-5 h-5 rounded-full bg-fuchsia-400 shadow-sm"></div>
-                    <div className="w-5 h-5 shadow-sm"><svg viewBox="0 0 100 100" className="w-full h-full fill-indigo-400"><polygon points="50,10 90,90 10,90" /></svg></div>
-                    <span className="text-[10px] font-black text-slate-400">...</span>
-                  </div>
-                </div>
-              )
-            },
-            {
-              id: 2,
-              title: "Rhythm & Action",
-              text: "A repeating sound pattern alternates two actions! Clap hands, Snap fingers, Clap hands, Snap fingers...",
-              renderItem: () => (
-                <div className="flex flex-col gap-1 flex-1 bg-indigo-50/50 p-2.5 rounded-xl border border-indigo-100">
-                  <h5 className="text-[10px] font-black text-indigo-850 uppercase">RHYTHM CORE (AB)</h5>
-                  <div className="flex gap-1.5 items-center mt-1">
-                    <span className="px-2 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black shadow-xs">👏 CLAP</span>
-                    <span className="px-2 py-1 bg-amber-500 text-slate-950 rounded-lg text-[9px] font-black shadow-xs">🫰 SNAP</span>
-                    <span className="px-2 py-1 bg-emerald-500 text-white rounded-lg text-[9px] font-black shadow-xs">👏 CLAP</span>
-                    <span className="px-2 py-1 bg-amber-500 text-slate-950 rounded-lg text-[9px] font-black shadow-xs">🫰 SNAP</span>
-                  </div>
-                </div>
-              )
+                )
+              }
             }
           ]}
         />
@@ -2959,9 +4260,9 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       };
 
       const getSafetyGridClass = (stepId: number) => {
-        const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer";
+        const base = "p-3 rounded-2xl flex items-center gap-3 transition-all cursor-pointer relative";
         if (stepId === r1w9Progress) {
-          return `${base} bg-white ring-4 ring-rose-300 animate-pulse shadow-xl scale-105 border-2 border-emerald-400 z-10 relative`;
+          return `${base} bg-white ring-4 ring-rose-300 shadow-[0_0_20px_rgba(251,113,133,0.6)] scale-105 border-2 border-emerald-400 z-10`;
         } else if (stepId < r1w9Progress) {
           return `${base} bg-white shadow-sm hover:-translate-y-1 hover:shadow-md border-2 border-emerald-150 hover:border-emerald-400`;
         } else {
@@ -3024,31 +4325,11 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
     case 'R-T1-W10':
       title = "Term 1 Tech Champion";
       pose = "clapping";
-      speechText = "You are a fully certified Term 1 Coding Star! Celebrate your success and grab your shiny graduation badge!";
+      speechText = "You are a fully certified Term 1 Coding Star! Watch the recap below!";
       visualNode = (
-        <InteractiveSequenceViewer
-          speakText={speakText}
-          onStepProgress={(p) => setR1W10Progress(p)}
-          titleText="Victory Celebration"
-          subtitleText="Congratulations coding champion!"
-          steps={[
-            {
-              id: 0,
-              title: "Trophy",
-              text: "You successfully mastered colors repeating patterns, keyboard inputs, green start blocks, and robot pathways!",
-              renderItem: () => (
-                <div className="bg-emerald-50/50 p-2 rounded-2xl flex items-center gap-4 flex-1">
-                  <span className="text-4xl animate-bounce">🏆</span>
-                  <div>
-                    <h5 className="text-sm font-black text-emerald-800">TERM 1 GRADE R GRADUATE!</h5>
-                    <p className="text-xs text-slate-600 mt-0.5 font-medium leading-normal">
-                      You successfully mastered colors repeating patterns, keyboard inputs, green start blocks, and robot pathways!
-                    </p>
-                  </div>
-                </div>
-              )
-            }
-          ]}
+        <AnimatedTerm1RecapExplorer 
+          speakText={speakText} 
+          onComplete={() => setR1W10Progress(1)} 
         />
       );
       break;
@@ -3679,7 +4960,9 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
                   lesson.id === 'R-T1-W2' ? (regeneratedMascotImgW2.src || regeneratedMascotImgW2) : 
                   lesson.id === 'R-T1-W3' ? (regeneratedMascotImgW3.src || regeneratedMascotImgW3) : 
                   lesson.id === 'R-T1-W4' ? (regeneratedMascotImgW4.src || regeneratedMascotImgW4) : 
+                  lesson.id === 'R-T1-W7' ? (regeneratedMascotImgW7.src || regeneratedMascotImgW7) : 
                   lesson.id === 'R-T1-W8' ? (regeneratedMascotImgW8.src || regeneratedMascotImgW8) : 
+                  lesson.id === 'R-T1-W9' ? (regeneratedMascotImgW9.src || regeneratedMascotImgW9) : 
                   getZolaImage(pose)
                 } 
                 alt="Zola"
@@ -3714,7 +4997,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       {onComplete && !isCompleted && (() => {
         const requiredSteps: Record<string, number> = {
           'R-T1-W1': 2, 'R-T1-W2': 6, 'R-T1-W3': 3, 'R-T1-W4': 4,
-          'R-T1-W5': 2, 'R-T1-W6': 3, 'R-T1-W7': 3, 'R-T1-W8': 2,
+          'R-T1-W5': 2, 'R-T1-W6': 3, 'R-T1-W7': 1, 'R-T1-W8': 2,
           'R-T1-W9': 4, 'R-T1-W10': 1, 'R-T2-W5': 2, 'R-T3-W5': 2,
           'R-T4-W2': 2, 'R-T4-W5': 3, '1-T1-W1': 3, '1-T1-W2': 3,
           '1-T1-W5': 3, '1-T2-W5': 2, '1-T2-W9': 3, '1-T3-W2': 2,
@@ -3757,7 +5040,14 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
   );
 }
 
-export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, onNextLesson }: GradeR1WorkbookProps) {
+export default function GradeR1Workbook({ 
+  lesson, 
+  activeStudentId, 
+  onComplete, 
+  onNextLesson,
+  isSuperAdmin = false,
+  superAdminBypass = false
+}: GradeR1WorkbookProps) {
   const [currentPage, setCurrentPage] = useState<1 | 2>(1);
   const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
 
@@ -3830,6 +5120,10 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
   const [grIdentifiedWord, setGrIdentifiedWord] = useState<string | null>(() => {
     return localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_identified_word`) || null;
   });
+
+  const [aiFeedbackText, setAiFeedbackText] = useState<string | null>(() => {
+    return localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_ai_feedback`) || null;
+  });
   
   // Tech Challenge Lock persistent setup
   const [quizSubmitted, setQuizSubmitted] = useState<boolean>(() => {
@@ -3898,6 +5192,9 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
 
     setDrawingFeedback(localStorage.getItem(feedbackKey) || null);
     setGrIdentifiedWord(localStorage.getItem(identifiedWordKey) || null);
+
+    const aiFeedbackKey = `gr_wb_${activeStudentId || 'default'}_${lesson.id}_ai_feedback`;
+    setAiFeedbackText(localStorage.getItem(aiFeedbackKey) || null);
 
     // Sandbox simulation and guides should unlock if already submitted
     if (isSub) {
@@ -4111,9 +5408,9 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
       setIsSection2Unlocked(true);
       playChime();
       if (lesson.id === 'R-T1-W2') {
-        speakText(`Wonderful tracing! You successfully matched our big word on the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more about them.`);
+        speakText(`Wonderful tracing! You successfully matched our big word of the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more about them.`);
       } else {
-        speakText(`Wonderful tracing! You successfully matched our big word on the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more.`);
+        speakText(`Wonderful tracing! You successfully matched our big word of the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more.`);
       }
     } else {
       playPop();
@@ -4125,7 +5422,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
     // Sandbox speech triggers are now handled directly by the onComplete handler below.
   }, [isSection3Unlocked]);
 
-  const onCompleteActivitySimulation = (starsEarned: number, possible?: number) => {
+  const onCompleteActivitySimulation = (starsEarned: number, possible?: number, aiFeedback?: string) => {
     setPracticeCompleted(true);
     playChime();
     
@@ -4140,8 +5437,14 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
       localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_score`, finalStars.toString());
       localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_total`, finalPossible.toString());
       
+      if (aiFeedback) {
+        localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_ai_feedback`, aiFeedback);
+        setAiFeedbackText(aiFeedback);
+      }
+      
       onComplete(finalStars, finalPossible);
-      speakText(`Magnificent design, bracelet designer! You completed your beaded bracelet design with a grade of ${finalStars} out of ${finalPossible} stars! Your workbook entries are locked and certified!`);
+      const speechToPlay = aiFeedback || `Magnificent design, bracelet designer! You completed your beaded bracelet design with a grade of ${finalStars} out of ${finalPossible} stars! Your workbook entries are locked and certified!`;
+      speakText(speechToPlay);
       return;
     }
     
@@ -4196,10 +5499,9 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
         detectedWord = data.identifiedWord || '';
       } catch (err) {
         console.error('Failed to grade drawing:', err);
-        // Fallback or grace pass if API fails to avoid blocking the student
-        isDrawingCorrectLocal = true; 
-        aiFeedback = "Wow! That was too fast for my robot eyes, I'll pass you on trust!";
-        detectedWord = workbookConfig.bigWord;
+        isDrawingCorrectLocal = false; 
+        aiFeedback = "AI feature not available. Please try again later.";
+        detectedWord = "";
       }
 
       setIsGradingDrawing(false);
@@ -4287,6 +5589,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
     if (lesson.id === 'R-T1-W1') totalQuestions += 1;
     if (lesson.id === '1-T1-W1') totalQuestions += 1;
     if (lesson.id === 'R-T1-W3') totalQuestions += 1;
+    if (lesson.id === 'R-T1-W8') totalQuestions += 1;
 
     let calculatedStars = totalQuestions > 0 ? correctCount : 0;
     
@@ -4399,7 +5702,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                 type="button"
                 onClick={() => {
                   playPop();
-                  if (!practiceCompleted && !quizSubmitted) {
+                  if (!practiceCompleted && !quizSubmitted && !(isSuperAdmin && superAdminBypass)) {
                     setShowHomeworkWarning(true);
                     speakText("Wait champion! You must complete the Discovery Guide Study on Page 1 first.");
                     return;
@@ -4410,10 +5713,10 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   currentPage === 2 
                     ? 'bg-slate-900 text-white shadow-xs' 
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-                } ${(!practiceCompleted && !quizSubmitted) ? 'opacity-50' : ''}`}
+                } ${(!practiceCompleted && !quizSubmitted && !(isSuperAdmin && superAdminBypass)) ? 'opacity-50' : ''}`}
               >
                 Page 2: Tech Challenge 📝
-                {(!practiceCompleted && !quizSubmitted) && <span className="ml-1">🔒</span>}
+                {(!practiceCompleted && !quizSubmitted && !(isSuperAdmin && superAdminBypass)) && <span className="ml-1">🔒</span>}
               </button>
             </>
           )}
@@ -4445,7 +5748,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
             className="space-y-6"
           >
             {/* Section 1: Mascot Hello Bubble */}
-            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+            {true && (
               <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-3xs flex gap-4 md:gap-6 flex-col md:flex-row items-center md:items-start">
                 {lesson.grade === 'R' ? (
                   <div className="w-16 h-16 shrink-0 select-none animate-bounce flex items-center justify-center bg-rose-50 border border-rose-200 rounded-2xl overflow-hidden p-0.5">
@@ -4472,20 +5775,13 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   <p className="text-sm md:text-base font-bold text-slate-800 leading-snug">
                     &ldquo;{workbookConfig.mascotSpeech}&rdquo;
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => speakText(workbookConfig.mascotSpeech)}
-                    className="px-3.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-extrabold rounded-lg text-xs active:scale-95 transition inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>Listen to Voice 🔊</span>
-                  </button>
+
                 </div>
               </div>
             )}
 
             {/* Section 2: Our Big Word & Vocabulary Gate */}
-            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+            {true && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="p-1 px-2.5 bg-amber-500 text-white rounded-full text-xs font-bold">🗣️</span>
@@ -4546,9 +5842,9 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
             )}
 
             {/* In-Lesson Illustrated Pattern Explainer */}
-            {!(lesson.id === 'R-T1-W7' && isSection3Unlocked) && (
+            {true && (
               <div className="relative">
-                {!isSection2Unlocked && (
+                {!isSection2Unlocked && !(isSuperAdmin && superAdminBypass) && (
                   <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs rounded-3xl flex flex-col justify-center items-center p-6 text-center z-20 text-white space-y-3">
                     <span className="text-3xl">🔒</span>
                     <h4 className="font-extrabold text-sm uppercase">Explorer Guide is locked</h4>
@@ -4560,8 +5856,8 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                 <LessonConceptExplainer 
                   lesson={lesson} 
                   speakText={speakText}
-                  isCompleted={isSection3Unlocked}
-                  isUnlocked={isSection2Unlocked}
+                  isCompleted={isSection3Unlocked || (isSuperAdmin && superAdminBypass)}
+                  isUnlocked={isSection2Unlocked || (isSuperAdmin && superAdminBypass)}
                   onComplete={() => {
                     setIsSection3Unlocked(true);
                     playChime();
@@ -4581,7 +5877,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                     } else if (lesson.id === 'R-T1-W5') {
                       studentMission = "Select a crayon color from our palette, and click any part of the robot to paint. When you are finished, click Done Coloring!";
                     } else if (lesson.id === 'R-T1-W7') {
-                      studentMission = "Welcome to your Creative Arts Workstation! Scroll down to draw, use shapes, and connect electronic parts to design your custom creation. Add at least three items and click Submit Workstation Design to earn your stars!";
+                      studentMission = "Welcome to your Beaded Bracelet Designer! Scroll down to the workspace, select the circle shape tool, and draw colorful round beads in a row. Alternate colors to create a repeating pattern, and click Submit Workstation Design to grade your custom bracelet!";
                     } else if (lesson.id === 'R-T1-W8') {
                       studentMission = "Listen to the sound pattern by tapping Hear Pattern, then match it: Drum, Clap, Drum, Clap!";
                     } else if (lesson.activityType === 'robotics') {
@@ -4618,7 +5914,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                 )}
               </div>
 
-              {!isSection3Unlocked && (
+              {!isSection3Unlocked && !(isSuperAdmin && superAdminBypass) && (
                 <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs rounded-3xl flex flex-col justify-center items-center p-6 text-center z-10 text-white space-y-3">
                   <span className="text-3xl">🔒</span>
                   <h4 className="font-extrabold text-sm uppercase">Sandbox Practice is locked</h4>
@@ -4632,7 +5928,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                 {lesson.id === 'R-T1-W8' ? (
                   <DrumSandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
                 ) : lesson.activityType === 'pattern' ? (
-                  <PatternActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} isUnlocked={isSection3Unlocked} speakText={speakText} disableInitialSpeech={true} />
+                  <PatternActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} isUnlocked={isSection3Unlocked || (isSuperAdmin && superAdminBypass)} speakText={speakText} disableInitialSpeech={true} />
                 ) : null}
                 {lesson.activityType === 'grid' && (
                   <CodingGridActivity grade={lesson.grade} lessonId={lesson.id} onComplete={onCompleteActivitySimulation} speakText={speakText} />
@@ -4644,17 +5940,27 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                     onComplete={onCompleteActivitySimulation} 
                     mode="bracelet" 
                     speakText={speakText} 
-                    otherActivitiesCompleted={isSection3Unlocked} 
+                    otherActivitiesCompleted={isSection3Unlocked || (isSuperAdmin && superAdminBypass)} 
                     activeStudentId={activeStudentId}
+                    isLocked={quizSubmitted}
+                    certifiedScore={quizFinalScore}
                   />
                 ) : lesson.activityType === 'robotics' && (
                   <RoboticsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
                 )}
                 {lesson.activityType === 'digital' && (
-                  <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+                  lesson.id === 'R-T1-W9' ? (
+                    <DeviceSafetySandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
+                  ) : (
+                    <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+                  )
                 )}
                 {lesson.activityType === 'exploration' && (
-                  <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+                  lesson.id === 'R-T1-W10' ? (
+                    <Term1RecapSimulationStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
+                  ) : (
+                    <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+                  )
                 )}
                 {lesson.activityType === 'sequence' && (
                   <SequenceActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} speakText={speakText} />
@@ -4739,6 +6045,20 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   )}
                 </div>
               </div>
+
+              {lesson.id === 'R-T1-W7' && quizSubmitted && aiFeedbackText && (
+                <div className="bg-sky-50 border-2 border-sky-200 rounded-3xl p-5 space-y-2 shadow-xs animate-fade-in text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">🤖</span>
+                    <h4 className="font-extrabold text-xs sm:text-sm text-sky-800 uppercase tracking-wide">
+                      AI Tutor Final Grading Feedback
+                    </h4>
+                  </div>
+                  <p className="text-sky-950 text-xs sm:text-sm font-semibold leading-relaxed">
+                    "{aiFeedbackText}"
+                  </p>
+                </div>
+              )}
 
               {/* Reflection faces */}
               <div className="bg-[#e1f5f5] p-6 border border-teal-200 rounded-3xl space-y-5 text-center">
@@ -5145,22 +6465,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   </div>
                 )}
                 
-                {/* Custom Tech Challenge Activity for R-T1-W8 (Rhythm Pattern) */}
-                {lesson.id === 'R-T1-W8' && (
-                  <div className={`p-5 rounded-2xl border space-y-4 transition ${quizSubmitted ? 'bg-emerald-50/20 border-emerald-200' : 'bg-slate-50/50 border-slate-200'}`}>
-                    <div className="flex items-start gap-3">
-                      <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
-                         2
-                      </span>
-                      <div className="space-y-1 w-full">
-                        <p className="text-xs md:text-sm font-bold text-slate-900 leading-normal">
-                          Great job exploring the drum pad! Keep moving to the beat! The rhythm challenges are waiting for you in the sandbox above.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
+
                 {/* Custom Tech Challenge Activity for 1-T1-W1 (Coloring Pattern) */}
                 {lesson.id === '1-T1-W1' && (
                   <div className={`p-5 rounded-2xl border space-y-4 transition ${quizSubmitted ? (g1w1Correct ? 'bg-emerald-50/20 border-emerald-200' : 'bg-rose-50/20 border-rose-200') : 'bg-slate-50/50 border-slate-200'}`}>
@@ -5276,7 +6581,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                     >
                       <div className="flex items-start gap-3">
                         <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
-                          {lesson.id === 'R-T1-W1' ? qIdx + 4 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 3 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
+                          {lesson.id === 'R-T1-W1' ? qIdx + 3 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
                         </span>
                         <div className="space-y-1">
                           <p className="text-sm md:text-base font-bold text-slate-900 leading-normal mb-1">
@@ -5335,66 +6640,248 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                         </div>
                       )}
 
-                      {/* Options */}
-                      <div className={`grid ${q.opts.length === 2 ? 'grid-cols-2 max-w-md mx-auto' : 'grid-cols-3'} gap-2.5 pt-1`}>
-                        {q.opts.map((opt, oIdx) => {
-                          const isOptionSelected = selectedId === oIdx;
+                      {lesson.id === 'R-T1-W8' && qIdx === 0 && (
+                        <div className="flex flex-col items-center justify-center p-4 bg-slate-100/60 rounded-2xl border border-slate-200/50 my-3">
+                          <span className="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-wider">Sound Pattern Row</span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-center p-2 bg-rose-50 border border-rose-200 rounded-xl w-14 h-18 justify-center shadow-3xs animate-in fade-in duration-200">
+                              <span className="text-3xl">🥁</span>
+                              <span className="text-[8px] font-black text-rose-700 mt-1 uppercase">DRUM</span>
+                            </div>
+                            <div className="flex flex-col items-center p-2 bg-amber-50 border border-amber-200 rounded-xl w-14 h-18 justify-center shadow-3xs animate-in fade-in duration-250">
+                              <span className="text-3xl">👏</span>
+                              <span className="text-[8px] font-black text-amber-700 mt-1 uppercase">CLAP</span>
+                            </div>
+                            <div className="flex flex-col items-center p-2 bg-rose-50 border border-rose-200 rounded-xl w-14 h-18 justify-center shadow-3xs animate-in fade-in duration-300">
+                              <span className="text-3xl">🥁</span>
+                              <span className="text-[8px] font-black text-rose-700 mt-1 uppercase">DRUM</span>
+                            </div>
+                            <div className="flex flex-col items-center p-2 bg-amber-50 border border-amber-200 rounded-xl w-14 h-18 justify-center shadow-3xs animate-in fade-in duration-350">
+                              <span className="text-3xl">👏</span>
+                              <span className="text-[8px] font-black text-amber-700 mt-1 uppercase">CLAP</span>
+                            </div>
+                            <div className="text-slate-400 font-extrabold text-xs px-0.5">➡️</div>
+                            <div className="flex flex-col items-center p-2 bg-indigo-50 border border-indigo-200 rounded-xl w-14 h-18 justify-center shadow-xs animate-bounce border-dashed">
+                              <span className="text-3xl font-black text-indigo-600">❓</span>
+                              <span className="text-[8px] font-black text-indigo-700 mt-1 uppercase">NEXT?</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                          let textPart = opt;
-                          let emojiPart = null;
-                          if (lesson.grade === 'R') {
-                            const match = opt.match(/^(.*?)([\p{Emoji_Presentation}\p{Extended_Pictographic}].*)$/u);
-                            if (match) {
-                              textPart = match[1].trim();
-                              emojiPart = match[2].trim();
-                            }
-                          }
 
-                          const isYes = textPart.toUpperCase() === 'YES';
-                          const isNo = textPart.toUpperCase() === 'NO';
 
-                          let btnStyle = 'border-slate-250 bg-white hover:border-slate-400';
+                      {lesson.id === 'R-T1-W8' && qIdx === 2 && (
+                        <div className="p-4 bg-slate-100/60 rounded-2xl border border-slate-200/50 my-3 flex flex-col items-center w-full max-w-sm mx-auto">
+                          <span className="text-[10px] uppercase font-black text-slate-400 block mb-2 tracking-wider text-center">Rhythm Matching Challenge</span>
                           
-                          if (isOptionSelected) {
-                            if (isYes) {
-                              btnStyle = 'border-emerald-500 bg-emerald-50/75 ring-2 ring-emerald-500 text-emerald-950 font-black';
-                            } else if (isNo) {
-                              btnStyle = 'border-rose-500 bg-rose-50/75 ring-2 ring-rose-500 text-rose-950 font-black';
-                            } else {
-                              btnStyle = 'border-indigo-605 bg-indigo-50/60 ring-2 ring-indigo-500';
-                            }
-                          }
-
-                          if (quizSubmitted) {
-                            if (oIdx === q.correct) {
-                              btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-black';
-                            } else if (isOptionSelected) {
-                              btnStyle = 'border-rose-300 bg-rose-50 text-rose-950 line-through opacity-75';
-                            } else {
-                              btnStyle = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
-                            }
-                          }
-
-                          return (
+                          <div className="flex flex-col items-center gap-4 w-full">
+                            {/* Target Pattern Playback */}
                             <button
-                              key={oIdx}
                               type="button"
-                              disabled={quizSubmitted}
-                              onClick={() => handleSelectQuizOpt(qIdx, oIdx)}
-                              className={`p-3 rounded-2xl border text-center transition cursor-pointer select-none active:scale-95 flex flex-col items-center justify-center gap-1 min-h-[5rem] ${btnStyle}`}
+                              onClick={() => {
+                                let step = 0;
+                                const interval = setInterval(() => {
+                                  if (step >= 4) {
+                                    clearInterval(interval);
+                                    return;
+                                  }
+                                  if (step % 2 === 0) playDrumAudio('kick');
+                                  else playDrumAudio('snare');
+                                  step++;
+                                }, 600);
+                              }}
+                              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full font-bold text-xs uppercase flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-sm"
                             >
-                              {lesson.grade === 'R' ? (
-                                <>
-                                  {emojiPart && <span className="text-4xl drop-shadow-sm pointer-events-none mb-1">{emojiPart}</span>}
-                                  {textPart && <span className="text-xs md:text-sm font-bold text-slate-700 pointer-events-none leading-tight">{textPart}</span>}
-                                </>
-                              ) : (
-                                <span className="text-base tracking-[0.25em] font-bold">{opt}</span>
-                              )}
+                              <span>🔊 Listen to the Beat</span>
                             </button>
-                          );
-                        })}
-                      </div>
+
+                            {/* Current progress visualization */}
+                            <div className="flex gap-2 justify-center h-12 my-1">
+                              {[0, 1, 2, 3].map((idx) => {
+                                const val = grW8Sequence[idx];
+                                return (
+                                  <div 
+                                    key={`q4-slot-${idx}`} 
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl border-2 transition-all ${
+                                      val ? 'bg-fuchsia-50 border-fuchsia-400 scale-105 shadow-3xs' : 'bg-slate-50 border-slate-200 border-dashed'
+                                    }`}
+                                  >
+                                    {val === "🔴" ? "🥁" : val === "🟡" ? "👏" : ""}
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Pad Controls */}
+                            {!quizSubmitted ? (
+                              <div className="flex gap-4 w-full justify-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playDrumAudio('kick');
+                                    const nextSeq = [...grW8Sequence, '🔴'];
+                                    if (nextSeq.length <= 4) {
+                                      setGrW8Sequence(nextSeq);
+                                      if (nextSeq.length === 4) {
+                                        if (nextSeq.join(',') === '🔴,🟡,🔴,🟡') {
+                                          playChime();
+                                          speakText("Excellent! You matched the beat! Drum, Clap, Drum, Clap.");
+                                          handleSelectQuizOpt(qIdx, q.correct);
+                                        } else {
+                                          playBoop();
+                                          speakText("Let's try that again!");
+                                          setTimeout(() => setGrW8Sequence([]), 1200);
+                                        }
+                                      }
+                                    }
+                                  }}
+                                  className="px-4 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold text-xs uppercase flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-xs w-28 justify-center"
+                                >
+                                  <span>🥁 DRUM</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playDrumAudio('snare');
+                                    const nextSeq = [...grW8Sequence, '🟡'];
+                                    if (nextSeq.length <= 4) {
+                                      setGrW8Sequence(nextSeq);
+                                      if (nextSeq.length === 4) {
+                                        if (nextSeq.join(',') === '🔴,🟡,🔴,🟡') {
+                                          playChime();
+                                          speakText("Excellent! You matched the beat! Drum, Clap, Drum, Clap.");
+                                          handleSelectQuizOpt(qIdx, q.correct);
+                                        } else {
+                                          playBoop();
+                                          speakText("Let's try that again!");
+                                          setTimeout(() => setGrW8Sequence([]), 1200);
+                                        }
+                                      }
+                                    }
+                                  }}
+                                  className="px-4 py-3 bg-amber-400 hover:bg-amber-500 text-slate-900 rounded-xl font-bold text-xs uppercase flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-xs w-28 justify-center"
+                                >
+                                  <span>👏 CLAP</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-250 animate-pulse">
+                                🎉 Beat matched successfully!
+                              </div>
+                            )}
+
+                            {grW8Sequence.length > 0 && !quizSubmitted && (
+                              <button
+                                type="button"
+                                onClick={() => setGrW8Sequence([])}
+                                className="text-[10px] text-slate-400 hover:text-slate-600 uppercase font-bold underline cursor-pointer"
+                              >
+                                Reset beat sequence
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Options */}
+                      {!(lesson.id === 'R-T1-W8' && qIdx === 2) && (
+                        <div className={`grid ${q.opts.length === 2 ? 'grid-cols-2 max-w-md mx-auto' : 'grid-cols-3'} gap-2.5 pt-1`}>
+                          {q.opts.map((opt, oIdx) => {
+                            const isOptionSelected = selectedId === oIdx;
+
+                            let textPart = opt;
+                            let emojiPart = null;
+                            if (lesson.grade === 'R') {
+                              const match = opt.match(/^(.*?)([\p{Emoji_Presentation}\p{Extended_Pictographic}].*)$/u);
+                              if (match) {
+                                textPart = match[1].trim();
+                                emojiPart = match[2].trim();
+                              }
+                            }
+
+                            const isYes = textPart.toUpperCase() === 'YES';
+                            const isNo = textPart.toUpperCase() === 'NO';
+
+                            let btnStyle = 'border-slate-250 bg-white hover:border-slate-400';
+                            
+                            if (isOptionSelected) {
+                              if (isYes) {
+                                btnStyle = 'border-emerald-500 bg-emerald-50/75 ring-2 ring-emerald-500 text-emerald-950 font-black';
+                              } else if (isNo) {
+                                btnStyle = 'border-rose-500 bg-rose-50/75 ring-2 ring-rose-500 text-rose-950 font-black';
+                              } else {
+                                btnStyle = 'border-indigo-605 bg-indigo-50/60 ring-2 ring-indigo-500';
+                              }
+                            }
+
+                            if (quizSubmitted) {
+                              if (oIdx === q.correct) {
+                                btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-black';
+                              } else if (isOptionSelected) {
+                                btnStyle = 'border-rose-300 bg-rose-50 text-rose-950 line-through opacity-75';
+                              } else {
+                                btnStyle = 'border-slate-200 bg-slate-50 text-slate-400 opacity-60';
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={oIdx}
+                                type="button"
+                                disabled={quizSubmitted}
+                                onClick={() => handleSelectQuizOpt(qIdx, oIdx)}
+                                className={`p-3 rounded-2xl border text-center transition cursor-pointer select-none active:scale-95 flex flex-col items-center justify-center gap-1 min-h-[5rem] ${btnStyle}`}
+                              >
+                                {lesson.id === 'R-T1-W8' && qIdx === 1 ? (
+                                  <div className="flex flex-col items-center gap-2 w-full">
+                                    {oIdx === 0 && (
+                                      <>
+                                        <div className="flex gap-1 p-1 bg-slate-50 border border-slate-100 rounded-xl">
+                                          <span className="text-2xl" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Drum">🥁</span>
+                                        </div>
+                                        <span className="text-[10px] md:text-xs font-bold text-slate-700 leading-tight">No pattern</span>
+                                      </>
+                                    )}
+                                    {oIdx === 1 && (
+                                      <>
+                                        <div className="flex gap-1 p-1 bg-indigo-50 border border-indigo-150 rounded-xl ring-2 ring-indigo-50/30">
+                                          <span className="text-2xl animate-pulse" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Clap">👏</span>
+                                          <span className="text-2xl animate-pulse" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Clap">👏</span>
+                                        </div>
+                                        <span className="text-[10px] md:text-xs font-black text-indigo-700 leading-tight">Repeats perfectly! ✨</span>
+                                      </>
+                                    )}
+                                    {oIdx === 2 && (
+                                      <>
+                                        <div className="flex gap-1 p-1 bg-slate-50 border border-slate-100 rounded-xl">
+                                          <span className="text-2xl" title="Drum">🥁</span>
+                                          <span className="text-2xl" title="Sneeze">🤧</span>
+                                          <span className="text-2xl" title="Giggle">🤭</span>
+                                          <span className="text-2xl" title="Yawn">🥱</span>
+                                        </div>
+                                        <span className="text-[10px] md:text-xs font-bold text-slate-700 leading-tight">Random sounds</span>
+                                      </>
+                                    )}
+                                  </div>
+                                ) : lesson.grade === 'R' ? (
+                                  <>
+                                    {emojiPart && <span className="text-4xl drop-shadow-sm pointer-events-none mb-1">{emojiPart}</span>}
+                                    {textPart && <span className="text-xs md:text-sm font-bold text-slate-700 pointer-events-none leading-tight">{textPart}</span>}
+                                  </>
+                                ) : (
+                                  <span className="text-base tracking-[0.25em] font-bold">{opt}</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
 
                       {quizSubmitted && selectedId !== q.correct && (
                         <p className="text-[10px] text-rose-600 font-bold leading-normal">
@@ -5412,9 +6899,9 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                   <button
                     type="button"
                     onClick={handleSubmitQuiz}
-                    disabled={Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3)}
+                    disabled={Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')}
                     className={`px-6 py-3 font-extrabold rounded-xl text-xs active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer ${
-                      (Object.keys(quizAnswers).length >= workbookConfig.questions.length && (lesson.grade !== 'R' || (grTracingCompleted && grTracingWordInput.trim().length > 0)) && (lesson.id !== '1-T1-W1' || g1w1ActiveColor !== null) && (lesson.id !== 'R-T1-W1' || grW1P2ActiveColor !== null) && (lesson.id !== 'R-T1-W3' || grW3Order.length === 3))
+                      (Object.keys(quizAnswers).length >= workbookConfig.questions.length && (lesson.grade !== 'R' || (grTracingCompleted && grTracingWordInput.trim().length > 0)) && (lesson.id !== '1-T1-W1' || g1w1ActiveColor !== null) && (lesson.id !== 'R-T1-W1' || grW1P2ActiveColor !== null) && (lesson.id !== 'R-T1-W3' || grW3Order.length === 3) && (lesson.id !== 'R-T1-W8' || grW8Sequence.join(',') === '🔴,🟡,🔴,🟡'))
                         ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
@@ -5422,7 +6909,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                     <Trophy className="w-4 h-4" />
                     <span>Submit Tech Challenge 🚀</span>
                   </button>
-                  {(Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3)) && (
+                  {(Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')) && (
                     <p className="text-[10px] text-slate-400 font-extrabold uppercase">
                       Complete all activities to submit!
                     </p>
@@ -5431,13 +6918,17 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
               ) : (
                 <div className="bg-slate-50 border border-slate-250 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
                   <div className="space-y-4 flex-1">
-                    <div className="flex justify-center md:justify-start gap-1">
+                    <div className="flex justify-center md:justify-start flex-wrap gap-1">
                       {Array.from({ length: quizTotalScore ?? 3 }).map((_, i) => i + 1).map((starIdx) => {
                         const isEarned = (quizFinalScore ?? 0) >= starIdx;
                         return (
                           <Star 
                             key={starIdx} 
-                            className={`w-7 h-7 ${
+                            className={`transition-all ${
+                              quizTotalScore && quizTotalScore > 5 
+                                ? 'w-5 h-5 sm:w-6 sm:h-6' 
+                                : 'w-7 h-7'
+                            } ${
                               isEarned 
                                 ? 'text-amber-500 fill-amber-500 animate-bounce' 
                                 : 'text-slate-200'
@@ -5471,7 +6962,7 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                     )}
                   </div>
 
-                  <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-3">
+                  <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-3 animate-fade-in">
                     <button
                       type="button"
                       onClick={() => {
@@ -5483,6 +6974,45 @@ export default function GradeR1Workbook({ lesson, activeStudentId, onComplete, o
                       <BookOpen className="w-3.5 h-3.5" />
                       <span>Back to Study Section</span>
                     </button>
+
+                    {lesson.id !== 'R-T1-W7' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playPop();
+                          // Reset submission state
+                          setQuizSubmitted(false);
+                          setQuizAnswers({});
+                          setQuizFinalScore(0);
+                          setQuizTotalScore(3);
+                          localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_submitted`);
+                          localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_score`);
+                          localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_total`);
+                          localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_answers`);
+
+                          // Also clear tracing if Grade R
+                          if (lesson.grade === 'R') {
+                            setGrTracingCompleted(false);
+                            setGrTracingWordInput('');
+                            setGrTracingCorrect(null);
+                            setGrTypingCorrect(null);
+                            setDrawingFeedback('');
+                            setGrIdentifiedWord('');
+                            localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_tracing`);
+                            localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_tracing_input`);
+                            localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_tracing_correct`);
+                            localStorage.removeItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_typing_correct`);
+                          }
+                          
+                          // Speak encouraging words
+                          speakText("Workbook reset! You can now edit your designs and try again to get all the stars!");
+                        }}
+                        className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-extrabold rounded-xl text-xs active:scale-95 transition cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Try Again / Redo 🔄</span>
+                      </button>
+                    )}
 
                     {onNextLesson && (
                       <button

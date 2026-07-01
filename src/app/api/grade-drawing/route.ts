@@ -1,16 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { NextRequest, NextResponse } from "next/server";
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
-  }
-});
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
   try {
     const body = await req.json();
     const { imageData, word } = body;
@@ -38,10 +33,12 @@ export async function POST(req: NextRequest) {
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: [
-        { text: prompt },
-        { inlineData: { data: base64Data, mimeType: "image/png" } }
-      ],
+      contents: {
+        parts: [
+          { text: prompt },
+          { inlineData: { data: base64Data, mimeType: "image/png" } }
+        ]
+      },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
@@ -71,11 +68,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(parsed);
   } catch (error: any) {
-    console.error("AI Evaluation error:", error);
+    // AI feature gracefully unavailable
     return NextResponse.json({
-      isCorrect: true,
-      feedback: "Wow! That is a very creative drawing! 🌟",
-      identifiedWord: "creative drawing"
+      isCorrect: false,
+      feedback: "AI feature not available. Please try again later.",
+      identifiedWord: ""
     });
   }
 }

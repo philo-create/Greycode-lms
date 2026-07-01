@@ -1,0 +1,268 @@
+324-  questions: Question[];
+325-}
+326-
+327-// Config object mapping lesson IDs to their custom guide & quiz data
+328-const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
+329:  'R-T1-W1': {
+330-    mascotSpeech: "Hey there, pattern explorer! Let's find repeating colors like Red, Blue, Red, Blue. Can you follow my sequence rule?",
+331-    bigWord: "PATTERN",
+332-    tracePrompt: "P-A-T-T-E-R-N",
+333-    questions: [
+334-      { q: "Which of these is a simple repeating colour pattern?", opts: ["🔴🔵🔴🔵", "🔴🔴🔴🔵🔵", "🔴🟡🔵🟢"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." }
+--
+412-      { q: "What should we do before using a tablet or computer?", opts: ["Wash and dry our hands 🧼", "Eat sticky candy 🍬", "Play in the mud 🌱"], correct: 0, hint: "Clean and dry hands keep devices working perfectly!" },
+413-      { q: "Can we have a glass of water right next to our device?", opts: ["Yes, the device might get thirsty!", "No, water can spill and break it! 🚫🥤", "Only if it is juice."], correct: 1, hint: "Keep liquids far away to protect the electronics." },
+414-      { q: "How should we treat our school devices?", opts: ["Throw them when we are done", "Hold them gently and be careful 🧸", "Leave them outside in the sun"], correct: 1, hint: "Always be gentle with delicate devices!" }
+415-    ]
+416-  },
+417:  'R-T1-W10': {
+418-    mascotSpeech: "Awesome job, little champion! We finished all Term 1 challenges. Let's do a fun recap!",
+419-    bigWord: "VICTORY",
+420-    tracePrompt: "C-H-A-M-P",
+421-    questions: [
+422-      { q: "What comes next in the pattern: Red, Blue, Red, Blue, ___?", opts: ["Red! 🔴", "Yellow! 🟡", "Green! 🟢"], correct: 0, hint: "Look at the first color in the repeating sequence." },
+--
+3715-  let voiceButtonLabel = "Read Aloud 🔊";
+3716-  let visualNode: React.ReactNode = null;
+3717-
+3718-  switch (lesson.id) {
+3719-    // --- GRADE R ---
+3720:    case 'R-T1-W1':
+3721-      title = "Pattern Explorer Guide";
+3722-      pose = "pointing_idea";
+3723-      speechText = "A pattern goes over and over! Click on the glowing card first to learn!";
+3724-      
+3725-      const r1w1Steps = [
+--
+4319-          </div>
+4320-        </div>
+4321-      );
+4322-      break;
+4323-
+4324:    case 'R-T1-W10':
+4325-      title = "Term 1 Tech Champion";
+4326-      pose = "clapping";
+4327-      speechText = "You are a fully certified Term 1 Coding Star! Watch the recap below!";
+4328-      visualNode = (
+4329-        <AnimatedTerm1RecapExplorer 
+--
+4953-        {lesson.id !== 'R-T1-W5' && (
+4954-          <div id="workbook-guidance-mascot-card" className="flex flex-col items-center shrink-0 p-3 bg-white rounded-3xl border-2 border-indigo-100 shadow-xs hover:shadow-md transition-all duration-300 transform hover:scale-105 select-none self-start">
+4955-            {lesson.grade === 'R' ? (
+4956-              <img 
+4957-                src={
+4958:                  lesson.id === 'R-T1-W1' ? (regeneratedMascotImg.src || regeneratedMascotImg) : 
+4959-                  lesson.id === 'R-T1-W2' ? (regeneratedMascotImgW2.src || regeneratedMascotImgW2) : 
+4960-                  lesson.id === 'R-T1-W3' ? (regeneratedMascotImgW3.src || regeneratedMascotImgW3) : 
+4961-                  lesson.id === 'R-T1-W4' ? (regeneratedMascotImgW4.src || regeneratedMascotImgW4) : 
+4962-                  lesson.id === 'R-T1-W7' ? (regeneratedMascotImgW7.src || regeneratedMascotImgW7) : 
+4963-                  lesson.id === 'R-T1-W8' ? (regeneratedMascotImgW8.src || regeneratedMascotImgW8) : 
+--
+4993-        </div>
+4994-      </div>
+4995-
+4996-      {onComplete && !isCompleted && (() => {
+4997-        const requiredSteps: Record<string, number> = {
+4998:          'R-T1-W1': 2, 'R-T1-W2': 6, 'R-T1-W3': 3, 'R-T1-W4': 4,
+4999-          'R-T1-W5': 2, 'R-T1-W6': 3, 'R-T1-W7': 1, 'R-T1-W8': 2,
+5000:          'R-T1-W9': 4, 'R-T1-W10': 1, 'R-T2-W5': 2, 'R-T3-W5': 2,
+5001-          'R-T4-W2': 2, 'R-T4-W5': 3, '1-T1-W1': 3, '1-T1-W2': 3,
+5002-          '1-T1-W5': 3, '1-T2-W5': 2, '1-T2-W9': 3, '1-T3-W2': 2,
+5003-          '1-T3-W5': 3, '1-T4-W2': 3, '1-T4-W5': 3,
+5004-        };
+5005-        const progresses: Record<string, number> = {
+5006:          'R-T1-W1': r1w1Progress, 'R-T1-W2': r1w2Progress, 'R-T1-W3': r1w3Progress,
+5007-          'R-T1-W4': r1w4Progress, 'R-T1-W5': r1w5Progress, 'R-T1-W6': r1w6Progress,
+5008-          'R-T1-W7': r1w7Progress, 'R-T1-W8': r1w8Progress, 'R-T1-W9': r1w9Progress,
+5009:          'R-T1-W10': r1w10Progress, 'R-T2-W5': rt2w5Progress, 'R-T3-W5': rt3w5Progress,
+5010-          'R-T4-W2': rt4w2Progress, 'R-T4-W5': rt4w5Progress, '1-T1-W1': g1t1w1Progress,
+5011-          '1-T1-W2': g1t1w2Progress, '1-T1-W5': g1t1w5Progress, '1-T2-W5': g1t2w5Progress,
+5012-          '1-T2-W9': g1t2w9Progress, '1-T3-W2': g1t3w2Progress, '1-T3-W5': g1t3w5Progress,
+5013-          '1-T4-W2': g1t4w2Progress, '1-T4-W5': g1t4w5Progress,
+5014-        };
+--
+5057-  const [practiceCompleted, setPracticeCompleted] = useState(false);
+5058-  const [grW1Level1Completed, setGrW1Level1Completed] = useState(false);
+5059-  const [reflectionFace, setReflectionFace] = useState<string | null>(null);
+5060-  const [showHomeworkWarning, setShowHomeworkWarning] = useState(false);
+5061-
+5062:  // States for interactive coloring puzzle in R-T1-W1
+5063-  const [w1SelectedCrayon, setW1SelectedCrayon] = useState<string | null>(null);
+5064-  const [w1ActiveColor, setW1ActiveColor] = useState<string | null>(null);
+5065-  const [w1Correct, setW1Correct] = useState<boolean | null>(null);
+5066-  const [w1Feedback, setW1Feedback] = useState<string>('');
+5067-  const [w1HasPainted, setW1HasPainted] = useState(false);
+5068-
+5069:  // States for interactive coloring puzzle in R-T1-W1 Page 2 Tech Challenge
+5070-  const [grW1P2SelectedCrayon, setGrW1P2SelectedCrayon] = useState<string | null>(null);
+5071-  const [grW1P2ActiveColor, setGrW1P2ActiveColor] = useState<string | null>(null);
+5072-  const [grW1P2Correct, setGrW1P2Correct] = useState<boolean | null>(null);
+5073-  const [grW1P2Feedback, setGrW1P2Feedback] = useState<string>('');
+5074-
+--
+5137-    // Fallback: If not found but quiz is submitted, trying to guess from lesson defaults
+5138-    if (s !== null) return parseInt(s, 10);
+5139-    if (localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_submitted`) === 'true') {
+5140-      let t = 3; // basic questions length
+5141-      if (lesson.grade === 'R') t += 2;
+5142:      if (lesson.id === 'R-T1-W1') t += 1;
+5143-      if (lesson.id === '1-T1-W1') t += 1;
+5144-      if (lesson.id === 'R-T1-W3') t += 1;
+5145-      return t;
+5146-    }
+5147-    return null;
+--
+5204-
+5205-    const savedLevelCompleted = localStorage.getItem(`gr_wb_${activeStudentId || "default"}_${lesson.id}_w1_level1_completed`) === "true";
+5206-    setGrW1Level1Completed(isSub || savedLevelCompleted);
+5207-
+5208-    if (isSub) {
+5209:      if (lesson.id === 'R-T1-W1') {
+5210-        const savedColor = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w1p2_color`);
+5211-        if (savedColor) {
+5212-          setGrW1P2ActiveColor(savedColor);
+5213-          setGrW1P2Correct(savedColor === 'Blue');
+5214-        } else {
+--
+5463-    setQuizAnswers(prev => ({
+5464-      ...prev,
+5465-      [qIdx]: oIdx
+5466-    }));
+5467-
+5468:    if (lesson.id === 'R-T1-W1') {
+5469-      const q = workbookConfig.questions[qIdx];
+5470-      const optText = q.opts[oIdx];
+5471-      const speakingText = optText.replace(/[🔴🔵🟢🟡]/g, '').trim();
+5472-      speakText(`You selected: ${speakingText || optText}. Click Submit Evaluation below when you are ready to check your final workbook grades!`);
+5473-    }
+--
+5508-      setGrIdentifiedWord(detectedWord);
+5509-      setGrTracingCorrect(isDrawingCorrectLocal);
+5510-      setGrTypingCorrect(isTypingCorrect);
+5511-    }
+5512-
+5513:    if (lesson.id === 'R-T1-W1') {
+5514-      if (grW1P2ActiveColor === 'Blue') {
+5515-        setGrW1P2Correct(true);
+5516-        setGrW1P2Feedback('Superb! You colored the last shape BLUE. The Blue-Green pattern continues perfectly!');
+5517-      } else if (grW1P2ActiveColor === 'Green') {
+5518-        setGrW1P2Correct(false);
+--
+5564-    if (lesson.grade === 'R') {
+5565-      if (isTypingCorrect) correctCount++;
+5566-      if (isDrawingCorrectLocal) correctCount++;
+5567-    }
+5568-
+5569:    if (lesson.id === 'R-T1-W1') {
+5570-      if (grW1P2ActiveColor === 'Blue') correctCount++;
+5571-    }
+5572-
+5573-    if (lesson.id === '1-T1-W1') {
+5574-      // Assuming 1 custom activity for 1-T1-W1 which adds a start (also question size is smaller?)
+--
+5583-      if (grW8Sequence.join(',') === '🔴,🟡,🔴,🟡') correctCount++;
+5584-    }
+5585-
+5586-    let totalQuestions = workbookConfig.questions.length;
+5587-    if (lesson.grade === 'R') totalQuestions += 2;
+5588:    if (lesson.id === 'R-T1-W1') totalQuestions += 1;
+5589-    if (lesson.id === '1-T1-W1') totalQuestions += 1;
+5590-    if (lesson.id === 'R-T1-W3') totalQuestions += 1;
+5591-    if (lesson.id === 'R-T1-W8') totalQuestions += 1;
+5592-
+5593-    let calculatedStars = totalQuestions > 0 ? correctCount : 0;
+--
+5614-      const fbToSave = aiFeedback || drawingFeedback;
+5615-      if (fbToSave) {
+5616-        localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_tracing_feedback`, fbToSave);
+5617-      }
+5618-    }
+5619:    if (lesson.id === 'R-T1-W1') {
+5620-      if (grW1P2ActiveColor) localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w1p2_color`, grW1P2ActiveColor);
+5621-    }
+5622-    if (lesson.id === '1-T1-W1') {
+5623-      if (g1w1ActiveColor) localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_g1w1_color`, g1w1ActiveColor);
+5624-    }
+--
+5634-    } else {
+5635-      playBoop();
+5636-    }
+5637-    onComplete(calculatedStars, totalQuestions);
+5638-
+5639:    if (lesson.id === 'R-T1-W1') {
+5640-      let speechFeedback = `Congratulations technology explorer! You finished your workbook and scored ${calculatedStars} out of ${totalQuestions} stars! `;
+5641-      if (calculatedStars === totalQuestions) {
+5642-        speechFeedback += "You got a perfect score! Excellent tracing of PATTERN, magnificent coloring of our blue square, and perfect matching of Sipho's sequence! You are a pattern superstar!";
+5643-      } else {
+5644-        speechFeedback += "Let's review our learning steps together. ";
+--
+5861-                    setIsSection3Unlocked(true);
+5862-                    playChime();
+5863-                    
+5864-                    let studentMission = "Complete the activity to earn your stars!";
+5865-                    
+5866:                    if (lesson.id === 'R-T1-W1') {
+5867-                      studentMission = "Which color circle comes next in Sipho’s repeating sequence?";
+5868-                    } else if (lesson.id === 'R-T1-W2') {
+5869-                      studentMission = "Level 1: Tap all the electronic computing devices!";
+5870-                    } else if (lesson.id === 'R-T1-W3') {
+5871-                      studentMission = "What is the right order to wash your hands? Click the pictures in the correct order!";
+--
+5953-                  ) : (
+5954-                    <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+5955-                  )
+5956-                )}
+5957-                {lesson.activityType === 'exploration' && (
+5958:                  lesson.id === 'R-T1-W10' ? (
+5959-                    <Term1RecapSimulationStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
+5960-                  ) : (
+5961-                    <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
+5962-                  )
+5963-                )}
+--
+6276-                      </div>
+6277-                    </div>
+6278-                  </div>
+6279-                )}
+6280-                
+6281:                {/* Custom Tech Challenge Activity for R-T1-W1 (Coloring Pattern) */}
+6282:                {lesson.id === 'R-T1-W1' && (
+6283-                  <div className={`p-5 rounded-2xl border space-y-4 transition ${quizSubmitted ? (grW1P2Correct ? 'bg-emerald-50/20 border-emerald-200' : 'bg-rose-50/20 border-rose-200') : 'bg-slate-50/50 border-slate-200'}`}>
+6284-                    <div className="flex items-start gap-3">
+6285-                      <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
+6286-                         2
+6287-                      </span>
+--
+6578-                          : 'bg-slate-50/50 border-slate-200'
+6579-                      }`}
+6580-                    >
+6581-                      <div className="flex items-start gap-3">
+6582-                        <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
+6583:                          {lesson.id === 'R-T1-W1' ? qIdx + 4 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
+6584-                        </span>
+6585-                        <div className="space-y-1">
+6586-                          <p className="text-sm md:text-base font-bold text-slate-900 leading-normal mb-1">
+6587-                            {lesson.grade === 'R' ? <SpeakableText text={q.q} /> : q.q}
+6588-                          </p>
+--
+6896-              {!quizSubmitted ? (
+6897-                <div className="pt-4 flex flex-col items-center gap-3">
+6898-                  <button
+6899-                    type="button"
+6900-                    onClick={handleSubmitQuiz}
+6901:                    disabled={Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')}
+6902-                    className={`px-6 py-3 font-extrabold rounded-xl text-xs active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer ${
+6903:                      (Object.keys(quizAnswers).length >= workbookConfig.questions.length && (lesson.grade !== 'R' || (grTracingCompleted && grTracingWordInput.trim().length > 0)) && (lesson.id !== '1-T1-W1' || g1w1ActiveColor !== null) && (lesson.id !== 'R-T1-W1' || grW1P2ActiveColor !== null) && (lesson.id !== 'R-T1-W3' || grW3Order.length === 3) && (lesson.id !== 'R-T1-W8' || grW8Sequence.join(',') === '🔴,🟡,🔴,🟡'))
+6904-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+6905-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+6906-                    }`}
+6907-                  >
+6908-                    <Trophy className="w-4 h-4" />
+6909-                    <span>Submit Tech Challenge 🚀</span>
+6910-                  </button>
+6911:                  {(Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')) && (
+6912-                    <p className="text-[10px] text-slate-400 font-extrabold uppercase">
+6913-                      Complete all activities to submit!
+6914-                    </p>
+6915-                  )}
+6916-                </div>

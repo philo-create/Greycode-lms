@@ -11,7 +11,8 @@ import { getSchoolAdminData } from '@/lib/dashboard/schoolData';
 import { supabase } from '@/lib/supabase';
 import { 
   Users, GraduationCap, BookOpen, 
-  CalendarCheck, AlertCircle, FileText, Download, UserPlus, TrendingUp
+  CalendarCheck, AlertCircle, FileText, Download, UserPlus, TrendingUp,
+  CheckCircle, XCircle, Clock
 } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/LoadingState';
 
@@ -19,6 +20,37 @@ export default function SchoolAdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+  const [pendingError, setPendingError] = useState<string | null>(null);
+
+  const loadPendingRequests = async (schoolId: string) => {
+    if (!supabase) return;
+    try {
+      setPendingError(null);
+      const { data: pending, error: supabaseError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('school_id', schoolId)
+        .in('role', ['learner', 'student'])
+        .order('created_at', { ascending: false });
+        
+      if (supabaseError) {
+        console.error('Supabase error loading school-specific student requests:', supabaseError);
+        setPendingError(`${supabaseError.message} (Code: ${supabaseError.code})`);
+        return;
+      }
+      if (pending) {
+        setPendingRequests(pending.filter(p => {
+          const status = p.enrollment_status || ((p.role === 'student' || p.role === 'learner') ? 'pending' : 'approved');
+          return status === 'pending';
+        }));
+      }
+    } catch (err: any) {
+      console.error('Failed to load school-specific student requests:', err);
+      setPendingError(err.message || 'Unknown query error');
+    }
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -35,6 +67,7 @@ export default function SchoolAdminDashboard() {
         if (profile?.school_id) {
           const schoolData = await getSchoolAdminData(profile.school_id);
           setData(schoolData);
+          await loadPendingRequests(profile.school_id);
         } else {
           setError('You are not assigned to any school.');
         }
@@ -47,6 +80,39 @@ export default function SchoolAdminDashboard() {
     }
     loadData();
   }, []);
+
+  const handleRequestStatusChange = async (userId: string, newStatus: string) => {
+    if (!supabase || !data?.school?.id) return;
+    setActioningId(userId);
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ enrollment_status: newStatus })
+        .eq('id', userId);
+        
+      if (updateError) throw updateError;
+      
+      // Remove from local state
+      setPendingRequests(prev => prev.filter(r => r.id !== userId));
+      
+      // Re-fetch school stats to reflect new learner count if approved
+      if (newStatus === 'approved') {
+        const schoolData = await getSchoolAdminData(data.school.id);
+        setData(schoolData);
+      }
+    } catch (err: any) {
+      console.error("Failed to update student enrollment status:", err);
+      let msg = 'Unknown error';
+      if (err?.message) msg = err.message;
+      else if (err?.details) msg = err.details;
+      else if (typeof err === 'object') msg = JSON.stringify(err);
+      else if (typeof err === 'string') msg = err;
+      
+      setPendingError(`Failed to update status: ${msg}`);
+    } finally {
+      setActioningId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -115,6 +181,74 @@ export default function SchoolAdminDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         <div className="lg:col-span-2 space-y-8">
+          <DashboardCard title="Pending Learner Registrations ⏳">
+            {pendingError ? (
+              <div className="p-4 bg-rose-50 border border-rose-150 text-rose-700 rounded-xl text-sm font-semibold">
+                ⚠️ Error loading learner registrations: {pendingError}
+                <p className="text-xs text-rose-500 mt-1 font-normal">This can happen if there is a database issue. Please try reloading or check back shortly.</p>
+              </div>
+            ) : pendingRequests.length > 0 ? (
+              <>
+                <div className="mb-4">
+                  <p className="text-sm text-slate-500">The following students have registered and are awaiting your approval to access the LMS:</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                        <th className="py-3 px-4">Name</th>
+                        <th className="py-3 px-4">Grade</th>
+                        <th className="py-3 px-4">Email</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-sm">
+                      {pendingRequests.map(req => (
+                        <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-3 px-4 font-medium text-slate-800">
+                            {req.first_name} {req.last_name}
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-indigo-600">
+                            Grade {req.grade}
+                          </td>
+                          <td className="py-3 px-4 text-slate-500">
+                            {req.email}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                disabled={actioningId === req.id}
+                                onClick={() => handleRequestStatusChange(req.id, 'approved')}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors disabled:opacity-50"
+                                title="Approve student registration"
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                              <button
+                                disabled={actioningId === req.id}
+                                onClick={() => handleRequestStatusChange(req.id, 'rejected')}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors disabled:opacity-50"
+                                title="Deny student registration"
+                              >
+                                <XCircle className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-slate-500 flex flex-col items-center justify-center gap-2">
+                <CheckCircle className="w-10 h-10 text-emerald-500" />
+                <p className="font-semibold text-slate-700">All student accounts are approved! 🎉</p>
+                <p className="text-xs">There are currently no registered students from your school awaiting approval.</p>
+              </div>
+            )}
+          </DashboardCard>
+
           <DashboardCard title="Academic Progress">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <ProgressCard

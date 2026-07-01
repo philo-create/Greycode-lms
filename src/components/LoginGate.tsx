@@ -5,12 +5,15 @@ import { GraduationCap, UserPlus, ArrowRight, LogIn } from 'lucide-react';
 import { StudentProfile, GradeType } from '../types';
 import { supabase } from '../lib/supabase';
 import { getStudentProfiles } from '../lib/db';
+import { GRADES } from '../curriculumData';
+import { useRouter } from 'next/navigation';
 
 interface LoginGateProps {
   onLogin: (student: StudentProfile) => void;
 }
 
 export default function LoginGate({ onLogin }: LoginGateProps) {
+  const router = useRouter();
   const [view, setView] = useState<'login' | 'register'>('login');
   
   // Form State
@@ -18,12 +21,25 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [selectedSchool, setSelectedSchool] = useState('');
+  const [selectedGrade, setSelectedGrade] = useState('');
+  
+  const [schools, setSchools] = useState<any[]>([]);
   const [errorText, setErrorText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPendingApproval, setIsPendingApproval] = useState(false);
 
   // Check if session exists on mount
   useEffect(() => {
     if (!supabase) return;
+    
+    // Fetch active schools
+    supabase.from('schools')
+      .select('id, name')
+      .in('subscription_status', ['active', 'Active'])
+      .then(({ data }) => {
+        if (data) setSchools(data);
+      });
     
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -54,23 +70,31 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (profileError) throw profileError;
       
       if (profile) {
-        let actualGrade = 'R';
+        // Check for enrollment approval
+        if ((profile.role === 'student' || profile.role === 'learner') && profile.enrollment_status === 'pending') {
+          setIsPendingApproval(true);
+          await supabase.auth.signOut();
+          return;
+        }
+        setIsPendingApproval(false);
+
+        let actualGrade = profile.grade || 'R';
         
         if (profile.role === 'learner' || profile.role === 'student') {
-          // Fetch from learners table to get class
-          const { data: learnerData } = await supabase
-            .from('learners')
+          // Fetch from students_classes table to get class as fallback if needed, but we now use profile.grade
+          const { data: scData } = await supabase
+            .from('students_classes')
             .select('*, classes(grade)')
-            .eq('profile_id', userId)
-            .single();
+            .eq('student_id', userId)
+            .maybeSingle();
             
-          if (learnerData && learnerData.classes && learnerData.classes.grade) {
-            actualGrade = learnerData.classes.grade;
+          if (scData && scData.classes && scData.classes.grade) {
+            actualGrade = scData.classes.grade;
           }
         }
         
         if (profile.role !== 'learner' && profile.role !== 'student') {
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
           return;
         }
 
@@ -136,6 +160,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorText('');
+    setIsPendingApproval(false);
     setIsLoading(true);
 
     if (!supabase) {
@@ -146,7 +171,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -166,6 +191,18 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorText('');
+    setIsPendingApproval(false);
+    
+    if (!selectedSchool) {
+      setErrorText('Please select your school.');
+      return;
+    }
+
+    if (!selectedGrade) {
+      setErrorText('Please select your grade level.');
+      return;
+    }
+
     setIsLoading(true);
 
     if (!supabase) {
@@ -176,12 +213,15 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
             first_name: firstName,
             last_name: lastName,
+            school_id: selectedSchool,
+            grade: selectedGrade,
+            role: 'learner'
           }
         }
       });
@@ -189,15 +229,14 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (error) throw error;
       
       if (data.user) {
-        // Fallback if trigger doesn't exist or is slow
-        // Wait a sec for the trigger to create the profile, then login
-        setTimeout(() => fetchProfile(data.user!.id), 1000);
+        setIsPendingApproval(true);
+        await supabase.auth.signOut();
       }
     } catch (err: any) {
       if (err.message === 'Failed to fetch') {
         setErrorText('Failed to connect to the database. Please check your Supabase configuration.');
       } else if (err.message && err.message.toLowerCase().includes('rate limit')) {
-        setErrorText('Email rate limit exceeded. Please try logging in if you already created an account, or disable "Confirm Email" in your Supabase Auth Providers settings.');
+        setErrorText('Email rate limit exceeded. Please try logging in if you already created an account.');
       } else {
         setErrorText(err.message || 'Failed to register');
       }
@@ -205,6 +244,31 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       setIsLoading(false);
     }
   };
+
+  if (isPendingApproval) {
+    return (
+      <div className="w-full max-w-4xl mx-auto py-10 px-4 min-h-[80vh] flex flex-col justify-center items-center">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-2xl text-center">
+          <div className="inline-flex p-4 bg-amber-50 border border-amber-200 rounded-full text-amber-500 mb-6">
+            <GraduationCap className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-3">Approval Pending</h2>
+          <p className="text-slate-600 mb-6 leading-relaxed">
+            Your registration has been received! Please wait for a school administrator to approve your account before you can log in and start learning.
+          </p>
+          <button
+            onClick={() => {
+              setIsPendingApproval(false);
+              setView('login');
+            }}
+            className="px-6 py-3 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition"
+          >
+            Return to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto py-10 px-4 min-h-[80vh] flex flex-col justify-center items-center" id="login-portal-root">
@@ -244,28 +308,60 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
           <form onSubmit={view === 'login' ? handleLogin : handleRegister} className="space-y-4 text-left">
             {view === 'register' && (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">First Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
-                  />
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">First Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Last Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
                 </div>
+                
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Last Name</label>
-                  <input
-                    type="text"
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Select School</label>
+                  <select
                     required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    value={selectedSchool}
+                    onChange={(e) => setSelectedSchool(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
-                  />
+                  >
+                    <option value="">-- Choose your school --</option>
+                    {schools.map(school => (
+                      <option key={school.id} value={school.id}>{school.name}</option>
+                    ))}
+                  </select>
                 </div>
-              </div>
+                
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Grade Level</label>
+                  <select
+                    required
+                    value={selectedGrade}
+                    onChange={(e) => setSelectedGrade(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                  >
+                    <option value="">-- Choose your grade --</option>
+                    {GRADES.map(g => (
+                      <option key={g.value} value={g.value}>{g.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </>
             )}
 
             <div className="space-y-1.5">
