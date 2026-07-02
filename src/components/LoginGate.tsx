@@ -24,6 +24,12 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
   const [selectedSchool, setSelectedSchool] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('');
   
+  // Parent / Guardian Details
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentPhone, setParentPhone] = useState('');
+  const [parentRelationship, setParentRelationship] = useState('');
+  
   const [schools, setSchools] = useState<any[]>([]);
   const [errorText, setErrorText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -71,8 +77,8 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (profileError) throw profileError;
       
       if (profile) {
-        // If missing critical school_id or grade, prompt to complete profile
-        if (!profile.school_id || !profile.grade) {
+        // If missing critical school_id or grade, prompt to complete profile (only for learners/students)
+        if ((profile.role === 'learner' || profile.role === 'student') && (!profile.school_id || !profile.grade)) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             setSessionUser(session.user);
@@ -248,7 +254,11 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
             last_name: lastName,
             school_id: selectedSchool,
             grade: selectedGrade,
-            role: 'learner'
+            role: 'learner',
+            parent_name: parentName,
+            parent_email: parentEmail,
+            parent_phone: parentPhone,
+            parent_relationship: parentRelationship
           }
         }
       });
@@ -330,10 +340,33 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           school_id: selectedSchool,
           grade: selectedGrade,
           role: 'learner',
-          enrollment_status: 'pending'
+          enrollment_status: 'pending',
+          parent_name: parentName,
+          parent_email: parentEmail,
+          parent_phone: parentPhone,
+          parent_relationship: parentRelationship
         });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message && (error.message.includes('column') || error.message.includes('parent_'))) {
+          console.warn("Attempting fallback profile completion without parent details columns...", error);
+          const { error: fallbackError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: sessionUser.id,
+              first_name: firstName,
+              last_name: lastName,
+              full_name: `${firstName} ${lastName}`.trim(),
+              school_id: selectedSchool,
+              grade: selectedGrade,
+              role: 'learner',
+              enrollment_status: 'pending'
+            });
+          if (fallbackError) throw fallbackError;
+        } else {
+          throw error;
+        }
+      }
 
       setIsPendingApproval(true);
       await supabase.auth.signOut();
@@ -468,6 +501,64 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                       <option key={g.value} value={g.value}>{g.label}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 space-y-4">
+                  <h3 className="text-xs font-extrabold text-indigo-700 uppercase tracking-wider">Parent / Guardian Details</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Parent Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={parentName}
+                        onChange={(e) => setParentName(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                        placeholder="Mary Smith"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Relationship</label>
+                      <select
+                        required
+                        value={parentRelationship}
+                        onChange={(e) => setParentRelationship(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                      >
+                        <option value="">-- Select --</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Father">Father</option>
+                        <option value="Guardian">Guardian</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Parent Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={parentEmail}
+                        onChange={(e) => setParentEmail(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                        placeholder="parent@example.com"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Parent Phone</label>
+                      <input
+                        type="tel"
+                        required
+                        value={parentPhone}
+                        onChange={(e) => setParentPhone(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                        placeholder="+27 82 123 4567"
+                      />
+                    </div>
+                  </div>
                 </div>
               </>
             )}

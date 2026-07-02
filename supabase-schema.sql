@@ -18,6 +18,10 @@ CREATE TABLE public.profiles (
   school_id UUID REFERENCES public.schools(id),
   grade TEXT,
   enrollment_status TEXT CHECK (enrollment_status IN ('pending', 'approved', 'rejected')) DEFAULT 'approved',
+  parent_name TEXT,
+  parent_email TEXT,
+  parent_phone TEXT,
+  parent_relationship TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -169,7 +173,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Profiles: Users can read and update their own profile
+-- Profiles: Users can read, update, and insert their own profile
 CREATE POLICY "Users can view own profile" 
 ON public.profiles FOR SELECT 
 USING (auth.uid() = id);
@@ -177,6 +181,10 @@ USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" 
 ON public.profiles FOR UPDATE 
 USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" 
+ON public.profiles FOR INSERT 
+WITH CHECK (auth.uid() = id);
 
 -- Super admin bypass for profiles (Allow super admins to see and update all)
 CREATE POLICY "Super admins can do all to profiles"
@@ -240,7 +248,19 @@ USING (true);
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, first_name, last_name, role, school_id, grade, enrollment_status)
+  INSERT INTO public.profiles (
+    id, 
+    first_name, 
+    last_name, 
+    role, 
+    school_id, 
+    grade, 
+    enrollment_status,
+    parent_name,
+    parent_email,
+    parent_phone,
+    parent_relationship
+  )
   VALUES (
     new.id, 
     new.raw_user_meta_data->>'first_name', 
@@ -248,7 +268,11 @@ BEGIN
     COALESCE(new.raw_user_meta_data->>'role', 'student'),
     (new.raw_user_meta_data->>'school_id')::UUID,
     new.raw_user_meta_data->>'grade',
-    CASE WHEN COALESCE(new.raw_user_meta_data->>'role', 'student') IN ('student', 'learner') THEN 'pending' ELSE 'approved' END
+    CASE WHEN COALESCE(new.raw_user_meta_data->>'role', 'student') IN ('student', 'learner') THEN 'pending' ELSE 'approved' END,
+    new.raw_user_meta_data->>'parent_name',
+    new.raw_user_meta_data->>'parent_email',
+    new.raw_user_meta_data->>'parent_phone',
+    new.raw_user_meta_data->>'parent_relationship'
   );
   RETURN new;
 END;

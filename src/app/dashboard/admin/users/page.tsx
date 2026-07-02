@@ -191,6 +191,7 @@ export default function AdminUsersPage() {
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600">Role</th>
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600">School</th>
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600">Grade</th>
+                  <th className="py-3 px-4 font-semibold text-sm text-slate-600">Parent / Contact</th>
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600">Status</th>
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600 text-right">Actions</th>
                 </tr>
@@ -211,6 +212,17 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
                       {user.grade ? `Grade ${user.grade}` : '-'}
+                    </td>
+                    <td className="py-3 px-4 text-xs text-slate-600">
+                      {user.parent_name ? (
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-slate-700">{user.parent_name} <span className="font-normal text-slate-400">({user.parent_relationship || 'Parent'})</span></div>
+                          <div className="text-[10px] text-slate-500">{user.parent_email}</div>
+                          <div className="text-[10px] text-slate-500">{user.parent_phone}</div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">-</span>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-sm">
                       {(() => {
@@ -255,7 +267,7 @@ export default function AdminUsersPage() {
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
+                    <td colSpan={7} className="py-8 text-center text-slate-500">
                       No users found.
                     </td>
                   </tr>
