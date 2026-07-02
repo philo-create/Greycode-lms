@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
-import { Users, Save, X } from 'lucide-react';
+import { Users, Save, X, RefreshCw, Key, Check } from 'lucide-react';
+import { supabase, supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 function NewUserForm() {
   const router = useRouter();
@@ -12,82 +14,254 @@ function NewUserForm() {
   const initialRole = searchParams.get('role') || 'learner';
   
   const [loading, setLoading] = useState(false);
+  const [schoolsLoading, setSchoolsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [schools, setSchools] = useState<any[]>([]);
+
+  const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#%&*';
+    let pass = '';
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return pass;
+  };
+
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
+    password: '',
     role: initialRole,
-    school_id: ''
+    school_id: '',
+    grade: ''
   });
+
+  // Pre-fill a generated password on component mount
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      password: generatePassword()
+    }));
+  }, []);
+
+  // Fetch schools on mount
+  useEffect(() => {
+    const fetchSchools = async () => {
+      if (!supabase) {
+        setSchoolsLoading(false);
+        return;
+      }
+      try {
+        const { data, error } = await supabase
+          .from('schools')
+          .select('id, name')
+          .order('name');
+        if (error) throw error;
+        if (data) setSchools(data);
+      } catch (err: any) {
+        console.error('Failed to load schools:', err);
+        setError('Failed to load schools list. Please refresh.');
+      } finally {
+        setSchoolsLoading(false);
+      }
+    };
+
+    fetchSchools();
+  }, []);
+
+  const handleGeneratePassword = () => {
+    setFormData(prev => ({
+      ...prev,
+      password: generatePassword()
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
+
+    // Field Validations based on selected Role
+    const isSchoolRequired = ['learner', 'student', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
+    const isGradeRequired = ['learner', 'student', 'teacher'].includes(formData.role);
+
+    if (isSchoolRequired && !formData.school_id) {
+      setError('Please select a school for this role.');
+      setLoading(false);
+      return;
+    }
+
+    if (isGradeRequired && !formData.grade) {
+      setError('Please select a grade level for this role.');
+      setLoading(false);
+      return;
+    }
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setError('Supabase connection details are missing.');
+      setLoading(false);
+      return;
+    }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/dashboard/admin');
+      // 1. Create a non-persistent Supabase client so we sign up the user without losing our current session
+      const tempSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false
+        }
+      });
+
+      // 2. Register the user in Supabase auth
+      const { data, error: signUpError } = await tempSupabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            role: formData.role,
+            school_id: formData.school_id || null,
+            grade: formData.grade || null,
+          }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (!data.user) {
+        throw new Error('User was not created successfully.');
+      }
+
+      setSuccess(`User successfully registered! An approval record has been created for ${formData.firstName} ${formData.lastName}.`);
+      
+      // Delay navigation to let the success state render nicely
+      setTimeout(() => {
+        router.push('/dashboard/admin/users');
+      }, 2000);
+
     } catch (err: any) {
-      setError(err.message || 'Failed to create user');
+      console.error('User creation failed:', err);
+      setError(err.message || 'Failed to create user. Please check details and try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Determine which options to show
+  const showSchoolSelect = ['learner', 'student', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
+  const showGradeSelect = ['learner', 'student', 'teacher'].includes(formData.role);
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center space-x-3 mb-6">
+    <div className="max-w-2xl mx-auto" id="new-user-container">
+      <div className="flex items-center space-x-3 mb-6" id="new-user-header">
         <Users className="w-8 h-8 text-indigo-600" />
         <h1 className="text-2xl font-bold text-slate-800">Add New User</h1>
       </div>
 
-      <DashboardCard title="User Details">
+      <DashboardCard title="User Account Details" id="new-user-card">
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg border border-red-200">
+          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-xl border border-red-200 text-sm font-semibold" id="form-error">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="e.g. Jane Doe"
-            />
+        {success && (
+          <div className="mb-4 p-4 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-sm font-bold flex items-center space-x-2" id="form-success">
+            <Check className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{success}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6" id="new-user-form">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                First Name
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.firstName}
+                onChange={e => setFormData({...formData, firstName: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="e.g. Jane"
+                id="input-first-name"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Last Name
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.lastName}
+                onChange={e => setFormData({...formData, lastName: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="e.g. Doe"
+                id="input-last-name"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Email Address
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                placeholder="jane@example.com"
+                id="input-email"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  value={formData.password}
+                  onChange={e => setFormData({...formData, password: e.target.value})}
+                  className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                  placeholder="Password"
+                  id="input-password"
+                />
+                <button
+                  type="button"
+                  onClick={handleGeneratePassword}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="Generate random password"
+                  id="btn-generate-password"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="jane@example.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Role
             </label>
             <select
               value={formData.role}
-              onChange={e => setFormData({...formData, role: e.target.value})}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              onChange={e => setFormData({...formData, role: e.target.value, school_id: '', grade: ''})}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+              id="select-role"
             >
-              <option value="learner">Learner</option>
+              <option value="learner">Learner / Student</option>
               <option value="teacher">Teacher</option>
               <option value="school_admin">School Admin</option>
               <option value="facilitator">Facilitator</option>
@@ -96,22 +270,72 @@ function NewUserForm() {
             </select>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+          {showSchoolSelect && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                School
+              </label>
+              <select
+                required
+                disabled={schoolsLoading}
+                value={formData.school_id}
+                onChange={e => setFormData({...formData, school_id: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer disabled:opacity-50"
+                id="select-school"
+              >
+                <option value="">-- Select School --</option>
+                {schools.map(school => (
+                  <option key={school.id} value={school.id}>
+                    {school.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {showGradeSelect && (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                Grade
+              </label>
+              <select
+                required
+                value={formData.grade}
+                onChange={e => setFormData({...formData, grade: e.target.value})}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                id="select-grade"
+              >
+                <option value="">-- Select Grade --</option>
+                <option value="R">Grade R</option>
+                <option value="1">Grade 1</option>
+                <option value="2">Grade 2</option>
+                <option value="3">Grade 3</option>
+                <option value="4">Grade 4</option>
+                <option value="5">Grade 5</option>
+                <option value="6">Grade 6</option>
+                <option value="7">Grade 7</option>
+              </select>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-6 border-t border-slate-100" id="form-actions">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 flex items-center space-x-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-5 py-2.5 flex items-center space-x-2 text-slate-600 hover:bg-slate-100 rounded-xl text-sm font-semibold transition-colors"
+              id="btn-cancel"
             >
               <X className="w-4 h-4" />
               <span>Cancel</span>
             </button>
             <button
               type="submit"
-              disabled={loading}
-              className="px-4 py-2 flex items-center space-x-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              disabled={loading || schoolsLoading}
+              className="px-5 py-2.5 flex items-center space-x-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-95 disabled:opacity-50"
+              id="btn-save"
             >
               <Save className="w-4 h-4" />
-              <span>{loading ? 'Saving...' : 'Save User'}</span>
+              <span>{loading ? 'Creating...' : 'Create User'}</span>
             </button>
           </div>
         </form>
@@ -123,7 +347,11 @@ function NewUserForm() {
 export default function NewUserPage() {
   return (
     <DashboardLayout allowedRoles={['super_admin']}>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
+        </div>
+      }>
         <NewUserForm />
       </Suspense>
     </DashboardLayout>

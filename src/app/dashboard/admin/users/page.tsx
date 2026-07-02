@@ -103,6 +103,35 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setUsers(prev => prev.map(user => {
+        if (user.id === userId) {
+          return {
+            ...user,
+            role: newRole
+          };
+        }
+        return user;
+      }));
+    } catch (err: any) {
+      console.error('Failed to update role:', err);
+      alert(`Failed to update role: ${err.message || 'Unknown error'}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleSchoolChange = async (userId: string, schoolId: string) => {
     if (!supabase) return;
     setUpdatingId(userId);
@@ -203,15 +232,51 @@ export default function AdminUsersPage() {
                       <div className="font-medium text-slate-800">{user.first_name} {user.last_name}</div>
                     </td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-semibold capitalize">
-                        {user.role}
-                      </span>
+                      <select
+                        value={user.role || 'learner'}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        disabled={updatingId === user.id}
+                        className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded text-xs font-semibold capitalize border border-transparent focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
+                      >
+                        <option value="learner">Learner</option>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="school_admin">School Admin</option>
+                        <option value="facilitator">Facilitator</option>
+                        <option value="parent">Parent</option>
+                        <option value="super_admin">Super Admin</option>
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
-                      {user.schools?.name || user.school?.name || '-'}
+                      <select
+                        value={user.school_id || ''}
+                        onChange={(e) => handleSchoolChange(user.id, e.target.value)}
+                        disabled={updatingId === user.id}
+                        className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors max-w-[150px] truncate"
+                      >
+                        <option value="">No School</option>
+                        {schools.map(school => (
+                          <option key={school.id} value={school.id}>{school.name}</option>
+                        ))}
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
-                      {user.grade ? `Grade ${user.grade}` : '-'}
+                      <select
+                        value={user.grade || ''}
+                        onChange={(e) => handleGradeChange(user.id, e.target.value)}
+                        disabled={updatingId === user.id}
+                        className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
+                      >
+                        <option value="">No Grade</option>
+                        <option value="R">Grade R</option>
+                        <option value="1">Grade 1</option>
+                        <option value="2">Grade 2</option>
+                        <option value="3">Grade 3</option>
+                        <option value="4">Grade 4</option>
+                        <option value="5">Grade 5</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-600">
                       {user.parent_name ? (

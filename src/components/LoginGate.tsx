@@ -14,7 +14,10 @@ interface LoginGateProps {
 
 export default function LoginGate({ onLogin }: LoginGateProps) {
   const router = useRouter();
-  const [view, setView] = useState<'login' | 'register' | 'complete_profile'>('login');
+  const [view, setView] = useState<'login' | 'register' | 'complete_profile' | 'forgot_password' | 'reset_password'>('login');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [successText, setSuccessText] = useState('');
   
   // Form State
   const [email, setEmail] = useState('');
@@ -48,17 +51,38 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         if (data) setSchools(data);
       });
     
+    // Check URL hash/params for password recovery redirect
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+        setView('reset_password');
+      } else if (search && (search.includes('type=recovery') || search.includes('reset=true'))) {
+        setView('reset_password');
+      }
+    }
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        fetchProfile(session.user.id);
+        const isResetting = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+        if (isResetting) {
+          setView('reset_password');
+        } else {
+          fetchProfile(session.user.id);
+        }
       }
     }).catch(err => {
       console.warn("Could not fetch session (database might be unreachable):", err);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchProfile(session.user.id);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setView('reset_password');
+      } else if (session?.user) {
+        const isResetting = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+        if (!isResetting) {
+          fetchProfile(session.user.id);
+        }
       }
     });
 
@@ -307,6 +331,72 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorText('');
+    setSuccessText('');
+    setIsLoading(true);
+
+    if (!supabase) {
+      setErrorText('Supabase is not configured.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) throw error;
+      setSuccessText('Password setup link sent successfully! Please check your email inbox.');
+    } catch (err: any) {
+      setErrorText(err.message || 'Failed to send password setup link.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorText('');
+    setSuccessText('');
+
+    if (newPassword !== confirmPassword) {
+      setErrorText('Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    if (!supabase) {
+      setErrorText('Supabase is not configured.');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setSuccessText('Password updated successfully! Redirecting you now...');
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setTimeout(() => {
+          fetchProfile(session.user.id);
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          setView('login');
+        }, 1500);
+      }
+    } catch (err: any) {
+      setErrorText(err.message || 'Failed to update your password.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleCompleteProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorText('');
@@ -418,10 +508,26 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
               <GraduationCap className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              {view === 'login' ? 'Welcome Back' : view === 'complete_profile' ? 'Complete Profile' : 'Create an Account'}
+              {view === 'login' 
+                ? 'Welcome Back' 
+                : view === 'complete_profile' 
+                ? 'Complete Profile' 
+                : view === 'forgot_password'
+                ? 'Set Up or Reset Password'
+                : view === 'reset_password'
+                ? 'Choose Your Password'
+                : 'Create an Account'}
             </h1>
             <p className="text-slate-500 text-sm">
-              {view === 'login' ? 'Sign in to continue learning' : view === 'complete_profile' ? 'Please configure your school and grade level' : 'Sign up to start your journey'}
+              {view === 'login' 
+                ? 'Sign in to continue learning' 
+                : view === 'complete_profile' 
+                ? 'Please configure your school and grade level' 
+                : view === 'forgot_password'
+                ? 'Enter your email to receive a password setup link'
+                : view === 'reset_password'
+                ? 'Enter your new password to complete account setup'
+                : 'Sign up to start your journey'}
             </p>
           </div>
 
@@ -436,6 +542,16 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 ⚠️ {errorText}
               </motion.div>
             )}
+            {successText && (
+              <motion.div
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-lg text-xs font-bold"
+              >
+                ✅ {successText}
+              </motion.div>
+            )}
           </AnimatePresence>
 
           <form 
@@ -444,6 +560,10 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 ? handleLogin 
                 : view === 'complete_profile' 
                 ? handleCompleteProfile 
+                : view === 'forgot_password'
+                ? handleForgotPassword
+                : view === 'reset_password'
+                ? handleResetPassword
                 : handleRegister
             } 
             className="space-y-4 text-left"
@@ -563,7 +683,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
               </>
             )}
 
-            {view !== 'complete_profile' && (
+            {view !== 'complete_profile' && view !== 'forgot_password' && view !== 'reset_password' && (
               <>
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Email Address</label>
@@ -577,7 +697,20 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Password</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Password</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setView('forgot_password');
+                        setErrorText('');
+                        setSuccessText('');
+                      }}
+                      className="text-[10px] font-black uppercase tracking-wider text-indigo-600 hover:text-indigo-800 transition"
+                    >
+                      Setup / Forgot Password?
+                    </button>
+                  </div>
                   <input
                     type="password"
                     required
@@ -585,6 +718,50 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </>
+            )}
+
+            {view === 'forgot_password' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Email Address</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                  placeholder="Enter your registered email address"
+                />
+              </div>
+            )}
+
+            {view === 'reset_password' && (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Confirm New Password</label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                    placeholder="Repeat your new password"
                   />
                 </div>
               </>
@@ -601,13 +778,17 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 ? 'Log In' 
                 : view === 'complete_profile' 
                 ? 'Complete Registration' 
+                : view === 'forgot_password'
+                ? 'Send Password Setup Link'
+                : view === 'reset_password'
+                ? 'Update Password & Log In'
                 : 'Create Account'
               }
               {view === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
             </button>
           </form>
 
-          {view !== 'complete_profile' && (
+          {view !== 'complete_profile' && view !== 'forgot_password' && view !== 'reset_password' && (
             <>
               <div className="relative flex py-2 items-center">
                 <div className="flex-grow border-t border-slate-200"></div>
@@ -653,10 +834,23 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                   if (supabase) await supabase.auth.signOut();
                   setView('login');
                   setErrorText('');
+                  setSuccessText('');
                 }}
                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
               >
                 Cancel and Return to Login
+              </button>
+            ) : view === 'forgot_password' || view === 'reset_password' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setView('login');
+                  setErrorText('');
+                  setSuccessText('');
+                }}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
+              >
+                Return to Login
               </button>
             ) : (
               <button
@@ -664,6 +858,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 onClick={() => {
                   setView(view === 'login' ? 'register' : 'login');
                   setErrorText('');
+                  setSuccessText('');
                 }}
                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
               >

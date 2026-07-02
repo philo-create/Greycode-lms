@@ -13,8 +13,8 @@ if (rawUrl.includes(' ')) {
   }
 }
 
-const supabaseUrl = rawUrl.trim();
-const supabaseAnonKey = rawKey.trim();
+export const supabaseUrl = rawUrl.trim();
+export const supabaseAnonKey = rawKey.trim();
 
 // We only initialize if the URL and Key are actually provided to prevent crash loops
 export const supabase = supabaseUrl && supabaseAnonKey 
