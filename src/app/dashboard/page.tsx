@@ -45,7 +45,7 @@ export default function DashboardIndex() {
       };
 
       const normalizedRole = (data.role as string)?.toLowerCase();
-      router.push(rolePaths[normalizedRole] || '/');
+      window.location.href = rolePaths[normalizedRole] || '/';
     }
 
     routeUser();

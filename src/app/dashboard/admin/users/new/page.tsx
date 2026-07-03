@@ -296,25 +296,58 @@ function NewUserForm() {
           {showGradeSelect && (
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Grade
+                {formData.role === 'teacher' ? 'Assigned Grades (Select multiple)' : 'Grade'}
               </label>
-              <select
-                required
-                value={formData.grade}
-                onChange={e => setFormData({...formData, grade: e.target.value})}
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
-                id="select-grade"
-              >
-                <option value="">-- Select Grade --</option>
-                <option value="R">Grade R</option>
-                <option value="1">Grade 1</option>
-                <option value="2">Grade 2</option>
-                <option value="3">Grade 3</option>
-                <option value="4">Grade 4</option>
-                <option value="5">Grade 5</option>
-                <option value="6">Grade 6</option>
-                <option value="7">Grade 7</option>
-              </select>
+              {formData.role === 'teacher' ? (
+                <div className="grid grid-cols-4 gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3" id="select-grade">
+                  {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
+                    const selectedGrades = formData.grade ? formData.grade.split(',') : [];
+                    const isSelected = selectedGrades.includes(g);
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => {
+                          let newGrades;
+                          if (isSelected) {
+                            newGrades = selectedGrades.filter((x: string) => x !== g);
+                          } else {
+                            newGrades = [...selectedGrades, g];
+                          }
+                          const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
+                          setFormData({ ...formData, grade: sortedGrades.join(',') });
+                        }}
+                        className={`py-2 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span>Grade {g}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <select
+                  required
+                  value={formData.grade}
+                  onChange={e => setFormData({...formData, grade: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                  id="select-grade"
+                >
+                  <option value="">-- Select Grade --</option>
+                  <option value="R">Grade R</option>
+                  <option value="1">Grade 1</option>
+                  <option value="2">Grade 2</option>
+                  <option value="3">Grade 3</option>
+                  <option value="4">Grade 4</option>
+                  <option value="5">Grade 5</option>
+                  <option value="6">Grade 6</option>
+                  <option value="7">Grade 7</option>
+                </select>
+              )}
             </div>
           )}
 

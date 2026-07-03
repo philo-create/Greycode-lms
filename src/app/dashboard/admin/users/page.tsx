@@ -261,22 +261,56 @@ export default function AdminUsersPage() {
                       </select>
                     </td>
                     <td className="py-3 px-4 text-sm text-slate-600">
-                      <select
-                        value={user.grade || ''}
-                        onChange={(e) => handleGradeChange(user.id, e.target.value)}
-                        disabled={updatingId === user.id}
-                        className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
-                      >
-                        <option value="">No Grade</option>
-                        <option value="R">Grade R</option>
-                        <option value="1">Grade 1</option>
-                        <option value="2">Grade 2</option>
-                        <option value="3">Grade 3</option>
-                        <option value="4">Grade 4</option>
-                        <option value="5">Grade 5</option>
-                        <option value="6">Grade 6</option>
-                        <option value="7">Grade 7</option>
-                      </select>
+                      {user.role === 'teacher' ? (
+                        <div className="flex flex-wrap gap-1 max-w-[200px]" id={`teacher-grades-${user.id}`}>
+                          {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
+                            const teacherGrades = user.grade ? user.grade.split(',') : [];
+                            const isActive = teacherGrades.includes(g);
+                            return (
+                              <button
+                                key={g}
+                                disabled={updatingId === user.id}
+                                onClick={async () => {
+                                  let newGrades;
+                                  if (isActive) {
+                                    newGrades = teacherGrades.filter((x: string) => x !== g);
+                                  } else {
+                                    newGrades = [...teacherGrades, g];
+                                  }
+                                  // Sort them naturally so they display in order
+                                  const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
+                                  await handleGradeChange(user.id, sortedGrades.join(','));
+                                }}
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                                  isActive 
+                                    ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500 scale-105' 
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                                }`}
+                                title={`Toggle Grade ${g}`}
+                              >
+                                {g}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <select
+                          value={user.grade || ''}
+                          onChange={(e) => handleGradeChange(user.id, e.target.value)}
+                          disabled={updatingId === user.id}
+                          className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
+                        >
+                          <option value="">No Grade</option>
+                          <option value="R">Grade R</option>
+                          <option value="1">Grade 1</option>
+                          <option value="2">Grade 2</option>
+                          <option value="3">Grade 3</option>
+                          <option value="4">Grade 4</option>
+                          <option value="5">Grade 5</option>
+                          <option value="6">Grade 6</option>
+                          <option value="7">Grade 7</option>
+                        </select>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-600">
                       {user.parent_name ? (

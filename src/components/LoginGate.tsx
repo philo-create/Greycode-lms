@@ -137,7 +137,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         }
         
         if (profile.role !== 'learner' && profile.role !== 'student') {
-          router.push('/dashboard');
+          window.location.href = '/dashboard';
           return;
         }
 

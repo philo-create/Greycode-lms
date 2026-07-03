@@ -90,6 +90,7 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
               <Link 
                 key={link.href} 
                 href={link.href}
+                prefetch={false}
                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
               >
                 {link.icon}

@@ -91,7 +91,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
           'student': `${base}/learner`,
           'parent': `${base}/parent`,
         };
-        router.push(rolePaths[normalizedRole] || '/');
+        window.location.href = rolePaths[normalizedRole] || '/';
         return;
       }
 
