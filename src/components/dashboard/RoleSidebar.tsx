@@ -70,7 +70,7 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/';
+    router.push('/');
   };
 
   const links = getLinks();

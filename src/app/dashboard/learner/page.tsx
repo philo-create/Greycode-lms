@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
@@ -13,6 +14,7 @@ import {
 import { LoadingState } from '@/components/dashboard/LoadingState';
 
 export default function LearnerDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -101,7 +103,7 @@ export default function LearnerDashboard() {
             Ready to learn some cool robotics today? You're doing great!
           </p>
           <button 
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
             className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-3 rounded-xl font-bold text-lg flex items-center shadow-sm transition-transform hover:scale-105 active:scale-95"
           >
             <PlayCircle className="w-6 h-6 mr-2" />
@@ -169,7 +171,7 @@ export default function LearnerDashboard() {
               Draw, design, assemble robots, and connect electronic circuits in your very own creative workstation!
             </p>
             <button 
-              onClick={() => window.location.href = '/dashboard/learner/workstation'}
+              onClick={() => router.push('/dashboard/learner/workstation')}
               className="bg-indigo-600 text-white hover:bg-indigo-700 px-8 py-3 rounded-xl font-bold shadow-sm transition-transform hover:scale-105"
             >
               Enter Workstation

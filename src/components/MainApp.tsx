@@ -17,7 +17,10 @@ import ProgressDashboard from './ProgressDashboard';
 import TeacherDashboard from './TeacherDashboard';
 import CreativeWorkstationApp from './CreativeWorkstationApp';
 
+import { useRouter } from 'next/navigation';
+
 export default function App() {
+  const router = useRouter();
   const [activeStudent, setActiveStudent] = useState<StudentProfile | null>(null);
   const [selectedGrade, setSelectedGrade] = useState<GradeType | null>(null);
   const [progress, setProgress] = useState<UserProgress>({
@@ -202,7 +205,7 @@ export default function App() {
               <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3 select-none">Learning View</p>
               
               <button
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => router.push('/dashboard')}
                 className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent"
               >
                 <div className="w-4 h-4 flex items-center justify-center bg-slate-800 rounded shrink-0">

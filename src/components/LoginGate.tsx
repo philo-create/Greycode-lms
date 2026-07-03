@@ -1,5 +1,5 @@
 import { localStore, migrateLocalStorageProgress, getStudentWorkbookStates, mergeProgress, restoreStudentWorkbookStates } from '../lib/localStore';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GraduationCap, UserPlus, ArrowRight, LogIn } from 'lucide-react';
 import { StudentProfile, GradeType } from '../types';
@@ -38,6 +38,10 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isPendingApproval, setIsPendingApproval] = useState(false);
   const [sessionUser, setSessionUser] = useState<any>(null);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  const initialResetRef = useRef(false);
+  const initialRecoveryRef = useRef(false);
 
   // Check if session exists on mount
   useEffect(() => {
@@ -51,33 +55,36 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         if (data) setSchools(data);
       });
     
-    // Check URL hash/params for password recovery redirect
+    // Check URL hash/params for password recovery redirect or signup/invite
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
       const search = window.location.search;
-      if (hash && (hash.includes('type=recovery') || hash.includes('type=signup') || hash.includes('type=invite') || hash.includes('access_token='))) {
+      
+      const isRecovery = 
+        hash.includes('type=recovery') || 
+        search.includes('type=recovery') || 
+        search.includes('reset=true');
+        
+      const isReset = 
+        isRecovery ||
+        hash.includes('type=signup') || 
+        hash.includes('type=invite') || 
+        hash.includes('access_token=') ||
+        search.includes('type=signup') || 
+        search.includes('type=invite');
+
+      if (isRecovery) {
+        initialRecoveryRef.current = true;
         setView('reset_password');
-      } else if (search && (search.includes('type=recovery') || search.includes('type=signup') || search.includes('type=invite') || search.includes('reset=true'))) {
-        setView('reset_password');
+        setIsResettingPassword(true);
+      } else if (isReset) {
+        initialResetRef.current = true;
       }
     }
     
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const isResetting = 
-          window.location.hash.includes('type=recovery') || 
-          window.location.hash.includes('type=signup') || 
-          window.location.hash.includes('type=invite') || 
-          window.location.hash.includes('access_token=') ||
-          window.location.search.includes('type=recovery') || 
-          window.location.search.includes('type=signup') || 
-          window.location.search.includes('type=invite') || 
-          window.location.search.includes('reset=true');
-        if (isResetting) {
-          setView('reset_password');
-        } else {
-          fetchProfile(session.user.id);
-        }
+        fetchProfile(session.user.id);
       }
     }).catch(err => {
       console.warn("Could not fetch session (database might be unreachable):", err);
@@ -86,26 +93,18 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setView('reset_password');
+        setIsResettingPassword(true);
+        initialRecoveryRef.current = true;
+        initialResetRef.current = true;
       } else if (session?.user) {
-        const isResetting = 
-          window.location.hash.includes('type=recovery') || 
-          window.location.hash.includes('type=signup') || 
-          window.location.hash.includes('type=invite') || 
-          window.location.hash.includes('access_token=') ||
-          window.location.search.includes('type=recovery') || 
-          window.location.search.includes('type=signup') || 
-          window.location.search.includes('type=invite') || 
-          window.location.search.includes('reset=true');
-        if (!isResetting) {
-          fetchProfile(session.user.id);
-        }
+        fetchProfile(session.user.id);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, passwordAlreadyUpdated: boolean = false) => {
     if (!supabase) return;
     try {
       const { data: profile, error: profileError } = await supabase
@@ -131,9 +130,30 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           }
         }
 
+        // Determine if we should show the password reset screen based on URL refs captured on mount
+        const hasRecoveryMarker = initialRecoveryRef.current;
+        const hasResetMarker = initialResetRef.current;
+
+        if (!passwordAlreadyUpdated) {
+          // Both learners and non-learners must reset/set their password if arriving via any confirmation/signup/invite/recovery/reset link
+          if (hasRecoveryMarker || hasResetMarker) {
+            setView('reset_password');
+            setIsResettingPassword(true);
+            return; // Halt further routing so they can set their password
+          }
+        }
+
+        // If they are a teacher, school admin, or super admin, direct to /dashboard
+        if (profile.role !== 'learner') {
+          // Add a small delay to ensure Supabase has finished persisting the session to localStorage
+          setTimeout(() => {
+            router.push('/dashboard');
+          }, 500);
+          return;
+        }
+
         // If missing critical school_id or grade, prompt to complete profile (only for learners)
         if (profile.role === 'learner' && (!profile.school_id || !profile.grade)) {
-          const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             setSessionUser(session.user);
             setFirstName(profile.first_name || session.user.user_metadata?.first_name || session.user.user_metadata?.full_name?.split(' ')[0] || '');
@@ -153,22 +173,15 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
         let actualGrade = profile.grade || 'R';
         
-        if (profile.role === 'learner') {
-          // Fetch from students_classes table to get class as fallback if needed, but we now use profile.grade
-          const { data: scData } = await supabase
-            .from('students_classes')
-            .select('*, classes(grade)')
-            .eq('student_id', userId)
-            .maybeSingle();
-            
-          if (scData && scData.classes && scData.classes.grade) {
-            actualGrade = scData.classes.grade;
-          }
-        }
-        
-        if (profile.role !== 'learner') {
-          window.location.href = '/dashboard';
-          return;
+        // Fetch from students_classes table to get class as fallback if needed, but we now use profile.grade
+        const { data: scData } = await supabase
+          .from('students_classes')
+          .select('*, classes(grade)')
+          .eq('student_id', userId)
+          .maybeSingle();
+          
+        if (scData && scData.classes && scData.classes.grade) {
+          actualGrade = scData.classes.grade;
         }
 
         // Migrate and merge progress to make sure work doesn't disappear
@@ -417,10 +430,12 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setTimeout(() => {
-          fetchProfile(session.user.id);
+          setIsResettingPassword(false);
+          fetchProfile(session.user.id, true);
         }, 1500);
       } else {
         setTimeout(() => {
+          setIsResettingPassword(false);
           setView('login');
         }, 1500);
       }
