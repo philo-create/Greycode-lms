@@ -55,16 +55,24 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
       const search = window.location.search;
-      if (hash && (hash.includes('type=recovery') || hash.includes('access_token='))) {
+      if (hash && (hash.includes('type=recovery') || hash.includes('type=signup') || hash.includes('type=invite') || hash.includes('access_token='))) {
         setView('reset_password');
-      } else if (search && (search.includes('type=recovery') || search.includes('reset=true'))) {
+      } else if (search && (search.includes('type=recovery') || search.includes('type=signup') || search.includes('type=invite') || search.includes('reset=true'))) {
         setView('reset_password');
       }
     }
     
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const isResetting = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+        const isResetting = 
+          window.location.hash.includes('type=recovery') || 
+          window.location.hash.includes('type=signup') || 
+          window.location.hash.includes('type=invite') || 
+          window.location.hash.includes('access_token=') ||
+          window.location.search.includes('type=recovery') || 
+          window.location.search.includes('type=signup') || 
+          window.location.search.includes('type=invite') || 
+          window.location.search.includes('reset=true');
         if (isResetting) {
           setView('reset_password');
         } else {
@@ -79,7 +87,15 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (event === 'PASSWORD_RECOVERY') {
         setView('reset_password');
       } else if (session?.user) {
-        const isResetting = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+        const isResetting = 
+          window.location.hash.includes('type=recovery') || 
+          window.location.hash.includes('type=signup') || 
+          window.location.hash.includes('type=invite') || 
+          window.location.hash.includes('access_token=') ||
+          window.location.search.includes('type=recovery') || 
+          window.location.search.includes('type=signup') || 
+          window.location.search.includes('type=invite') || 
+          window.location.search.includes('reset=true');
         if (!isResetting) {
           fetchProfile(session.user.id);
         }
@@ -311,7 +327,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
     } catch (err: any) {
       let errMsg = err.message || '';
       if (errMsg === '{}' || err.name === 'AuthRetryableFetchError' || (typeof errMsg === 'string' && errMsg.includes('confirmation email'))) {
-        setErrorText('Failed to send registration confirmation email. This usually means SMTP is not configured in your Supabase project. Please ask your administrator to go to Supabase Dashboard -> Authentication -> Providers -> Email, and disable "Confirm email".');
+        setErrorText('Failed to send registration confirmation email. Since you want to keep email confirmation enabled, please configure a custom SMTP provider (such as Resend, SendGrid, or Mailgun) in your Supabase Dashboard under Authentication -> Providers -> SMTP. (Otherwise, you can temporarily disable "Confirm email" under Authentication -> Providers -> Email during development).');
       } else if (errMsg === 'Failed to fetch') {
         setErrorText('Failed to connect to the database. Please check your Supabase configuration.');
       } else if (errMsg && errMsg.toLowerCase().includes('rate limit')) {

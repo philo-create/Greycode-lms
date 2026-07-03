@@ -156,7 +156,7 @@ export default function AdminSchoolsPage() {
       console.error('Error creating admin:', err);
       let errMsg = err.message || '';
       if (errMsg === '{}' || err.name === 'AuthRetryableFetchError' || (typeof errMsg === 'string' && errMsg.includes('confirmation email'))) {
-        errMsg = 'Failed to send confirmation email. This usually means SMTP is not configured in your Supabase project. To fix this, please go to your Supabase Dashboard -> Authentication -> Providers -> Email, and disable "Confirm email".';
+        errMsg = 'Failed to send confirmation email. Since you want to keep email confirmation enabled, you must configure a custom SMTP provider (such as Resend, SendGrid, or Mailgun) in your Supabase Dashboard under Authentication -> Providers -> SMTP. (For temporary testing, you can disable "Confirm email" under Authentication -> Providers -> Email).';
       }
       setModalError(errMsg || 'Failed to create new administrator.');
     } finally {
