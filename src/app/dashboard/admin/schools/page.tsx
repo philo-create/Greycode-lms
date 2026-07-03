@@ -154,7 +154,11 @@ export default function AdminSchoolsPage() {
       }, 1500);
     } catch (err: any) {
       console.error('Error creating admin:', err);
-      setModalError(err.message || 'Failed to create new administrator.');
+      let errMsg = err.message || '';
+      if (errMsg === '{}' || err.name === 'AuthRetryableFetchError' || (typeof errMsg === 'string' && errMsg.includes('confirmation email'))) {
+        errMsg = 'Failed to send confirmation email. This usually means SMTP is not configured in your Supabase project. To fix this, please go to your Supabase Dashboard -> Authentication -> Providers -> Email, and disable "Confirm email".';
+      }
+      setModalError(errMsg || 'Failed to create new administrator.');
     } finally {
       setModalLoading(false);
     }

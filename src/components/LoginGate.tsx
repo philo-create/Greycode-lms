@@ -309,12 +309,15 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         await supabase.auth.signOut();
       }
     } catch (err: any) {
-      if (err.message === 'Failed to fetch') {
+      let errMsg = err.message || '';
+      if (errMsg === '{}' || err.name === 'AuthRetryableFetchError' || (typeof errMsg === 'string' && errMsg.includes('confirmation email'))) {
+        setErrorText('Failed to send registration confirmation email. This usually means SMTP is not configured in your Supabase project. Please ask your administrator to go to Supabase Dashboard -> Authentication -> Providers -> Email, and disable "Confirm email".');
+      } else if (errMsg === 'Failed to fetch') {
         setErrorText('Failed to connect to the database. Please check your Supabase configuration.');
-      } else if (err.message && err.message.toLowerCase().includes('rate limit')) {
+      } else if (errMsg && errMsg.toLowerCase().includes('rate limit')) {
         setErrorText('Email rate limit exceeded. Please try logging in if you already created an account.');
       } else {
-        setErrorText(err.message || 'Failed to register');
+        setErrorText(errMsg || 'Failed to register');
       }
     } finally {
       setIsLoading(false);

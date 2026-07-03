@@ -147,7 +147,11 @@ function NewUserForm() {
 
     } catch (err: any) {
       console.error('User creation failed:', err);
-      setError(err.message || 'Failed to create user. Please check details and try again.');
+      let errMsg = err.message || '';
+      if (errMsg === '{}' || err.name === 'AuthRetryableFetchError' || (typeof errMsg === 'string' && errMsg.includes('confirmation email'))) {
+        errMsg = 'Failed to send confirmation email. This usually means SMTP is not configured in your Supabase project. To fix this, please go to your Supabase Dashboard -> Authentication -> Providers -> Email, and disable "Confirm email".';
+      }
+      setError(errMsg || 'Failed to create user. Please check details and try again.');
     } finally {
       setLoading(false);
     }
