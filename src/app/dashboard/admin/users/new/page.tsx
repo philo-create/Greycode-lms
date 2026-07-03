@@ -85,8 +85,8 @@ function NewUserForm() {
     setSuccess('');
 
     // Field Validations based on selected Role
-    const isSchoolRequired = ['learner', 'student', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
-    const isGradeRequired = ['learner', 'student', 'teacher'].includes(formData.role);
+    const isSchoolRequired = ['learner', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
+    const isGradeRequired = ['learner', 'teacher'].includes(formData.role);
 
     if (isSchoolRequired && !formData.school_id) {
       setError('Please select a school for this role.');
@@ -121,6 +121,7 @@ function NewUserForm() {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName,
@@ -141,7 +142,7 @@ function NewUserForm() {
       
       // Delay navigation to let the success state render nicely
       setTimeout(() => {
-        router.push('/dashboard/admin/users');
+        window.location.href = '/dashboard/admin/users';
       }, 2000);
 
     } catch (err: any) {
@@ -153,8 +154,8 @@ function NewUserForm() {
   };
 
   // Determine which options to show
-  const showSchoolSelect = ['learner', 'student', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
-  const showGradeSelect = ['learner', 'student', 'teacher'].includes(formData.role);
+  const showSchoolSelect = ['learner', 'teacher', 'school_admin', 'facilitator'].includes(formData.role);
+  const showGradeSelect = ['learner', 'teacher'].includes(formData.role);
 
   return (
     <div className="max-w-2xl mx-auto" id="new-user-container">

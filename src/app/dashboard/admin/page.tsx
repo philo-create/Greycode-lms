@@ -16,9 +16,78 @@ import {
   Building2, Users, GraduationCap, BookOpen, 
   PlusCircle, FileText, CheckCircle2, TrendingUp,
   Clock, Server, ChevronDown, ChevronRight, BookOpenCheck, PlayCircle,
-  CheckCircle, XCircle
+  CheckCircle, XCircle, Mail, Settings, Send, HelpCircle, Info, Lock
 } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/LoadingState';
+
+const SIGNUP_EMAIL_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
+    .container { max-width: 580px; margin: 40px auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .header { background-color: #4f46e5; padding: 32px; text-align: center; color: #ffffff; }
+    .content { padding: 32px; line-height: 1.6; }
+    .button { display: inline-block; background-color: #4f46e5; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 24px 0; text-align: center; }
+    .footer { padding: 24px; text-align: center; font-size: 11px; color: #64748b; background-color: #f1f5f9; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">Greycode Academy</h1>
+    </div>
+    <div class="content">
+      <p style="font-size: 16px; margin-top: 0;"><b>Welcome to Greycode Academy!</b></p>
+      <p>Thank you for signing up. To complete your registration and verify your email, please click the button below:</p>
+      <div style="text-align: center;">
+        <a href="{{ .ConfirmationURL }}" class="button" target="_blank">Confirm My Account</a>
+      </div>
+      <p style="font-size: 13px; color: #64748b;">If the button above does not work, please copy and paste the following link into your browser:</p>
+      <p style="font-size: 12px; word-break: break-all; color: #4f46e5;"><a href="{{ .ConfirmationURL }}" target="_blank">{{ .ConfirmationURL }}</a></p>
+      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+      <p style="font-size: 13px; color: #64748b;">Note: After verification, a school administrator will review and approve your account enrollment status.</p>
+    </div>
+    <div class="footer">
+      &copy; 2026 Greycode Academy. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>`;
+
+const PASSWORD_EMAIL_TEMPLATE = `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
+    .container { max-width: 580px; margin: 40px auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    .header { background-color: #4f46e5; padding: 32px; text-align: center; color: #ffffff; }
+    .content { padding: 32px; line-height: 1.6; }
+    .button { display: inline-block; background-color: #4f46e5; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 24px 0; text-align: center; }
+    .footer { padding: 24px; text-align: center; font-size: 11px; color: #64748b; background-color: #f1f5f9; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0; font-size: 24px; letter-spacing: -0.5px;">Greycode Academy</h1>
+    </div>
+    <div class="content">
+      <p style="font-size: 16px; margin-top: 0;"><b>Set Up or Reset Your Password</b></p>
+      <p>We received a request to set up or change the password for your Greycode Academy account. Click the button below to choose your secure password:</p>
+      <div style="text-align: center;">
+        <a href="{{ .ConfirmationURL }}" class="button" target="_blank">Set Up New Password</a>
+      </div>
+      <p style="font-size: 13px; color: #64748b;">If you did not request this, please ignore this email. Your password will remain unchanged.</p>
+      <p style="font-size: 13px; color: #64748b;">If the button above does not work, copy and paste this link into your browser:</p>
+      <p style="font-size: 12px; word-break: break-all; color: #4f46e5;"><a href="{{ .ConfirmationURL }}" target="_blank">{{ .ConfirmationURL }}</a></p>
+    </div>
+    <div class="footer">
+      &copy; 2026 Greycode Academy. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>`;
 
 export default function SuperAdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -28,6 +97,62 @@ export default function SuperAdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [pendingError, setPendingError] = useState<string | null>(null);
+
+  // Zoho SMTP Custom test states
+  const [testEmail, setTestEmail] = useState('');
+  const [testStatus, setTestStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [testErrorMessage, setTestErrorMessage] = useState('');
+  const [showZohoDocs, setShowZohoDocs] = useState(false);
+  const [showEmailTemplates, setShowEmailTemplates] = useState(false);
+  const [selectedTemplateTab, setSelectedTemplateTab] = useState<'signup' | 'password'>('signup');
+  const [copiedType, setCopiedType] = useState<string | null>(null);
+  const [useCustomCreds, setUseCustomCreds] = useState(false);
+  const [customUser, setCustomUser] = useState('');
+  const [customPass, setCustomPass] = useState('');
+  const [smtpEnvConfigured, setSmtpEnvConfigured] = useState<boolean | null>(null);
+  const [smtpServerUser, setSmtpServerUser] = useState<string | null>(null);
+
+  const handleTestZohoEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testEmail) return;
+    
+    // Client-side credentials validation to prevent confusing errors
+    if (!smtpEnvConfigured && !useCustomCreds) {
+      setTestStatus('error');
+      setTestErrorMessage('Please check "Use custom test credentials" and enter your Zoho User Email and App Password to run the test.');
+      return;
+    }
+
+    if (useCustomCreds && (!customUser || !customPass)) {
+      setTestStatus('error');
+      setTestErrorMessage('Please fill in both the Zoho User Email and App Password.');
+      return;
+    }
+
+    setTestStatus('sending');
+    setTestErrorMessage('');
+    try {
+      const payload: any = { testRecipient: testEmail };
+      if (useCustomCreds) {
+        payload.customUser = customUser;
+        payload.customPass = customPass;
+      }
+      const res = await fetch('/api/email/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
+      if (!res.ok || result.success === false) {
+        throw new Error(result.error || 'Failed to send test email');
+      }
+      setTestStatus('success');
+    } catch (err: any) {
+      console.error(err);
+      setTestStatus('error');
+      setTestErrorMessage(err.message || 'Unknown error occurred while sending email.');
+    }
+  };
 
   const loadPendingRequests = async () => {
     if (!supabase) return;
@@ -63,7 +188,7 @@ export default function SuperAdminDashboard() {
       if (profiles) {
         // Filter pending users
         const pendingProfiles = profiles.filter(p => {
-          const status = p.enrollment_status || ((p.role === 'student' || p.role === 'learner') ? 'pending' : 'approved');
+          const status = p.enrollment_status || (p.role === 'learner' ? 'pending' : 'approved');
           return status === 'pending';
         });
 
@@ -98,7 +223,23 @@ export default function SuperAdminDashboard() {
         setLoading(false);
       }
     }
+    
+    async function checkSmtpStatus() {
+      try {
+        const res = await fetch('/api/email/test');
+        const result = await res.json();
+        setSmtpEnvConfigured(!!result.configured);
+        setSmtpServerUser(result.user || null);
+        if (!result.configured) {
+          setUseCustomCreds(true);
+        }
+      } catch (err) {
+        console.warn('Failed to check SMTP setup on server:', err);
+      }
+    }
+
     loadData();
+    checkSmtpStatus();
   }, []);
 
   const handleRequestStatusChange = async (userId: string, newStatus: string) => {
@@ -420,6 +561,291 @@ export default function SuperAdminDashboard() {
           <DashboardCard title="Quick Actions" noPadding>
             <div className="p-6">
               <QuickActions actions={quickActions} />
+            </div>
+          </DashboardCard>
+
+          <DashboardCard title="Zoho Email Integration 📧">
+            <div className="space-y-4">
+              <p className="text-xs text-slate-500 leading-relaxed">
+                By default, auth emails say "Supabase". Connect your Zoho Mail to brand them and remove generic mentions.
+              </p>
+
+              {/* Document toggle button */}
+              <button
+                onClick={() => setShowZohoDocs(!showZohoDocs)}
+                className="w-full flex items-center justify-between p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4" />
+                  <span>How to setup Zoho in Supabase</span>
+                </div>
+                {showZohoDocs ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {showZohoDocs && (
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs space-y-3 text-slate-600 leading-relaxed">
+                  <p className="font-semibold text-slate-800">Follow these simple steps in your Supabase Dashboard:</p>
+                  <ol className="list-decimal pl-4 space-y-1.5">
+                    <li>Log into your <b>Supabase Dashboard</b>.</li>
+                    <li>Go to <b>Project Settings</b> &rarr; <b>Auth</b>.</li>
+                    <li>Scroll down to the <b>SMTP Settings</b> section.</li>
+                    <li>Toggle on <b>Enable Custom SMTP</b>.</li>
+                    <li>Fill in these <b>Zoho SMTP</b> details:
+                      <ul className="list-disc pl-4 mt-1 space-y-1 text-[11px] text-slate-500">
+                        <li><b>Sender Email:</b> Your Zoho email (e.g. hello@domain.com)</li>
+                        <li><b>Sender Name:</b> E.g., "Greycode Academy"</li>
+                        <li><b>SMTP Host:</b> <code className="bg-slate-150 px-1 py-0.5 rounded text-indigo-600 font-mono">smtp.zoho.com</code> (or <code className="bg-slate-150 px-1 py-0.5 rounded text-indigo-600 font-mono">smtp.zoho.eu</code>)</li>
+                        <li><b>Port:</b> <code className="bg-slate-150 px-1 py-0.5 rounded text-indigo-600 font-mono">465</code> (SSL) or <code className="bg-slate-150 px-1 py-0.5 rounded text-indigo-600 font-mono">587</code> (TLS)</li>
+                        <li><b>Username:</b> Your Zoho email</li>
+                        <li><b>Password:</b> Your Zoho <i>App Password</i> (create this in your Zoho Security Account settings under App Passwords)</li>
+                      </ul>
+                    </li>
+                    <li>Save settings.</li>
+                    <li>Go to <b>Auth</b> &rarr; <b>Email Templates</b> &rarr; <b>Confirm Signup</b> to edit the text and completely remove any references to Supabase!</li>
+                  </ol>
+                  <div className="p-2 bg-indigo-50/50 rounded flex items-start gap-2 text-[11px] text-indigo-700 font-medium">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Using an "App Password" is required by Zoho if multi-factor auth is enabled.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Email templates toggle button */}
+              <button
+                onClick={() => setShowEmailTemplates(!showEmailTemplates)}
+                className="w-full flex items-center justify-between p-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer mt-2"
+              >
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4" />
+                  <span>Branded Email Templates for Supabase</span>
+                </div>
+                {showEmailTemplates ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+
+              {showEmailTemplates && (
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs space-y-3 text-slate-600 leading-relaxed text-left">
+                  <p className="font-semibold text-slate-800">
+                    Copy and paste these pre-formatted HTML templates into your <b>Supabase Dashboard</b> under <b>Auth &rarr; Email Templates</b> to ensure high-end branding:
+                  </p>
+
+                  <div className="flex border-b border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTemplateTab('signup')}
+                      className={`flex-1 py-1.5 text-center font-bold text-xs border-b-2 transition-all ${
+                        selectedTemplateTab === 'signup'
+                          ? 'border-indigo-600 text-indigo-600'
+                          : 'border-transparent text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Confirm Signup (Welcome)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTemplateTab('password')}
+                      className={`flex-1 py-1.5 text-center font-bold text-xs border-b-2 transition-all ${
+                        selectedTemplateTab === 'password'
+                          ? 'border-indigo-600 text-indigo-600'
+                          : 'border-transparent text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Confirm Password Setup / Reset
+                    </button>
+                  </div>
+
+                  {selectedTemplateTab === 'signup' ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-slate-100 p-2 rounded">
+                        <span className="font-mono text-[10px] text-slate-500 font-bold">Subject: Confirm your registration on Greycode Academy</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('Confirm your registration on Greycode Academy');
+                            setCopiedType('subject_signup');
+                            setTimeout(() => setCopiedType(null), 2000);
+                          }}
+                          className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] hover:bg-slate-50 transition font-bold text-slate-600"
+                        >
+                          {copiedType === 'subject_signup' ? 'Copied!' : 'Copy Subject'}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <textarea
+                          readOnly
+                          value={SIGNUP_EMAIL_TEMPLATE}
+                          className="w-full h-48 p-2 font-mono text-[10px] bg-white border border-slate-200 rounded-lg focus:outline-none resize-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(SIGNUP_EMAIL_TEMPLATE);
+                            setCopiedType('body_signup');
+                            setTimeout(() => setCopiedType(null), 2000);
+                          }}
+                          className="absolute right-2.5 bottom-2.5 px-3 py-1 bg-indigo-600 text-white rounded text-[11px] hover:bg-indigo-700 transition font-bold shadow-sm"
+                        >
+                          {copiedType === 'body_signup' ? 'Copied HTML!' : 'Copy HTML Template'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-slate-100 p-2 rounded">
+                        <span className="font-mono text-[10px] text-slate-500 font-bold">Subject: Set up your password on Greycode Academy</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText('Set up your password on Greycode Academy');
+                            setCopiedType('subject_password');
+                            setTimeout(() => setCopiedType(null), 2000);
+                          }}
+                          className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] hover:bg-slate-50 transition font-bold text-slate-600"
+                        >
+                          {copiedType === 'subject_password' ? 'Copied!' : 'Copy Subject'}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <textarea
+                          readOnly
+                          value={PASSWORD_EMAIL_TEMPLATE}
+                          className="w-full h-48 p-2 font-mono text-[10px] bg-white border border-slate-200 rounded-lg focus:outline-none resize-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(PASSWORD_EMAIL_TEMPLATE);
+                            setCopiedType('body_password');
+                            setTimeout(() => setCopiedType(null), 2000);
+                          }}
+                          className="absolute right-2.5 bottom-2.5 px-3 py-1 bg-indigo-600 text-white rounded text-[11px] hover:bg-indigo-700 transition font-bold shadow-sm"
+                        >
+                          {copiedType === 'body_password' ? 'Copied HTML!' : 'Copy HTML Template'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-2 bg-emerald-50/50 rounded text-[11px] text-emerald-800 font-medium text-left">
+                    💡 <b>How to install:</b> Paste these inside Supabase Dashboard &rarr; <b>Auth</b> &rarr; <b>Email Templates</b> for <b>Confirm signup</b> and <b>Reset password</b>.
+                  </div>
+                </div>
+              )}
+
+              {/* SMTP configuration status indicator */}
+              <div className="border-t border-slate-150 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-slate-700">Notification Server:</span>
+                  <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-full border border-emerald-100 uppercase">
+                    ● Manual Supabase Setup Active
+                  </span>
+                </div>
+
+                <div className="p-3 bg-emerald-50/50 border border-emerald-100/60 rounded-lg text-xs text-emerald-800 space-y-1.5 mb-4 leading-relaxed">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    <span>Branded Zoho Emails Configured</span>
+                  </p>
+                  <p className="text-[11px] text-emerald-700">
+                    Since you configured Zoho Custom SMTP directly in your Supabase Dashboard, all authentication and verification emails are fully handled and branded under your custom domain. No Supabase branding will appear!
+                  </p>
+                  {smtpEnvConfigured === true && smtpServerUser && (
+                    <div className="text-[10px] text-emerald-800 font-mono mt-1 pt-1 border-t border-emerald-100/60">
+                      Server API Fallback: Configured for {smtpServerUser}
+                    </div>
+                  )}
+                  {smtpEnvConfigured === false && (
+                    <div className="text-[10px] text-amber-800 font-medium mt-1 pt-1 border-t border-emerald-100/40">
+                      ℹ️ To run custom test sends from this Next.js dashboard, use the form below with "custom test credentials" checked.
+                    </div>
+                  )}
+                </div>
+
+                {/* SMTP Test Tool */}
+                <form onSubmit={handleTestZohoEmail} className="space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                      Send Zoho Test Email
+                    </label>
+                    <label className="flex items-center gap-1.5 text-[10.5px] font-medium text-slate-500 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={useCustomCreds}
+                        onChange={(e) => setUseCustomCreds(e.target.checked)}
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3 h-3 cursor-pointer"
+                      />
+                      <span>Use custom test credentials</span>
+                    </label>
+                  </div>
+
+                  {useCustomCreds && (
+                    <div className="space-y-2 p-2.5 bg-white rounded-lg border border-slate-150 text-[11px] space-y-2">
+                      <p className="text-[10.5px] text-slate-400 font-medium mb-1">
+                        These credentials are only used for this test send session and are not stored.
+                      </p>
+                      <div>
+                        <label className="block font-semibold text-slate-600 mb-0.5">Zoho User Email</label>
+                        <input
+                          type="email"
+                          required={useCustomCreds}
+                          placeholder="your-email@domain.com"
+                          value={customUser}
+                          onChange={(e) => setCustomUser(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold text-slate-600 mb-0.5">Zoho App Password</label>
+                        <input
+                          type="password"
+                          required={useCustomCreds}
+                          placeholder="••••••••••••••••"
+                          value={customPass}
+                          onChange={(e) => setCustomPass(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-indigo-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      placeholder="recipient@domain.com"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white"
+                    />
+                    <button
+                      type="submit"
+                      disabled={testStatus === 'sending'}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:bg-indigo-400 cursor-pointer shrink-0"
+                    >
+                      <Send className="w-3 h-3" />
+                      {testStatus === 'sending' ? 'Sending...' : 'Test Send'}
+                    </button>
+                  </div>
+
+                  {testStatus === 'success' && (
+                    <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
+                      <CheckCircle className="w-3.5 h-3.5" /> Success! Test email sent. Check inbox.
+                    </p>
+                  )}
+                  {testStatus === 'error' && (
+                    <div className="p-2 bg-rose-50 border border-rose-100 rounded text-[11px] text-rose-700 font-semibold mt-1 leading-relaxed">
+                      ❌ {testErrorMessage}
+                    </div>
+                  )}
+                </form>
+              </div>
             </div>
           </DashboardCard>
 

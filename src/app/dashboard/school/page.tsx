@@ -32,7 +32,7 @@ export default function SchoolAdminDashboard() {
         .from('profiles')
         .select('*')
         .eq('school_id', schoolId)
-        .in('role', ['learner', 'student'])
+        .eq('role', 'learner')
         .order('created_at', { ascending: false });
         
       if (supabaseError) {
@@ -42,7 +42,7 @@ export default function SchoolAdminDashboard() {
       }
       if (pending) {
         setPendingRequests(pending.filter(p => {
-          const status = p.enrollment_status || ((p.role === 'student' || p.role === 'learner') ? 'pending' : 'approved');
+          const status = p.enrollment_status || (p.role === 'learner' ? 'pending' : 'approved');
           return status === 'pending';
         }));
       }

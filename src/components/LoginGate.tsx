@@ -101,8 +101,22 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (profileError) throw profileError;
       
       if (profile) {
-        // If missing critical school_id or grade, prompt to complete profile (only for learners/students)
-        if ((profile.role === 'learner' || profile.role === 'student') && (!profile.school_id || !profile.grade)) {
+        // Sync email_confirmed status client-side as a fallback/backup
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email_confirmed_at && !profile.email_confirmed) {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ email_confirmed: true })
+              .eq('id', userId);
+            profile.email_confirmed = true;
+          } catch (syncErr) {
+            console.warn("Could not sync email confirmation status:", syncErr);
+          }
+        }
+
+        // If missing critical school_id or grade, prompt to complete profile (only for learners)
+        if (profile.role === 'learner' && (!profile.school_id || !profile.grade)) {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             setSessionUser(session.user);
@@ -114,7 +128,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         }
 
         // Check for enrollment approval
-        if ((profile.role === 'student' || profile.role === 'learner') && profile.enrollment_status === 'pending') {
+        if (profile.role === 'learner' && profile.enrollment_status === 'pending') {
           setIsPendingApproval(true);
           await supabase.auth.signOut();
           return;
@@ -123,7 +137,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
         let actualGrade = profile.grade || 'R';
         
-        if (profile.role === 'learner' || profile.role === 'student') {
+        if (profile.role === 'learner') {
           // Fetch from students_classes table to get class as fallback if needed, but we now use profile.grade
           const { data: scData } = await supabase
             .from('students_classes')
@@ -136,7 +150,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           }
         }
         
-        if (profile.role !== 'learner' && profile.role !== 'student') {
+        if (profile.role !== 'learner') {
           window.location.href = '/dashboard';
           return;
         }
@@ -187,12 +201,12 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
 
         onLogin({
           id: profile.id,
-          name: profile.full_name || profile.first_name || 'Student',
+          name: profile.full_name || profile.first_name || 'Learner',
           grade: actualGrade as any,
           avatar: '🦁',
           pin: '',
           progress: merged,
-          role: profile.role as 'student' | 'teacher' | 'admin' | 'learner' || 'student'
+          role: profile.role as 'teacher' | 'admin' | 'learner' || 'learner'
         });
       }
     } catch (err) {
@@ -273,6 +287,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         email: email.trim(),
         password,
         options: {
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
           data: {
             first_name: firstName,
             last_name: lastName,

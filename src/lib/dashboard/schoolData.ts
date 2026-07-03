@@ -40,7 +40,7 @@ export async function getSchoolAdminData(schoolId: string) {
       teachersCount,
       classesCount
     ] = await Promise.all([
-      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).in('role', ['learner', 'student'])),
+      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).eq('role', 'learner')),
       safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('school_id', schoolId).eq('role', 'teacher')),
       safeCount(supabase.from('classes').select('*', { count: 'exact', head: true }).eq('school_id', schoolId))
     ]);

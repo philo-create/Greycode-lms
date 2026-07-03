@@ -23,13 +23,13 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
     async function checkAuth() {
       if (!supabase) {
         console.warn('Supabase is not configured.');
-        router.push('/');
+        window.location.href = '/';
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        router.push('/');
+        window.location.href = '/';
         return;
       }
 
@@ -41,7 +41,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
 
       if (error || !data) {
         console.error('Error fetching profile:', error);
-        router.push('/');
+        window.location.href = '/';
         return;
       }
 
@@ -88,7 +88,6 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
           'teacher': `${base}/teacher`,
           'facilitator': `${base}/facilitator`,
           'learner': `${base}/learner`,
-          'student': `${base}/learner`,
           'parent': `${base}/parent`,
         };
         window.location.href = rolePaths[normalizedRole] || '/';

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
-import { Users, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import { Users, UserPlus, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -12,10 +12,19 @@ export default function AdminUsersPage() {
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          setCurrentUser(user);
+        } catch (err) {
+          console.warn('Could not get current authenticated user:', err);
+        }
+      }
       await Promise.all([fetchSchools(), fetchUsers()]);
       setLoading(false);
     };
@@ -98,6 +107,44 @@ export default function AdminUsersPage() {
       else if (typeof err === 'string') msg = err;
       
       alert(`Failed to update status: ${msg}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!supabase) return;
+    if (!confirm(`Are you sure you want to permanently delete user "${userName}"? This will remove their profile and enrollment.`)) {
+      return;
+    }
+    setUpdatingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      
+      if (!token) {
+        throw new Error('You are not authenticated. Please log in again.');
+      }
+
+      const response = await fetch('/api/admin/users/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete user');
+      }
+      
+      // Update local state
+      setUsers(prev => prev.filter(user => user.id !== userId));
+    } catch (err: any) {
+      console.error('Failed to delete user:', err);
+      alert(`Failed to delete user: ${err.message || 'Unknown error'}`);
     } finally {
       setUpdatingId(null);
     }
@@ -239,7 +286,6 @@ export default function AdminUsersPage() {
                         className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 rounded text-xs font-semibold capitalize border border-transparent focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
                       >
                         <option value="learner">Learner</option>
-                        <option value="student">Student</option>
                         <option value="teacher">Teacher</option>
                         <option value="school_admin">School Admin</option>
                         <option value="facilitator">Facilitator</option>
@@ -325,42 +371,68 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="py-3 px-4 text-sm">
                       {(() => {
-                        const userStatus = user.enrollment_status || 
-                          ((user.role === 'student' || user.role === 'learner') ? 'pending' : 'approved');
+                        const isLearner = user.role === 'learner';
+                        const isConfirmed = user.email_confirmed === true;
+                        
+                        let displayStatus = user.enrollment_status || (isLearner ? 'pending' : 'approved');
+                        if (!isLearner && !isConfirmed && displayStatus === 'approved') {
+                          displayStatus = 'unconfirmed';
+                        }
+
                         return (
-                          <span className={`px-2 py-1 rounded text-xs font-semibold capitalize ${
-                            userStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
-                            userStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                          <span className={`px-2 py-1 rounded text-xs font-semibold capitalize whitespace-nowrap ${
+                            displayStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
+                            displayStatus === 'unconfirmed' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                            displayStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
                             'bg-rose-100 text-rose-700'
                           }`}>
-                            {userStatus}
+                            {displayStatus === 'unconfirmed' ? 'Pending Confirmation' : displayStatus}
                           </span>
                         );
                       })()}
                     </td>
                     <td className="py-3 px-4 text-right">
-                      {(() => {
-                        const userStatus = user.enrollment_status || 
-                          ((user.role === 'student' || user.role === 'learner') ? 'pending' : 'approved');
-                        return userStatus === 'pending' && (
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleStatusChange(user.id, 'approved')}
-                              className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-                              title="Approve"
-                            >
-                              <CheckCircle className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={() => handleStatusChange(user.id, 'rejected')}
-                              className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors"
-                              title="Reject"
-                            >
-                              <XCircle className="w-5 h-5" />
-                            </button>
-                          </div>
-                        );
-                      })()}
+                      <div className="flex justify-end items-center space-x-2">
+                        {(() => {
+                          const userStatus = user.enrollment_status || 
+                            ((user.role === 'learner') ? 'pending' : 'approved');
+                          return userStatus === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(user.id, 'approved')}
+                                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                title="Approve"
+                                disabled={updatingId === user.id}
+                              >
+                                <CheckCircle className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(user.id, 'rejected')}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                                title="Reject"
+                                disabled={updatingId === user.id}
+                              >
+                                <XCircle className="w-5 h-5" />
+                              </button>
+                            </>
+                          );
+                        })()}
+
+                        {currentUser?.id !== user.id ? (
+                          <button
+                            onClick={() => handleDeleteUser(user.id, `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'User')}
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded transition-colors disabled:opacity-50"
+                            title="Delete / Remove User"
+                            disabled={updatingId === user.id}
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-semibold select-none px-1.5 py-0.5 bg-slate-100 rounded">
+                            You (Admin)
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -30,7 +30,7 @@ export async function getParentData(parentId: string) {
           .from('profiles')
           .select('id, full_name, first_name, last_name, email, grade, progress')
           .eq('school_id', parentProfile.school_id)
-          .in('role', ['student', 'learner']);
+          .eq('role', 'learner');
 
         if (!error && studentProfiles) {
           for (const student of studentProfiles) {

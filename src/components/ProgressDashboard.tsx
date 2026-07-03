@@ -151,7 +151,7 @@ export default function ProgressDashboard({
             <h4 className="font-extrabold text-xs text-slate-900 uppercase tracking-tight">Grade Enrollment</h4>
             <p className="text-[11px] text-slate-400 mt-0.5 font-medium leading-relaxed">
               Enrolled in CAPS <b className="text-slate-700 font-extrabold">Grade {activeStudent.grade}</b>. 
-              {(activeStudent.role !== 'learner' && activeStudent.role !== 'student') && " You can preview other grades' lesson roadmap below!"}
+              {activeStudent.role !== 'learner' && " You can preview other grades' lesson roadmap below!"}
             </p>
           </div>
         </div>
@@ -161,7 +161,7 @@ export default function ProgressDashboard({
       <div className="border-b border-slate-250 pb-px flex items-center justify-between gap-4 flex-wrap">
         <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200 gap-1.5" id="grade-tabs-container">
           {(['R', '1', '2', '3'] as GradeType[]).filter(g => 
-            (activeStudent.role !== 'learner' && activeStudent.role !== 'student') || 
+            activeStudent.role !== 'learner' || 
             g === activeStudent.grade
           ).map((gradeType) => {
             const isActive = selectedTabGrade === gradeType;

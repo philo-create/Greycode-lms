@@ -39,7 +39,7 @@ export async function getSuperAdminData() {
       classesCount
     ] = await Promise.all([
       safeCount(supabase.from('schools').select('*', { count: 'exact', head: true })),
-      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).in('role', ['learner', 'student'])),
+      safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'learner')),
       safeCount(supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher')),
       safeCount(supabase.from('classes').select('*', { count: 'exact', head: true }))
     ]);

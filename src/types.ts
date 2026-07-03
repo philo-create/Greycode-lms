@@ -31,6 +31,6 @@ export interface StudentProfile {
   avatar: string; // emoji character
   pin: string;    // optional 4-digit PIN
   progress: UserProgress;
-  role?: 'student' | 'teacher' | 'admin' | 'learner' | 'school_admin' | 'super_admin' | 'parent' | 'facilitator';
+  role?: 'teacher' | 'admin' | 'learner' | 'school_admin' | 'super_admin' | 'parent' | 'facilitator';
 }
 

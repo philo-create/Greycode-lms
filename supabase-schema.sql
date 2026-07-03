@@ -22,6 +22,7 @@ CREATE TABLE public.profiles (
   parent_email TEXT,
   parent_phone TEXT,
   parent_relationship TEXT,
+  email_confirmed BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -256,6 +257,7 @@ BEGIN
     school_id, 
     grade, 
     enrollment_status,
+    email_confirmed,
     parent_name,
     parent_email,
     parent_phone,
@@ -269,6 +271,7 @@ BEGIN
     (new.raw_user_meta_data->>'school_id')::UUID,
     new.raw_user_meta_data->>'grade',
     CASE WHEN COALESCE(new.raw_user_meta_data->>'role', 'student') IN ('student', 'learner') THEN 'pending' ELSE 'approved' END,
+    (new.email_confirmed_at IS NOT NULL),
     new.raw_user_meta_data->>'parent_name',
     new.raw_user_meta_data->>'parent_email',
     new.raw_user_meta_data->>'parent_phone',
@@ -281,3 +284,18 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Automatically track email confirmation updates on auth.users
+CREATE OR REPLACE FUNCTION public.handle_user_update() 
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.profiles
+  SET email_confirmed = (new.email_confirmed_at IS NOT NULL)
+  WHERE id = new.id;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_user_update();

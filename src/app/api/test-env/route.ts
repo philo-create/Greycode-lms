@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const key = process.env.GEMINI_API_KEY || "";
-  return NextResponse.json({ keyPrefix: key.substring(0, 10), length: key.length });
+  const keys = Object.keys(process.env);
+  return NextResponse.json({ 
+    envKeys: keys,
+    hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL
+  });
 }

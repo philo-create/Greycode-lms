@@ -165,7 +165,7 @@ export default function App() {
               {/* Individual grade link selections */}
               <div className="py-2 space-y-1">
                 {GRADES.filter(info => 
-                  (activeStudent.role !== 'learner' && activeStudent.role !== 'student') || 
+                  activeStudent.role !== 'learner' || 
                   info.value === activeStudent.grade
                 ).map((info) => {
                   const isSelected = selectedGrade === info.value;
@@ -305,7 +305,7 @@ export default function App() {
               <span>{progress.totalStars} Stars Earned</span>
             </div>
 
-            {(activeStudent.role !== 'learner' && activeStudent.role !== 'student') && selectedGrade && (
+            {activeStudent.role !== 'learner' && selectedGrade && (
               <button
                 onClick={() => {
                   setSelectedGrade(null);
@@ -376,7 +376,7 @@ export default function App() {
                 {/* Grid cards for Grades R, 1, 2, 3 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {GRADES.filter(info => 
-                    (activeStudent.role !== 'learner' && activeStudent.role !== 'student') || 
+                    activeStudent.role !== 'learner' || 
                     info.value === activeStudent.grade
                   ).map((info) => {
                     const currentCompletedCount = Object.keys(progress.completedWeeks).filter(k => k.startsWith(info.value)).length;

@@ -12,13 +12,13 @@ export default function DashboardIndex() {
     async function routeUser() {
       if (!supabase) {
         console.warn('Supabase is not configured.');
-        router.push('/');
+        window.location.href = '/';
         return;
       }
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        router.push('/');
+        window.location.href = '/';
         return;
       }
 
@@ -30,7 +30,7 @@ export default function DashboardIndex() {
 
       if (error || !data) {
         console.error('Error fetching profile for routing:', error);
-        router.push('/');
+        window.location.href = '/';
         return;
       }
 
@@ -40,7 +40,6 @@ export default function DashboardIndex() {
         'teacher': '/dashboard/teacher',
         'facilitator': '/dashboard/facilitator',
         'learner': '/dashboard/learner',
-        'student': '/dashboard/learner',
         'parent': '/dashboard/parent',
       };
 

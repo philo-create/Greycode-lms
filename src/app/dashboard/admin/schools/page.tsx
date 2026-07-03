@@ -134,6 +134,7 @@ export default function AdminSchoolsPage() {
         email: newAdminEmail.trim(),
         password: newAdminPassword,
         options: {
+          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/` : undefined,
           data: {
             first_name: newAdminFirstName.trim(),
             last_name: newAdminLastName.trim(),

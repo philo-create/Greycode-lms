@@ -47,6 +47,75 @@ WITH CHECK (
   AND school_id = (auth.jwt() -> 'user_metadata' ->> 'school_id')::UUID
 );
 
+-- School admins can delete profiles in their own school
+CREATE POLICY "School admins can delete school profiles"
+ON public.profiles FOR DELETE
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('school_admin'), false)
+  AND school_id = (auth.jwt() -> 'user_metadata' ->> 'school_id')::UUID
+);
+
+-- 3. Comprehensive policies for progress, classes, and students_classes
+-- Drop existing policies first
+DROP POLICY IF EXISTS "Super admins can do all to progress" ON public.progress;
+DROP POLICY IF EXISTS "School staff can manage progress" ON public.progress;
+DROP POLICY IF EXISTS "Super admins can manage classes" ON public.classes;
+DROP POLICY IF EXISTS "School staff can manage classes" ON public.classes;
+DROP POLICY IF EXISTS "Anyone authenticated can view classes" ON public.classes;
+DROP POLICY IF EXISTS "Super admins can manage students_classes" ON public.students_classes;
+DROP POLICY IF EXISTS "School staff can manage students_classes" ON public.students_classes;
+DROP POLICY IF EXISTS "Anyone authenticated can view students_classes" ON public.students_classes;
+
+-- Progress Policies for Admin and Staff
+CREATE POLICY "Super admins can do all to progress"
+ON public.progress FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('super_admin', 'Super_admin', 'admin'), false)
+);
+
+CREATE POLICY "School staff can manage progress"
+ON public.progress FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('school_admin', 'teacher', 'facilitator'), false)
+);
+
+-- Classes Policies
+CREATE POLICY "Anyone authenticated can view classes"
+ON public.classes FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Super admins can manage classes"
+ON public.classes FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('super_admin', 'Super_admin', 'admin'), false)
+);
+
+CREATE POLICY "School staff can manage classes"
+ON public.classes FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('school_admin', 'teacher', 'facilitator'), false)
+  AND (school_id = (auth.jwt() -> 'user_metadata' ->> 'school_id')::UUID OR school_id IS NULL)
+);
+
+-- Students Classes Mapping Policies
+CREATE POLICY "Anyone authenticated can view students_classes"
+ON public.students_classes FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Super admins can manage students_classes"
+ON public.students_classes FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('super_admin', 'Super_admin', 'admin'), false)
+);
+
+CREATE POLICY "School staff can manage students_classes"
+ON public.students_classes FOR ALL
+USING (
+  coalesce((auth.jwt() -> 'user_metadata' ->> 'role') in ('school_admin', 'teacher', 'facilitator'), false)
+);
+
 -- Note: Also ensure enrollment_status column exists and check constraint is correct
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS enrollment_status TEXT DEFAULT 'pending';
 

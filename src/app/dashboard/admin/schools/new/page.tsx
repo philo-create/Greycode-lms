@@ -33,7 +33,7 @@ export default function NewSchoolPage() {
       
       if (error) throw error;
       
-      router.push('/dashboard/admin/schools'); // redirect to schools list
+      window.location.href = '/dashboard/admin/schools'; // redirect to schools list
     } catch (err: any) {
       setError(err.message || 'Failed to create school');
     } finally {
