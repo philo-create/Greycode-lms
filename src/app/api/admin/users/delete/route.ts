@@ -30,23 +30,24 @@ export async function POST(req: NextRequest) {
     }
     const token = authHeader.split(' ')[1];
 
-    // Create a client bound to the requesting user's session
+    // Create a client bound to the requesting user's session by passing the Bearer token in headers
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       auth: {
         persistSession: false,
         autoRefreshToken: false,
       }
     });
 
-    // Explicitly set session inside the user client to register auth.uid() and auth.jwt() for RLS policies
-    const { data: sessionData, error: sessionError } = await userClient.auth.setSession({
-      access_token: token,
-      refresh_token: '',
-    });
+    // Fetch the authenticated user using getUser(token)
+    const { data: { user }, error: userError } = await userClient.auth.getUser(token);
 
-    const user = sessionData?.user;
-    if (sessionError || !user) {
-      console.error('Failed to verify token session:', sessionError);
+    if (userError || !user) {
+      console.error('Failed to verify token user:', userError);
       return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
     }
 
