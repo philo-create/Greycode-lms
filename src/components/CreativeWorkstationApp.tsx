@@ -184,7 +184,7 @@ export default function CreativeWorkstationApp({
   const [currentStrokeWidth, setCurrentStrokeWidth] = useState(4);
   const [objects, setObjects] = useState<CanvasObject[]>(() => {
     if (typeof window !== 'undefined' && mode === 'bracelet') {
-      const saved = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W7_bracelet_objects`);
+      const saved = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W8_bracelet_objects`);
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -198,7 +198,7 @@ export default function CreativeWorkstationApp({
 
   useEffect(() => {
     if (typeof window !== 'undefined' && mode === 'bracelet') {
-      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W7_bracelet_objects`, JSON.stringify(objects));
+      localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_R-T1-W8_bracelet_objects`, JSON.stringify(objects));
     }
   }, [objects, mode, activeStudentId]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -3336,7 +3336,7 @@ export default function CreativeWorkstationApp({
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          activityId: "R-T1-W7-bracelet",
+                          activityId: "R-T1-W8-bracelet",
                           title: "Beaded Bracelet Design",
                           description: "Place colorful circular beads in a row and alternate exactly two colors to create a repeating AB pattern (e.g. Red, Blue, Red, Blue).",
                           targetDescription: "Must be circular beads placed in a pattern alternating exactly two colors (such as Red and Blue, or Orange and Yellow). They must have drawn actual beads (circles or freehand circular shapes) and they must be colored in an alternating pattern. Look at the image to confirm they didn't just place random lines or non-patterned/single-color elements. If they have extra items or used more than 2 colors without a repeating pattern, fail them with an encouraging message.",

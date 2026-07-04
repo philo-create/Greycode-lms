@@ -107,7 +107,7 @@ const getMascotForGrade = (grade: GradeType, lessonTitle: string): Mascot => {
         bgColor: 'bg-rose-50',
         textColor: 'text-rose-700',
         borderColor: 'border-rose-200',
-        textSpeech: `Hooray! I am Zola! Today we are learning about ${lessonTitle}. Let's play with our blocks and paint patterns! Click the speak button to hear me read everything aloud!`
+        textSpeech: `Hooray! I am Zola! Today we are learning about ${lessonTitle}. Let's have fun and explore this together! Click the speak button to hear me read everything aloud!`
       };
     case '1':
       return {
@@ -892,7 +892,36 @@ export default function Dashboard({
 
   const rating = getReportingRating(percentage);
 
+  const getLessonStatus = (lessonId: string) => {
+    const lessonStatus = (lessonStatuses || {})[lessonId];
+    
+    if (isTeacherPreparation) {
+      const lesson = lessonsForGrade.find(l => l.id === lessonId);
+      if (lesson && lesson.term === 1 && lesson.week === 1 && !lessonStatus) {
+        return 'teacher_unlocked';
+      }
+      return lessonStatus || 'locked';
+    } else {
+      return lessonStatus || 'locked';
+    }
+  };
+
+  const checkIsLessonLocked = (lessonId: string) => {
+    if (superAdminBypass) return false;
+    const status = getLessonStatus(lessonId);
+    
+    if (isTeacherPreparation) {
+      return status === 'locked' || status === 'pending_approval'; // teachers can't open locked or pending
+    } else {
+      return status !== 'unlocked_for_students';
+    }
+  };
+
   const handleToggleWeek = (id: string) => {
+    if (checkIsLessonLocked(id)) {
+      alert("This lesson is currently locked and requires admin approval.");
+      return;
+    }
     const isExpanding = expandedWeek !== id;
     setExpandedWeek(isExpanding ? id : null);
   };
@@ -1130,7 +1159,7 @@ export default function Dashboard({
                             {(lesson.grade === 'R' || lesson.grade === '1') ? (
                               <div key={`col-workbook-${activeStudentId}-${lesson.id}-${resetCounter}`} className="pt-2">
                                 {(() => {
-                                  if (lesson.id === 'R-T1-W7' && grade === 'R') {
+                                  if (lesson.id === 'R-T1-W8' && grade === 'R') {
                                     const actIds = ['activity_1_red_blue', 'activity_2_device_frame', 'activity_3_led_circuit', 'activity_4_house_design'];
                                     const actNames = [
                                       'Pattern Creator 🔴🔵',
@@ -1838,7 +1867,7 @@ export default function Dashboard({
                   {(fullscreenLesson.grade === 'R' || fullscreenLesson.grade === '1') ? (
                     <div key={`fs-workbook-${activeStudentId}-${fullscreenLesson.id}-${resetCounter}`} className="space-y-5">
                       {(() => {
-                        if (fullscreenLesson.id === 'R-T1-W7' && grade === 'R') {
+                        if (fullscreenLesson.id === 'R-T1-W8' && grade === 'R') {
                           const actIds = ['activity_1_red_blue', 'activity_2_device_frame', 'activity_3_led_circuit', 'activity_4_house_design'];
                           const actNames = [
                             'Pattern Creator 🔴🔵',
@@ -2335,9 +2364,16 @@ export default function Dashboard({
 
                     <button
                       disabled={!isChecklistCompletedForLesson(fullscreenLesson.id)}
-                      onClick={() => {
+                      onClick={async () => {
                         const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
                         updateProgress(weekKey, 3, 3);
+                        
+                        if (isTeacherPreparation && schoolId) {
+                           await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
+                           if (setLessonStatuses) {
+                             setLessonStatuses(prev => ({ ...prev, [fullscreenLesson.id]: 'pending_approval' }));
+                           }
+                        }
                       }}
                       className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer select-none active:scale-95 ${
                         progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`]

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -21,7 +22,7 @@ import {
 import { LoadingState } from '@/components/dashboard/LoadingState';
 
 const SIGNUP_EMAIL_TEMPLATE = `<!DOCTYPE html>
-<html>
+<html lang='en'>
 <head>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }
@@ -56,7 +57,7 @@ const SIGNUP_EMAIL_TEMPLATE = `<!DOCTYPE html>
 </html>`;
 
 const PASSWORD_EMAIL_TEMPLATE = `<!DOCTYPE html>
-<html>
+<html lang='en'>
 <head>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 0; }

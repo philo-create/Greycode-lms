@@ -65,22 +65,22 @@ interface GradeRVisualBoardProps {
 }
 
 export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) {
-  // Pattern interactive state (R-T1-W1)
+  // Pattern interactive state (R-T1-W2)
   const [patternAnswers, setPatternAnswers] = useState<(string | null)[]>([null, null]);
   const [patternSuccess, setPatternSuccess] = useState(false);
 
-  // Arrow card interactive state (R-T1-W4)
+  // Arrow card interactive state (R-T1-W5)
   const [bunnyPosition, setBunnyPosition] = useState<number>(0); // 0 = start, 1 = mid, 2 = eating, 3 = happy
   const [arrowCommands, setArrowCommands] = useState<string[]>([]);
 
-  // Input/Output tapping state (R-T1-W9)
+  // Input/Output tapping state (R-T1-W1)
   const [isPhoneRinging, setIsPhoneRinging] = useState(false);
 
-  // Rhythm percussion interactive states (R-T1-W8)
+  // Rhythm percussion interactive states (R-T1-W9)
   const [rhythmSequence, setRhythmSequence] = useState<string[]>([]);
   const [rhythmSuccessState, setRhythmSuccessState] = useState(false);
 
-  // Desktop parts interactive states (R-T1-W9)
+  // Desktop parts interactive states (R-T1-W1)
   const [highlightedComponent, setHighlightedComponent] = useState<string | null>(null);
 
   // General audio states
@@ -180,7 +180,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
   const renderVisualContent = () => {
     switch (lessonId) {
       // WEEK 1: Rudimentary Patterns
-      case 'R-T1-W1':
+      case 'R-T1-W2':
         return (
           <div className="space-y-5">
             <div className="bg-amber-50/70 border border-amber-200/60 rounded-2xl p-4 text-center space-y-2">
@@ -276,7 +276,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 2: My First Computing Devices
-      case 'R-T1-W2':
+      case 'R-T1-W3':
         return (
           <div className="space-y-4">
             <div className="bg-sky-50 border border-sky-200/60 rounded-2xl p-4 text-center space-y-1.5">
@@ -352,7 +352,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 3: Picture Stories — Beginning, Middle and End
-      case 'R-T1-W3':
+      case 'R-T1-W4':
         return (
           <div className="space-y-4">
             <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-2xl p-4 text-center space-y-1.5">
@@ -424,7 +424,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 4: Introduction to Arrow Cards
-      case 'R-T1-W4':
+      case 'R-T1-W5':
         return (
           <div className="space-y-4">
             <div className="bg-amber-55/40 border border-amber-200 bg-amber-50 rounded-2xl p-4 text-center space-y-1">
@@ -506,7 +506,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 5: What is a Robot?
-      case 'R-T1-W5':
+      case 'R-T1-W6':
         return (
           <div className="space-y-4">
             <div className="bg-indigo-50 border border-indigo-150 rounded-2xl p-4 text-center space-y-1">
@@ -572,7 +572,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 6: Mimic Robot Grid Task
-      case 'R-T1-W6':
+      case 'R-T1-W7':
         return (
           <div className="space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
@@ -630,7 +630,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 7: Beaded Bracelet Designer
-      case 'R-T1-W7':
+      case 'R-T1-W8':
         return (
           <div className="space-y-4">
             <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-2xl p-4 text-center">
@@ -680,7 +680,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
         );
 
       // WEEK 8: Sound & Percussion Rhythm
-      case 'R-T1-W8': {
+      case 'R-T1-W9': {
         const expectedPattern = ["🔴", "🟡", "🔴", "🟡"];
         const handleAddBeats = (type: string) => {
           if (rhythmSuccessState) return;
@@ -799,7 +799,7 @@ export default function GradeRVisualBoard({ lessonId }: GradeRVisualBoardProps) 
       }
 
       // WEEK 9: How to Keep Devices Safe
-      case 'R-T1-W9': {
+      case 'R-T1-W1': {
         const safetyRulesList = [
           {
             id: 'clean-hands',

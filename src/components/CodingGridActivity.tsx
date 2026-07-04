@@ -25,7 +25,7 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
 
   const getInitialBoard = (lvl: number): GridCell[][] => {
-    if (lessonId === 'R-T1-W6') {
+    if (lessonId === 'R-T1-W7') {
       if (lvl === 1) {
         return [
           [ {type: 'empty'}, {type: 'empty'}, {type: 'empty'}, {type: 'empty'}, {type: 'target'} ],
@@ -44,7 +44,7 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
         ];
       }
     }
-    if (lessonId === 'R-T1-W4') {
+    if (lessonId === 'R-T1-W5') {
       return [
         [ {type: 'start'}, {type: 'empty'}, {type: 'empty'}, {type: 'empty'}, {type: 'wall'} ],
         [ {type: 'wall'}, {type: 'wall'}, {type: 'wall'}, {type: 'empty'}, {type: 'wall'} ],
@@ -63,10 +63,10 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
   };
 
   // Map levels
-  const characterName = lessonId === 'R-T1-W6' ? 'Baby Bot' : 'Sipho Super Bunny';
-  const characterEmoji = lessonId === 'R-T1-W6' ? '🤖' : '🐰';
-  const targetEmoji = lessonId === 'R-T1-W6' ? '🍼' : '🥕';
-  const targetName = lessonId === 'R-T1-W6' ? 'milk bottle' : 'juicy carrot';
+  const characterName = lessonId === 'R-T1-W7' ? 'Baby Bot' : 'Sipho Super Bunny';
+  const characterEmoji = lessonId === 'R-T1-W7' ? '🤖' : '🐰';
+  const targetEmoji = lessonId === 'R-T1-W7' ? '🍼' : '🥕';
+  const targetName = lessonId === 'R-T1-W7' ? 'milk bottle' : 'juicy carrot';
 
   const [board, setBoard] = useState<GridCell[][]>(getInitialBoard(1));
 
@@ -83,7 +83,7 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
   const [tick, setTick] = useState(0);
   const [demoRunning, setDemoRunning] = useState(false);
   const demoRunningRef = useRef(false);
-  const [hasWatchedDemo, setHasWatchedDemo] = useState(lessonId !== 'R-T1-W4');
+  const [hasWatchedDemo, setHasWatchedDemo] = useState(lessonId !== 'R-T1-W5');
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
 
   // Load level start coordinates based on grade style
@@ -492,7 +492,7 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
       </div>
 
       {/* Playful Instruction Banner or Interactive Teacher */}
-      {lessonId === 'R-T1-W4' ? (
+      {lessonId === 'R-T1-W5' ? (
         <div className="bg-indigo-50 border-2 border-indigo-200 p-4 rounded-2xl mb-6 shadow-sm flex gap-4 items-center">
           <div className="w-16 h-16 bg-white shrink-0 rounded-full border-4 border-indigo-100 flex items-center justify-center text-3xl shadow">
             👩‍🏫
@@ -613,7 +613,7 @@ export default function CodingGridActivity({ grade, lessonId, onComplete }: { gr
 
         {/* Workspace Block Programmer or Multiple Choice Mode */}
         <div className="lg:col-span-6 flex flex-col space-y-6">
-          {lessonId === 'R-T1-W6' ? (
+          {lessonId === 'R-T1-W7' ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex-grow flex flex-col">
               <h3 className="text-lg font-black text-slate-800 mb-4">
                 Which set of instructions gets Baby Bot to the bottle?

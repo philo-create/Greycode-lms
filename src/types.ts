@@ -34,3 +34,16 @@ export interface StudentProfile {
   role?: 'teacher' | 'admin' | 'learner' | 'school_admin' | 'super_admin' | 'parent' | 'facilitator';
 }
 
+
+export type LessonStatus = 'locked' | 'teacher_unlocked' | 'pending_approval' | 'unlocked_for_students';
+
+export interface ClassLessonStatus {
+  id: string;
+  school_id: string;
+  teacher_id: string;
+  grade: string;
+  lesson_id: string;
+  status: LessonStatus;
+  completed_at?: string;
+  approved_at?: string;
+}

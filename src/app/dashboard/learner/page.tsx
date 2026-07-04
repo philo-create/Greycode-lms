@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -19,6 +20,7 @@ export default function LearnerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState<any>(null);
+  const [lessonStatuses, setLessonStatuses] = useState<Record<string, LessonStatus>>({});
   const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {

@@ -326,7 +326,7 @@ interface LessonWorkbookData {
 
 // Config object mapping lesson IDs to their custom guide & quiz data
 const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
-  'R-T1-W1': {
+  'R-T1-W2': {
     mascotSpeech: "Hey there, pattern explorer! Let's find repeating colors like Red, Blue, Red, Blue. Can you follow my sequence rule?",
     bigWord: "PATTERN",
     tracePrompt: "P-A-T-T-E-R-N",
@@ -334,7 +334,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "Which of these is a simple repeating colour pattern?", opts: ["🔴🔵🔴🔵", "🔴🔴🔴🔵🔵", "🔴🟡🔵🟢"], correct: 0, hint: "Look for neat alternation: Red, Blue, Red, Blue." }
     ]
   },
-  'R-T1-W2': {
+  'R-T1-W3': {
     mascotSpeech: "Hello! There are amazing electronic devices all around the world! Let's learn about them and how they help us every day.",
     bigWord: "DEVICE",
     tracePrompt: "D-E-V-I-C-E",
@@ -344,7 +344,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "What does a desktop computer or laptop help us do?", opts: ["Play cool school games and learn! 💻", "Chop some vegetables 🥦", "Wash our hands 🧼"], correct: 0, hint: "Computers help us learn, play games, and work!" }
     ]
   },
-  'R-T1-W3': {
+  'R-T1-W4': {
     mascotSpeech: "Computers and robots need steps in the correct order! Let's arrange picture stories: what happens first, next, and last?",
     bigWord: "STORY",
     tracePrompt: "S-T-O-R-Y",
@@ -354,7 +354,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "If you want to grow a plant, what is the BEGINNING step?", opts: ["Pick tomatoes 🍅", "Water the plants 🚿", "Plant seeds 🌱"], correct: 2, hint: "First, you must put the seeds in the ground." }
     ]
   },
-  'R-T1-W4': {
+  'R-T1-W5': {
     mascotSpeech: "Hop hop! Let's use ARROW CARDS to guide Sipho Super Bunny to the tasty carrots. One arrow moves me forward until I hit a wall!",
     bigWord: "ARROW CODE",
     tracePrompt: "A-R-R-O-W",
@@ -364,7 +364,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "How far does Sipho move when given one arrow card?", opts: ["Until hitting a wall 🧱", "Moves 10 blocks 🏃", "Loops forever 🔄"], correct: 0, hint: "One arrow will move Sipho continuously until he bumps into a wall." }
     ]
   },
-  'R-T1-W5': {
+  'R-T1-W6': {
     mascotSpeech: "System online! I am a robot helper. Humans build me and tell me exactly what to do using code cards.",
     bigWord: "ROBOT",
     tracePrompt: "R-O-B-O-T",
@@ -374,7 +374,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "Do helper robots clean the floors for us automatically?", opts: ["YES 👍", "NO 👎"], correct: 0, hint: "Yes! Robot vacuum cleaners can sweep up and clean the floor by themselves." }
     ]
   },
-  'R-T1-W6': {
+  'R-T1-W7': {
     mascotSpeech: "Remember the arrow cards we used to guide the bunny? They are a type of code card! We use these symbols to give instructions. Let's use a set of instructions to guide Baby Bot to its milk bottle!",
     bigWord: "INSTRUCTIONS",
     tracePrompt: "C-O-D-E",
@@ -384,7 +384,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "If Baby Bot misses the bottle, what do we do?", opts: ["Debug and test another set of instructions 🛠️", "Give up completely 😭", "Break the maze 💥"], correct: 0, hint: "We test a different set of instructions." }
     ]
   },
-  'R-T1-W7': {
+  'R-T1-W8': {
     mascotSpeech: "Today, you are going to design your own bracelet using a repeating color pattern with round beads. Your bracelet design will be graded to earn up to 10 stars!",
     bigWord: "BRACELET",
     tracePrompt: "B-E-A-D-S",
@@ -394,7 +394,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "Does this bracelet follow a perfect alternating pattern: Red, Blue, Red, Blue?", opts: ["YES 👍", "NO 👎"], correct: 0, hint: "Look at the sequence! It alternates Red, Blue, Red, Blue correctly from start to finish.", beadColors: ["🔴", "🔵", "🔴", "🔵", "🔴", "🔵"] }
     ]
   },
-  'R-T1-W8': {
+  'R-T1-W9': {
     mascotSpeech: "Rhythms are patterns we can hear and feel! Drum, Clap, Drum, Clap. Let's make happy rhythm patterns!",
     bigWord: "RHYTHM",
     tracePrompt: "R-H-Y-T-H-M",
@@ -404,7 +404,7 @@ const LESSON_WORKBOOK_DATA: Record<string, LessonWorkbookData> = {
       { q: "Can we make repeating patterns using drum pads and claps?", opts: ["YES! 🥁 Drumming & Clapping", "NO 🤐 Only by jumping"], correct: 0, hint: "We can use drums and claps to make fun sound patterns!" }
     ]
   },
-  'R-T1-W9': {
+  'R-T1-W1': {
     mascotSpeech: "It is very important to keep our devices safe! Let's learn about washing hands, keeping food away, and being gentle.",
     bigWord: "SAFETY",
     tracePrompt: "S-A-F-E",
@@ -2778,7 +2778,7 @@ function ArrowMazeConceptGuide({
     }
   };
 
-  // 5x5 Grid Maze visualizer match R-T1-W4 exact Sandbox Layout
+  // 5x5 Grid Maze visualizer match R-T1-W5 exact Sandbox Layout
   const grid = [
     ['empty', 'empty', 'empty', 'empty', 'wall'],
     ['wall',  'wall',  'wall',  'empty', 'wall'],
@@ -3717,7 +3717,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
 
   switch (lesson.id) {
     // --- GRADE R ---
-    case 'R-T1-W1':
+    case 'R-T1-W2':
       title = "Pattern Explorer Guide";
       pose = "pointing_idea";
       speechText = "A pattern goes over and over! Click on the glowing card first to learn!";
@@ -3962,7 +3962,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W2':
+    case 'R-T1-W3':
       title = "2. Device Explorer Guide Introduction";
       pose = "thumbsup";
       speechText = "As mentioned in the introduction there are different electronic devices in the world! Let's learn about them. Click on the highlighted item to continue.";
@@ -4079,7 +4079,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W3':
+    case 'R-T1-W4':
       title = "Picture Storyteller";
       pose = "crayon_book";
       speechText = "Every picture story has a Beginning, a Middle, and an End! Click the glowing boxes to continue.";
@@ -4155,7 +4155,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W4':
+    case 'R-T1-W5':
       title = "Arrow Code Navigator";
       pose = "reminder";
       speechText = "Each arrow tells Sipho Super Bunny to hop in a direction until hitting a wall. Click to trace the commands!";
@@ -4164,7 +4164,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W5':
+    case 'R-T1-W6':
       title = "Robot Assistant Lab";
       pose = "clapping";
       speechText = "A robot is a machine made by humans that follows our exact instructions. It does not have feelings or sleep, but performs helpful jobs very fast! Click to learn more.";
@@ -4177,7 +4177,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W6':
+    case 'R-T1-W7':
       title = "Baby Bot Code Cards";
       pose = "waving";
       speechText = "Just like we used arrow cards to guide the bunny, we can group arrow cards together to build instructions for a robot! Since there are no obstacles in our path, different sets of instructions can reach our goal. Test the sets to see which ones work!";
@@ -4186,7 +4186,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W7':
+    case 'R-T1-W8':
       title = "Bracelet Design Challenge";
       pose = "pointing_idea";
       speechText = "A bracelet is a beautiful piece of jewelry we wear around our wrists! Today, you are going to design your own bracelet using a repeating color pattern with round beads. Tap to see the design you need to build!";
@@ -4228,14 +4228,14 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
       );
       break;
 
-    case 'R-T1-W8':
+    case 'R-T1-W9':
       title = "Drum Pad Rhythm Explorer";
       pose = "clapping";
       speechText = "Rhythm patterns are sound patterns that repeat over and over! We can use drums and claps to make a beat. Let's play the drum pad to hear our sequence!";
       visualNode = <DrumPadExplorer speakText={speakText} stepProgress={r1w8Progress} onStepProgress={(p) => setR1W8Progress(p)} />;
       break;
 
-    case 'R-T1-W9':
+    case 'R-T1-W1':
       title = "Device Safety Guide";
       pose = "thumbsup";
       speechText = "To keep our electronic devices working perfectly, we must treat them well! Keep them away from food and water, hold them nicely, and always have clean hands. Let's learn to keep devices safe!";
@@ -4950,18 +4950,18 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
 
       <div className="bg-indigo-50/40 border border-indigo-100 rounded-2xl p-4 md:p-6 flex flex-col md:flex-row items-stretch gap-6 relative z-10 font-sans">
         {/* Left Side: Mascot Girl / Zoe / Zola */}
-        {lesson.id !== 'R-T1-W5' && (
+        {lesson.id !== 'R-T1-W6' && (
           <div id="workbook-guidance-mascot-card" className="flex flex-col items-center shrink-0 p-3 bg-white rounded-3xl border-2 border-indigo-100 shadow-xs hover:shadow-md transition-all duration-300 transform hover:scale-105 select-none self-start">
             {lesson.grade === 'R' ? (
               <img 
                 src={
-                  lesson.id === 'R-T1-W1' ? (regeneratedMascotImg.src || regeneratedMascotImg) : 
-                  lesson.id === 'R-T1-W2' ? (regeneratedMascotImgW2.src || regeneratedMascotImgW2) : 
-                  lesson.id === 'R-T1-W3' ? (regeneratedMascotImgW3.src || regeneratedMascotImgW3) : 
-                  lesson.id === 'R-T1-W4' ? (regeneratedMascotImgW4.src || regeneratedMascotImgW4) : 
-                  lesson.id === 'R-T1-W7' ? (regeneratedMascotImgW7.src || regeneratedMascotImgW7) : 
-                  lesson.id === 'R-T1-W8' ? (regeneratedMascotImgW8.src || regeneratedMascotImgW8) : 
-                  lesson.id === 'R-T1-W9' ? (regeneratedMascotImgW9.src || regeneratedMascotImgW9) : 
+                  lesson.id === 'R-T1-W2' ? (regeneratedMascotImg.src || regeneratedMascotImg) : 
+                  lesson.id === 'R-T1-W3' ? (regeneratedMascotImgW2.src || regeneratedMascotImgW2) : 
+                  lesson.id === 'R-T1-W4' ? (regeneratedMascotImgW3.src || regeneratedMascotImgW3) : 
+                  lesson.id === 'R-T1-W5' ? (regeneratedMascotImgW4.src || regeneratedMascotImgW4) : 
+                  lesson.id === 'R-T1-W8' ? (regeneratedMascotImgW7.src || regeneratedMascotImgW7) : 
+                  lesson.id === 'R-T1-W9' ? (regeneratedMascotImgW8.src || regeneratedMascotImgW8) : 
+                  lesson.id === 'R-T1-W1' ? (regeneratedMascotImgW9.src || regeneratedMascotImgW9) : 
                   getZolaImage(pose)
                 } 
                 alt="Zola"
@@ -4995,17 +4995,17 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
 
       {onComplete && !isCompleted && (() => {
         const requiredSteps: Record<string, number> = {
-          'R-T1-W1': 2, 'R-T1-W2': 6, 'R-T1-W3': 3, 'R-T1-W4': 4,
-          'R-T1-W5': 2, 'R-T1-W6': 3, 'R-T1-W7': 1, 'R-T1-W8': 2,
-          'R-T1-W9': 4, 'R-T1-W10': 1, 'R-T2-W5': 2, 'R-T3-W5': 2,
+          'R-T1-W2': 2, 'R-T1-W3': 6, 'R-T1-W4': 3, 'R-T1-W5': 4,
+          'R-T1-W6': 2, 'R-T1-W7': 3, 'R-T1-W8': 1, 'R-T1-W9': 2,
+          'R-T1-W1': 4, 'R-T1-W10': 1, 'R-T2-W5': 2, 'R-T3-W5': 2,
           'R-T4-W2': 2, 'R-T4-W5': 3, '1-T1-W1': 3, '1-T1-W2': 3,
           '1-T1-W5': 3, '1-T2-W5': 2, '1-T2-W9': 3, '1-T3-W2': 2,
           '1-T3-W5': 3, '1-T4-W2': 3, '1-T4-W5': 3,
         };
         const progresses: Record<string, number> = {
-          'R-T1-W1': r1w1Progress, 'R-T1-W2': r1w2Progress, 'R-T1-W3': r1w3Progress,
-          'R-T1-W4': r1w4Progress, 'R-T1-W5': r1w5Progress, 'R-T1-W6': r1w6Progress,
-          'R-T1-W7': r1w7Progress, 'R-T1-W8': r1w8Progress, 'R-T1-W9': r1w9Progress,
+          'R-T1-W2': r1w1Progress, 'R-T1-W3': r1w2Progress, 'R-T1-W4': r1w3Progress,
+          'R-T1-W5': r1w4Progress, 'R-T1-W6': r1w5Progress, 'R-T1-W7': r1w6Progress,
+          'R-T1-W8': r1w7Progress, 'R-T1-W9': r1w8Progress, 'R-T1-W1': r1w9Progress,
           'R-T1-W10': r1w10Progress, 'R-T2-W5': rt2w5Progress, 'R-T3-W5': rt3w5Progress,
           'R-T4-W2': rt4w2Progress, 'R-T4-W5': rt4w5Progress, '1-T1-W1': g1t1w1Progress,
           '1-T1-W2': g1t1w2Progress, '1-T1-W5': g1t1w5Progress, '1-T2-W5': g1t2w5Progress,
@@ -5059,14 +5059,14 @@ export default function GradeR1Workbook({
   const [reflectionFace, setReflectionFace] = useState<string | null>(null);
   const [showHomeworkWarning, setShowHomeworkWarning] = useState(false);
 
-  // States for interactive coloring puzzle in R-T1-W1
+  // States for interactive coloring puzzle in R-T1-W2
   const [w1SelectedCrayon, setW1SelectedCrayon] = useState<string | null>(null);
   const [w1ActiveColor, setW1ActiveColor] = useState<string | null>(null);
   const [w1Correct, setW1Correct] = useState<boolean | null>(null);
   const [w1Feedback, setW1Feedback] = useState<string>('');
   const [w1HasPainted, setW1HasPainted] = useState(false);
 
-  // States for interactive coloring puzzle in R-T1-W1 Page 2 Tech Challenge
+  // States for interactive coloring puzzle in R-T1-W2 Page 2 Tech Challenge
   const [grW1P2SelectedCrayon, setGrW1P2SelectedCrayon] = useState<string | null>(null);
   const [grW1P2ActiveColor, setGrW1P2ActiveColor] = useState<string | null>(null);
   const [grW1P2Correct, setGrW1P2Correct] = useState<boolean | null>(null);
@@ -5077,12 +5077,12 @@ export default function GradeR1Workbook({
   const [g1w1ActiveColor, setG1w1ActiveColor] = useState<string | null>(null);
   const [g1w1Correct, setG1w1Correct] = useState<boolean | null>(null);
   
-  // States for interactive ordering puzzle in R-T1-W3
+  // States for interactive ordering puzzle in R-T1-W4
   const [grW3Order, setGrW3Order] = useState<string[]>([]);
   const [grW3Correct, setGrW3Correct] = useState<boolean | null>(null);
   const [grW3Feedback, setGrW3Feedback] = useState<string>('');
   
-  // States for interactive rhythm challenge in R-T1-W8
+  // States for interactive rhythm challenge in R-T1-W9
   const [grW8Sequence, setGrW8Sequence] = useState<string[]>([]);
   const [grW8Correct, setGrW8Correct] = useState<boolean | null>(null);
   const [grW8Feedback, setGrW8Feedback] = useState<string>('');
@@ -5139,9 +5139,9 @@ export default function GradeR1Workbook({
     if (localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_submitted`) === 'true') {
       let t = 3; // basic questions length
       if (lesson.grade === 'R') t += 2;
-      if (lesson.id === 'R-T1-W1') t += 1;
+      if (lesson.id === 'R-T1-W2') t += 1;
       if (lesson.id === '1-T1-W1') t += 1;
-      if (lesson.id === 'R-T1-W3') t += 1;
+      if (lesson.id === 'R-T1-W4') t += 1;
       return t;
     }
     return null;
@@ -5206,7 +5206,7 @@ export default function GradeR1Workbook({
     setGrW1Level1Completed(isSub || savedLevelCompleted);
 
     if (isSub) {
-      if (lesson.id === 'R-T1-W1') {
+      if (lesson.id === 'R-T1-W2') {
         const savedColor = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w1p2_color`);
         if (savedColor) {
           setGrW1P2ActiveColor(savedColor);
@@ -5234,7 +5234,7 @@ export default function GradeR1Workbook({
         setG1w1Correct(null);
       }
 
-      if (lesson.id === 'R-T1-W3') {
+      if (lesson.id === 'R-T1-W4') {
         const savedOrder = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w3_order`);
         if (savedOrder) {
           const parsedOrder = JSON.parse(savedOrder);
@@ -5249,7 +5249,7 @@ export default function GradeR1Workbook({
         setGrW3Correct(null);
       }
       
-      if (lesson.id === 'R-T1-W8') {
+      if (lesson.id === 'R-T1-W9') {
         const savedSeq = localStorage.getItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w8_sequence`);
         if (savedSeq) {
           const parsedSeq = JSON.parse(savedSeq);
@@ -5391,7 +5391,7 @@ export default function GradeR1Workbook({
     }, 400);
 
     // Save started state if it's W7 to check for workstation unlocking
-    if (lesson.id === 'R-T1-W7' && activeStudentId) {
+    if (lesson.id === 'R-T1-W8' && activeStudentId) {
       localStorage.setItem(`w7_started_${activeStudentId}`, 'true');
     }
 
@@ -5406,7 +5406,7 @@ export default function GradeR1Workbook({
     if (isLenientMatch(traceInput, workbookConfig.bigWord, workbookConfig.tracePrompt)) {
       setIsSection2Unlocked(true);
       playChime();
-      if (lesson.id === 'R-T1-W2') {
+      if (lesson.id === 'R-T1-W3') {
         speakText(`Wonderful tracing! You successfully matched our big word of the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more about them.`);
       } else {
         speakText(`Wonderful tracing! You successfully matched our big word of the day in our writing desk! Let's explore the ${workbookConfig.bigWord} Explorer Guide below! Scroll down and click on the highlighted items to learn more.`);
@@ -5425,7 +5425,7 @@ export default function GradeR1Workbook({
     setPracticeCompleted(true);
     playChime();
     
-    if (lesson.id === 'R-T1-W7') {
+    if (lesson.id === 'R-T1-W8') {
       const finalStars = starsEarned;
       const finalPossible = possible || 3;
       setQuizSubmitted(true);
@@ -5465,7 +5465,7 @@ export default function GradeR1Workbook({
       [qIdx]: oIdx
     }));
 
-    if (lesson.id === 'R-T1-W1') {
+    if (lesson.id === 'R-T1-W2') {
       const q = workbookConfig.questions[qIdx];
       const optText = q.opts[oIdx];
       const speakingText = optText.replace(/[🔴🔵🟢🟡]/g, '').trim();
@@ -5510,7 +5510,7 @@ export default function GradeR1Workbook({
       setGrTypingCorrect(isTypingCorrect);
     }
 
-    if (lesson.id === 'R-T1-W1') {
+    if (lesson.id === 'R-T1-W2') {
       if (grW1P2ActiveColor === 'Blue') {
         setGrW1P2Correct(true);
         setGrW1P2Feedback('Superb! You colored the last shape BLUE. The Blue-Green pattern continues perfectly!');
@@ -5533,7 +5533,7 @@ export default function GradeR1Workbook({
       }
     }
     
-    if (lesson.id === 'R-T1-W3') {
+    if (lesson.id === 'R-T1-W4') {
       if (grW3Order.join(',') === 'Start,Middle,End') {
         setGrW3Correct(true);
         setGrW3Feedback('Correct! You arranged the pictures perfectly: Start, Middle, then End.');
@@ -5543,7 +5543,7 @@ export default function GradeR1Workbook({
       }
     }
     
-    if (lesson.id === 'R-T1-W8') {
+    if (lesson.id === 'R-T1-W9') {
       if (grW8Sequence.join(',') === '🔴,🟡,🔴,🟡') {
         setGrW8Correct(true);
         setGrW8Feedback('Fantastic! You followed the rhythm perfectly: Drum, Clap, Drum, Clap!');
@@ -5566,7 +5566,7 @@ export default function GradeR1Workbook({
       if (isDrawingCorrectLocal) correctCount++;
     }
 
-    if (lesson.id === 'R-T1-W1') {
+    if (lesson.id === 'R-T1-W2') {
       if (grW1P2ActiveColor === 'Blue') correctCount++;
     }
 
@@ -5575,20 +5575,20 @@ export default function GradeR1Workbook({
       if (g1w1ActiveColor === 'Blue') correctCount++;
     }
     
-    if (lesson.id === 'R-T1-W3') {
+    if (lesson.id === 'R-T1-W4') {
       if (grW3Order.join(',') === 'Start,Middle,End') correctCount++;
     }
 
-    if (lesson.id === 'R-T1-W8') {
+    if (lesson.id === 'R-T1-W9') {
       if (grW8Sequence.join(',') === '🔴,🟡,🔴,🟡') correctCount++;
     }
 
     let totalQuestions = workbookConfig.questions.length;
     if (lesson.grade === 'R') totalQuestions += 2;
-    if (lesson.id === 'R-T1-W1') totalQuestions += 1;
+    if (lesson.id === 'R-T1-W2') totalQuestions += 1;
     if (lesson.id === '1-T1-W1') totalQuestions += 1;
-    if (lesson.id === 'R-T1-W3') totalQuestions += 1;
-    if (lesson.id === 'R-T1-W8') totalQuestions += 1;
+    if (lesson.id === 'R-T1-W4') totalQuestions += 1;
+    if (lesson.id === 'R-T1-W9') totalQuestions += 1;
 
     let calculatedStars = totalQuestions > 0 ? correctCount : 0;
     
@@ -5616,16 +5616,16 @@ export default function GradeR1Workbook({
         localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_tracing_feedback`, fbToSave);
       }
     }
-    if (lesson.id === 'R-T1-W1') {
+    if (lesson.id === 'R-T1-W2') {
       if (grW1P2ActiveColor) localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w1p2_color`, grW1P2ActiveColor);
     }
     if (lesson.id === '1-T1-W1') {
       if (g1w1ActiveColor) localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_g1w1_color`, g1w1ActiveColor);
     }
-    if (lesson.id === 'R-T1-W3') {
+    if (lesson.id === 'R-T1-W4') {
       localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w3_order`, JSON.stringify(grW3Order));
     }
-    if (lesson.id === 'R-T1-W8') {
+    if (lesson.id === 'R-T1-W9') {
       localStorage.setItem(`gr_wb_${activeStudentId || 'default'}_${lesson.id}_w8_sequence`, JSON.stringify(grW8Sequence));
     }
 
@@ -5636,7 +5636,7 @@ export default function GradeR1Workbook({
     }
     onComplete(calculatedStars, totalQuestions);
 
-    if (lesson.id === 'R-T1-W1') {
+    if (lesson.id === 'R-T1-W2') {
       let speechFeedback = `Congratulations technology explorer! You finished your workbook and scored ${calculatedStars} out of ${totalQuestions} stars! `;
       if (calculatedStars === totalQuestions) {
         speechFeedback += "You got a perfect score! Excellent tracing of PATTERN, magnificent coloring of our blue square, and perfect matching of Sipho's sequence! You are a pattern superstar!";
@@ -5654,7 +5654,7 @@ export default function GradeR1Workbook({
         speechFeedback += "Learning is a beautiful journey! Ask your teacher or parent helper to check your finished workbook!";
       }
       speakText(speechFeedback);
-    } else if (lesson.id === 'R-T1-W3') {
+    } else if (lesson.id === 'R-T1-W4') {
       let speechFeedback = `Congratulations technology explorer! You finished your workbook and scored ${calculatedStars} out of ${totalQuestions} stars! `;
       if (calculatedStars === totalQuestions) {
         speechFeedback += "You got a perfect score! Excellent ordering of our cookie making story!";
@@ -5677,7 +5677,7 @@ export default function GradeR1Workbook({
       {/* Dynamic Workbook Navigator Header */}
       <div className="flex bg-slate-100 p-1.5 rounded-2xl border border-slate-200/60 justify-between items-center gap-4 flex-wrap">
         <div className="flex gap-2">
-          {lesson.id === 'R-T1-W7' ? (
+          {lesson.id === 'R-T1-W8' ? (
             <span className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-xs select-none">
               Page 1: Design Challenge Workspace 🎨
             </span>
@@ -5863,21 +5863,21 @@ export default function GradeR1Workbook({
                     
                     let studentMission = "Complete the activity to earn your stars!";
                     
-                    if (lesson.id === 'R-T1-W1') {
+                    if (lesson.id === 'R-T1-W2') {
                       studentMission = "Which color circle comes next in Sipho’s repeating sequence?";
-                    } else if (lesson.id === 'R-T1-W2') {
-                      studentMission = "Level 1: Tap all the electronic computing devices!";
                     } else if (lesson.id === 'R-T1-W3') {
+                      studentMission = "Level 1: Tap all the electronic computing devices!";
+                    } else if (lesson.id === 'R-T1-W4') {
                       studentMission = "What is the right order to wash your hands? Click the pictures in the correct order!";
-                    } else if (lesson.id === 'R-T1-W6') {
-                      studentMission = "Which set of instructions gets Baby Bot to the bottle? Click on a set to test it!";
-                    } else if (lesson.id === 'R-T1-W4' || lesson.activityType === 'grid') {
-                      studentMission = "Help Sipho Super Bunny collect the gem and reach the juicy carrot target using coded movement arrows!";
-                    } else if (lesson.id === 'R-T1-W5') {
-                      studentMission = "Select a crayon color from our palette, and click any part of the robot to paint. When you are finished, click Done Coloring!";
                     } else if (lesson.id === 'R-T1-W7') {
-                      studentMission = "Welcome to your Beaded Bracelet Designer! Scroll down to the workspace, select the circle shape tool, and draw colorful round beads in a row. Alternate colors to create a repeating pattern, and click Submit Workstation Design to grade your custom bracelet!";
+                      studentMission = "Which set of instructions gets Baby Bot to the bottle? Click on a set to test it!";
+                    } else if (lesson.id === 'R-T1-W5' || lesson.activityType === 'grid') {
+                      studentMission = "Help Sipho Super Bunny collect the gem and reach the juicy carrot target using coded movement arrows!";
+                    } else if (lesson.id === 'R-T1-W6') {
+                      studentMission = "Select a crayon color from our palette, and click any part of the robot to paint. When you are finished, click Done Coloring!";
                     } else if (lesson.id === 'R-T1-W8') {
+                      studentMission = "Welcome to your Beaded Bracelet Designer! Scroll down to the workspace, select the circle shape tool, and draw colorful round beads in a row. Alternate colors to create a repeating pattern, and click Submit Workstation Design to grade your custom bracelet!";
+                    } else if (lesson.id === 'R-T1-W9') {
                       studentMission = "Listen to the sound pattern by tapping Hear Pattern, then match it: Drum, Clap, Drum, Clap!";
                     } else if (lesson.activityType === 'robotics') {
                       studentMission = "Mission Grade R & 1 (R.1): Select exactly all the objects below that qualify as a Robot (machines built by humans that take instructions to do repetitive work).";
@@ -5924,7 +5924,7 @@ export default function GradeR1Workbook({
               )}
 
               <div className="p-2 border border-slate-100 rounded-2xl bg-slate-50 min-h-[300px]">
-                {lesson.id === 'R-T1-W8' ? (
+                {lesson.id === 'R-T1-W9' ? (
                   <DrumSandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
                 ) : lesson.activityType === 'pattern' ? (
                   <PatternActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} isUnlocked={isSection3Unlocked || (isSuperAdmin && superAdminBypass)} speakText={speakText} disableInitialSpeech={true} />
@@ -5932,9 +5932,9 @@ export default function GradeR1Workbook({
                 {lesson.activityType === 'grid' && (
                   <CodingGridActivity grade={lesson.grade} lessonId={lesson.id} onComplete={onCompleteActivitySimulation} speakText={speakText} />
                 )}
-                {lesson.activityType === 'robotics' && lesson.id === 'R-T1-W5' ? (
+                {lesson.activityType === 'robotics' && lesson.id === 'R-T1-W6' ? (
                   <RobotSandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
-                ) : lesson.activityType === 'robotics' && lesson.id === 'R-T1-W7' ? (
+                ) : lesson.activityType === 'robotics' && lesson.id === 'R-T1-W8' ? (
                   <CreativeWorkstationApp 
                     onComplete={onCompleteActivitySimulation} 
                     mode="bracelet" 
@@ -5948,7 +5948,7 @@ export default function GradeR1Workbook({
                   <RoboticsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
                 )}
                 {lesson.activityType === 'digital' && (
-                  lesson.id === 'R-T1-W9' ? (
+                  lesson.id === 'R-T1-W1' ? (
                     <DeviceSafetySandboxStage speakText={speakText} onComplete={onCompleteActivitySimulation} />
                   ) : (
                     <DigitalConceptsActivity grade={lesson.grade} onComplete={onCompleteActivitySimulation} />
@@ -6008,7 +6008,7 @@ export default function GradeR1Workbook({
                           onClick={() => {
                             playPop();
                             setShowHomeworkWarning(true);
-                            if (lesson.id === 'R-T1-W7') {
+                            if (lesson.id === 'R-T1-W8') {
                               speakText("Stop, technology champion! You must complete and submit your beaded bracelet design in the workstation below first before we can certify this lesson and proceed!");
                             } else {
                               speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can certify this lesson and proceed!");
@@ -6020,7 +6020,7 @@ export default function GradeR1Workbook({
                           <span>Finalise and Sign Workbook (Locked)</span>
                         </button>
                         <p className="text-[10px] font-black text-rose-500 flex items-center gap-1 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200">
-                          {lesson.id === 'R-T1-W7'
+                          {lesson.id === 'R-T1-W8'
                             ? "Complete and submit your beaded bracelet design first! 🔒"
                             : "Complete Page 2's Tech Challenge first! 🔒"
                           }
@@ -6045,7 +6045,7 @@ export default function GradeR1Workbook({
                 </div>
               </div>
 
-              {lesson.id === 'R-T1-W7' && quizSubmitted && aiFeedbackText && (
+              {lesson.id === 'R-T1-W8' && quizSubmitted && aiFeedbackText && (
                 <div className="bg-sky-50 border-2 border-sky-200 rounded-3xl p-5 space-y-2 shadow-xs animate-fade-in text-left">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">🤖</span>
@@ -6085,7 +6085,7 @@ export default function GradeR1Workbook({
                       <span>⚠️ Action Required</span>
                     </div>
                     <p className="leading-relaxed">
-                      {lesson.id === 'R-T1-W7' ? (
+                      {lesson.id === 'R-T1-W8' ? (
                         <span>Please complete and submit your beaded bracelet design in the workstation below first to unlock lesson progress!</span>
                       ) : (
                         <span>Please go to <strong className="font-black text-pink-600">Page 2: Tech Challenge</strong> at the top, complete all worksheets, and submit for grading to unlock lesson progress!</span>
@@ -6107,7 +6107,7 @@ export default function GradeR1Workbook({
                         onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
                       } else {
                         setShowHomeworkWarning(true);
-                        if (lesson.id === 'R-T1-W7') {
+                        if (lesson.id === 'R-T1-W8') {
                           speakText("Stop, technology champion! You must complete and submit your beaded bracelet design in the workstation below first before we can proceed to the next lesson!");
                         } else {
                           speakText("Stop, technology champion! You must complete and submit your Tech Challenge on Page 2 first before we can proceed to the next lesson!");
@@ -6278,8 +6278,8 @@ export default function GradeR1Workbook({
                   </div>
                 )}
                 
-                {/* Custom Tech Challenge Activity for R-T1-W1 (Coloring Pattern) */}
-                {lesson.id === 'R-T1-W1' && (
+                {/* Custom Tech Challenge Activity for R-T1-W2 (Coloring Pattern) */}
+                {lesson.id === 'R-T1-W2' && (
                   <div className={`p-5 rounded-2xl border space-y-4 transition ${quizSubmitted ? (grW1P2Correct ? 'bg-emerald-50/20 border-emerald-200' : 'bg-rose-50/20 border-rose-200') : 'bg-slate-50/50 border-slate-200'}`}>
                     <div className="flex items-start gap-3">
                       <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
@@ -6381,8 +6381,8 @@ export default function GradeR1Workbook({
                 )}
                 
 
-                {/* Custom Tech Challenge Activity for R-T1-W3 (Picture Ordering) */}
-                {lesson.id === 'R-T1-W3' && (
+                {/* Custom Tech Challenge Activity for R-T1-W4 (Picture Ordering) */}
+                {lesson.id === 'R-T1-W4' && (
                   <div className={`p-5 rounded-2xl border space-y-4 transition ${quizSubmitted ? (grW3Correct ? 'bg-emerald-50/20 border-emerald-200' : 'bg-rose-50/20 border-rose-200') : 'bg-slate-50/50 border-slate-200'}`}>
                     <div className="flex items-start gap-3">
                       <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
@@ -6580,7 +6580,7 @@ export default function GradeR1Workbook({
                     >
                       <div className="flex items-start gap-3">
                         <span className="w-5 h-5 rounded-full bg-slate-250 font-bold text-[10px] text-slate-800 flex items-center justify-center shrink-0">
-                          {lesson.id === 'R-T1-W1' ? qIdx + 4 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W3' ? qIdx + 3 : lesson.id === 'R-T1-W8' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
+                          {lesson.id === 'R-T1-W2' ? qIdx + 4 : lesson.id === '1-T1-W1' ? qIdx + 2 : lesson.id === 'R-T1-W4' ? qIdx + 3 : lesson.id === 'R-T1-W9' ? qIdx + 2 : lesson.grade === 'R' ? qIdx + 2 : qIdx + 1}
                         </span>
                         <div className="space-y-1">
                           <p className="text-sm md:text-base font-bold text-slate-900 leading-normal mb-1">
@@ -6639,7 +6639,7 @@ export default function GradeR1Workbook({
                         </div>
                       )}
 
-                      {lesson.id === 'R-T1-W8' && qIdx === 0 && (
+                      {lesson.id === 'R-T1-W9' && qIdx === 0 && (
                         <div className="flex flex-col items-center justify-center p-4 bg-slate-100/60 rounded-2xl border border-slate-200/50 my-3">
                           <span className="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-wider">Sound Pattern Row</span>
                           <div className="flex items-center gap-3">
@@ -6670,7 +6670,7 @@ export default function GradeR1Workbook({
 
 
 
-                      {lesson.id === 'R-T1-W8' && qIdx === 2 && (
+                      {lesson.id === 'R-T1-W9' && qIdx === 2 && (
                         <div className="p-4 bg-slate-100/60 rounded-2xl border border-slate-200/50 my-3 flex flex-col items-center w-full max-w-sm mx-auto">
                           <span className="text-[10px] uppercase font-black text-slate-400 block mb-2 tracking-wider text-center">Rhythm Matching Challenge</span>
                           
@@ -6784,7 +6784,7 @@ export default function GradeR1Workbook({
                       )}
 
                       {/* Options */}
-                      {!(lesson.id === 'R-T1-W8' && qIdx === 2) && (
+                      {!(lesson.id === 'R-T1-W9' && qIdx === 2) && (
                         <div className={`grid ${q.opts.length === 2 ? 'grid-cols-2 max-w-md mx-auto' : 'grid-cols-3'} gap-2.5 pt-1`}>
                           {q.opts.map((opt, oIdx) => {
                             const isOptionSelected = selectedId === oIdx;
@@ -6832,7 +6832,7 @@ export default function GradeR1Workbook({
                                 onClick={() => handleSelectQuizOpt(qIdx, oIdx)}
                                 className={`p-3 rounded-2xl border text-center transition cursor-pointer select-none active:scale-95 flex flex-col items-center justify-center gap-1 min-h-[5rem] ${btnStyle}`}
                               >
-                                {lesson.id === 'R-T1-W8' && qIdx === 1 ? (
+                                {lesson.id === 'R-T1-W9' && qIdx === 1 ? (
                                   <div className="flex flex-col items-center gap-2 w-full">
                                     {oIdx === 0 && (
                                       <>
@@ -6898,9 +6898,9 @@ export default function GradeR1Workbook({
                   <button
                     type="button"
                     onClick={handleSubmitQuiz}
-                    disabled={Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')}
+                    disabled={Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W2' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W4' && grW3Order.length < 3) || (lesson.id === 'R-T1-W9' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')}
                     className={`px-6 py-3 font-extrabold rounded-xl text-xs active:scale-95 transition shadow-sm flex items-center gap-1.5 cursor-pointer ${
-                      (Object.keys(quizAnswers).length >= workbookConfig.questions.length && (lesson.grade !== 'R' || (grTracingCompleted && grTracingWordInput.trim().length > 0)) && (lesson.id !== '1-T1-W1' || g1w1ActiveColor !== null) && (lesson.id !== 'R-T1-W1' || grW1P2ActiveColor !== null) && (lesson.id !== 'R-T1-W3' || grW3Order.length === 3) && (lesson.id !== 'R-T1-W8' || grW8Sequence.join(',') === '🔴,🟡,🔴,🟡'))
+                      (Object.keys(quizAnswers).length >= workbookConfig.questions.length && (lesson.grade !== 'R' || (grTracingCompleted && grTracingWordInput.trim().length > 0)) && (lesson.id !== '1-T1-W1' || g1w1ActiveColor !== null) && (lesson.id !== 'R-T1-W2' || grW1P2ActiveColor !== null) && (lesson.id !== 'R-T1-W4' || grW3Order.length === 3) && (lesson.id !== 'R-T1-W9' || grW8Sequence.join(',') === '🔴,🟡,🔴,🟡'))
                         ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
@@ -6908,7 +6908,7 @@ export default function GradeR1Workbook({
                     <Trophy className="w-4 h-4" />
                     <span>Submit Tech Challenge 🚀</span>
                   </button>
-                  {(Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W1' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W3' && grW3Order.length < 3) || (lesson.id === 'R-T1-W8' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')) && (
+                  {(Object.keys(quizAnswers).length < workbookConfig.questions.length || (lesson.grade === 'R' && (!grTracingCompleted || grTracingWordInput.trim().length === 0)) || (lesson.id === '1-T1-W1' && g1w1ActiveColor === null) || (lesson.id === 'R-T1-W2' && grW1P2ActiveColor === null) || (lesson.id === 'R-T1-W4' && grW3Order.length < 3) || (lesson.id === 'R-T1-W9' && grW8Sequence.join(',') !== '🔴,🟡,🔴,🟡')) && (
                     <p className="text-[10px] text-slate-400 font-extrabold uppercase">
                       Complete all activities to submit!
                     </p>
@@ -6974,7 +6974,7 @@ export default function GradeR1Workbook({
                       <span>Back to Study Section</span>
                     </button>
 
-                    {lesson.id !== 'R-T1-W7' && (
+                    {lesson.id !== 'R-T1-W8' && (
                       <button
                         type="button"
                         onClick={() => {

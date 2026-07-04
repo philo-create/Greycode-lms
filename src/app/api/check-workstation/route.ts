@@ -21,12 +21,12 @@ export async function POST(req: NextRequest) {
 
   try {
 
-    const prompt = activityId === 'R-T1-W7-bracelet' ? `
+    const prompt = activityId === 'R-T1-W8-bracelet' ? `
       You are an encouraging AI CAPS Tutor performing the FINAL GRADING on a Foundation Phase (Grade R/1) learner's Beaded Bracelet Design.
       This is a certified activity (not practice), so your grade and feedback will be final and the design will be locked!
       
       The student's task:
-      Activity Title: Beaded Bracelet Design (R-T1-W7)
+      Activity Title: Beaded Bracelet Design (R-T1-W8)
       Activity Description: Draw circular beads on your canvas, and create a repeating pattern using exactly TWO alternating colors (e.g. Red, Blue, Red, Blue).
 
       Here is the list of shapes/drawings on the canvas:

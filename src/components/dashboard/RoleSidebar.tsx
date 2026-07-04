@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
   Users, 
-  BookOpen, 
+  BookOpen,
+  School, 
   Settings, 
   LogOut,
   GraduationCap,
@@ -32,7 +33,8 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
       case 'super_admin':
         return [
           { href: `${base}/admin`, label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
-          { href: `${base}/admin/schools`, label: 'Schools', icon: <BookOpen className="w-5 h-5" /> },
+          { href: `${base}/admin/schools`, label: 'Schools', icon: <School className="w-5 h-5" /> },
+          { href: `${base}/admin/curriculum`, label: 'Curriculums', icon: <BookOpen className="w-5 h-5" /> },
           { href: `${base}/admin/users`, label: 'Users', icon: <Users className="w-5 h-5" /> },
         ];
       case 'school_admin':
@@ -44,7 +46,7 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
       case 'teacher':
         return [
           { href: `${base}/teacher`, label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
-          { href: `${base}/teacher/classes`, label: 'My Classes', icon: <Users className="w-5 h-5" /> },
+          { href: `${base}/teacher/preparation`, label: 'Preparation', icon: <BookOpen className="w-5 h-5" /> },
           { href: `${base}/teacher/assessments`, label: 'Assessments', icon: <ClipboardList className="w-5 h-5" /> },
         ];
       case 'facilitator':

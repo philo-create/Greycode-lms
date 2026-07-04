@@ -120,13 +120,18 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user?.email_confirmed_at && !profile.email_confirmed) {
           try {
-            await supabase
+            const { error: syncErr } = await supabase
               .from('profiles')
               .update({ email_confirmed: true })
               .eq('id', userId);
-            profile.email_confirmed = true;
+            
+            if (syncErr) {
+              console.warn("Could not sync email confirmation status:", syncErr);
+            } else {
+              profile.email_confirmed = true;
+            }
           } catch (syncErr) {
-            console.warn("Could not sync email confirmation status:", syncErr);
+            console.warn("Exception syncing email confirmation status:", syncErr);
           }
         }
 
@@ -146,7 +151,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         // If they are a teacher, school admin, or super admin, direct to /dashboard
         if (profile.role !== 'learner') {
           // Add a small delay to ensure Supabase has finished persisting the session to localStorage
-          setTimeout(() => {
+        setTimeout(() => {
             router.push('/dashboard');
           }, 500);
           return;
@@ -429,6 +434,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
+        await supabase.from('profiles').update({ email_confirmed: true }).eq('id', session.user.id);
         setTimeout(() => {
           setIsResettingPassword(false);
           fetchProfile(session.user.id, true);

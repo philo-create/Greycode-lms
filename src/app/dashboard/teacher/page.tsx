@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -58,10 +59,8 @@ export default function TeacherDashboard() {
   }
 
   const quickActions = [
-    { label: 'Start Lesson', href: '/lessons', icon: <PlayCircle className="w-5 h-5" />, color: 'text-indigo-600 bg-indigo-100' },
-    { label: 'Mark Attendance', href: '/dashboard/teacher/attendance', icon: <ClipboardCheck className="w-5 h-5" />, color: 'text-emerald-600 bg-emerald-100' },
-    { label: 'Capture Marks', href: '/dashboard/teacher/marks', icon: <Target className="w-5 h-5" />, color: 'text-rose-600 bg-rose-100' },
-    { label: 'Class Progress', href: '/dashboard/teacher/progress', icon: <TrendingUp className="w-5 h-5" />, color: 'text-blue-600 bg-blue-100' },
+    { label: 'Start Lesson', href: '/dashboard/teacher/preparation', icon: <PlayCircle className="w-5 h-5" />, color: 'text-indigo-600 bg-indigo-100' },
+    { label: 'Capture Marks', href: '/dashboard/teacher/assessments', icon: <Target className="w-5 h-5" />, color: 'text-rose-600 bg-rose-100' },
   ];
 
   return (
@@ -86,8 +85,8 @@ export default function TeacherDashboard() {
           color="emerald"
         />
         <StatCard
-          title="CAPS Alignment"
-          value={`${data.stats.capsAlignment}%`}
+          title="Average Score"
+          value={`${data.stats.averageScore}%`}
           icon={<Target className="w-6 h-6" />}
           color="purple"
         />
@@ -128,16 +127,16 @@ export default function TeacherDashboard() {
             <DashboardCard title="Term Progress">
               <ProgressCard
                 title="Curriculum Covered"
-                progress={65}
-                subtitle="Term 2 Targets"
+                progress={data.stats.averageCompletion || 0}
+                subtitle="Based on student completion"
                 color="indigo"
               />
             </DashboardCard>
-            <DashboardCard title="Practical Robotics">
+            <DashboardCard title="Assessments Overview">
               <ProgressCard
-                title="Marks Captured"
-                progress={30}
-                subtitle="Awaiting remaining 70%"
+                title="Average Class Score"
+                progress={data.stats.averageScore || 0}
+                subtitle="Across all assessments"
                 color="amber"
               />
             </DashboardCard>
@@ -154,7 +153,24 @@ export default function TeacherDashboard() {
           <DashboardCard title="Recent Quiz Results">
             {data.recentResults.length > 0 ? (
               <div className="space-y-3">
-                {/* Placeholder for mapping actual results */}
+                {data.recentResults.map((result: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                    <div className="flex items-center">
+                      <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mr-3">
+                        <CheckCircle2 className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-slate-800 text-sm">{result.learner}</h4>
+                        <p className="text-xs text-slate-500">
+                          {new Date(result.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-slate-900">{result.score}%</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <EmptyState 
