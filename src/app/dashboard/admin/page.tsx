@@ -17,7 +17,8 @@ import {
   Building2, Users, GraduationCap, BookOpen, 
   PlusCircle, FileText, CheckCircle2, TrendingUp,
   Clock, Server, ChevronDown, ChevronRight, BookOpenCheck, PlayCircle,
-  CheckCircle, XCircle, Mail, Settings, Send, HelpCircle, Info, Lock
+  CheckCircle, XCircle, Mail, Settings, Send, HelpCircle, Info, Lock,
+  BellRing, Unlock
 } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/LoadingState';
 
@@ -98,6 +99,9 @@ export default function SuperAdminDashboard() {
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [pendingError, setPendingError] = useState<string | null>(null);
+  const [pendingLessons, setPendingLessons] = useState<any[]>([]);
+  const [actioningLessonId, setActioningLessonId] = useState<string | null>(null);
+  const [lessonError, setLessonError] = useState<string | null>(null);
 
   // Zoho SMTP Custom test states
   const [testEmail, setTestEmail] = useState('');
@@ -205,6 +209,40 @@ export default function SuperAdminDashboard() {
 
         setPendingRequests(pendingData);
       }
+
+      // Fetch pending lessons for global approvals
+      const { data: pendingLessonsData, error: lessonsError } = await supabase
+        .from('class_lesson_status')
+        .select('*')
+        .eq('status', 'pending_approval');
+
+      if (lessonsError) {
+        console.warn('Error fetching pending lessons:', lessonsError);
+        setLessonError(`Could not load pending curriculum approvals: ${lessonsError.message}`);
+      } else if (pendingLessonsData) {
+        const profilesMap = new Map<string, any>();
+        if (profiles) {
+          profiles.forEach(p => profilesMap.set(p.id, p));
+        }
+
+        const lessonsWithSchoolAndDetails = pendingLessonsData.map(item => {
+          const schoolName = schoolsMap.get(item.school_id)?.name || 'Unknown School';
+          const lessonDetails = CURRICULUM_LESSONS.find(l => l.id === item.lesson_id);
+          const teacher = item.teacher_id ? profilesMap.get(item.teacher_id) : null;
+          const teacherName = teacher ? (teacher.full_name || `${teacher.first_name || ''} ${teacher.last_name || ''}`.trim()) : 'A Teacher';
+          return {
+            ...item,
+            schoolName,
+            teacherName,
+            lessonTitle: lessonDetails?.title || `Lesson ${item.lesson_id}`,
+            term: lessonDetails?.term || 1,
+            week: lessonDetails?.week || 1,
+            strand: lessonDetails?.strand || 'Robotics',
+          };
+        });
+        setPendingLessons(lessonsWithSchoolAndDetails);
+        setLessonError(null);
+      }
     } catch (err: any) {
       console.error('Failed to load pending system registrations:', err);
       setPendingError(err.message || 'Unknown query error');
@@ -275,6 +313,56 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const handleLessonApprove = async (schoolId: string, grade: string, lessonId: string) => {
+    if (!supabase) return;
+    const actionKey = `${schoolId}-${grade}-${lessonId}`;
+    setActioningLessonId(actionKey);
+    setLessonError(null);
+    try {
+      // 1. Approve this lesson (unlocked_for_students)
+      const payload: any = {
+        school_id: schoolId,
+        grade: grade,
+        lesson_id: lessonId,
+        status: 'unlocked_for_students',
+        approved_at: new Date().toISOString()
+      };
+      
+      const { error: err1 } = await supabase
+        .from('class_lesson_status')
+        .upsert(payload, { onConflict: 'school_id, grade, lesson_id' });
+        
+      if (err1) throw err1;
+
+      // 2. Unlock the next lesson for the teacher
+      const currentIndex = CURRICULUM_LESSONS.findIndex(l => l.id === lessonId);
+      if (currentIndex !== -1 && currentIndex + 1 < CURRICULUM_LESSONS.length) {
+        const nextLesson = CURRICULUM_LESSONS[currentIndex + 1];
+        const nextPayload: any = {
+          school_id: schoolId,
+          grade: grade,
+          lesson_id: nextLesson.id,
+          status: 'teacher_unlocked'
+        };
+        const { error: err2 } = await supabase
+          .from('class_lesson_status')
+          .upsert(nextPayload, { onConflict: 'school_id, grade, lesson_id' });
+          
+        if (err2) {
+          console.warn('Failed to unlock next lesson for teacher:', err2.message);
+        }
+      }
+
+      // 3. Refresh pending lists
+      await loadPendingRequests();
+    } catch (err: any) {
+      console.error('Failed to approve lesson:', err);
+      setLessonError(err.message || 'Error approving lesson');
+    } finally {
+      setActioningLessonId(null);
+    }
+  };
+
   const toggleGrade = (gradeValue: string) => {
     setExpandedGrades(prev => ({
       ...prev,
@@ -309,6 +397,81 @@ export default function SuperAdminDashboard() {
 
   return (
     <DashboardLayout allowedRoles={['super_admin']}>
+      {/* Dynamic Notification Center for Completed Lessons Awaiting Student Unlock */}
+      {pendingLessons.length > 0 && (
+        <div id="pending-lessons-top-banner" className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl shadow-sm">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-amber-500/10 text-amber-600 rounded-2xl flex items-center justify-center shrink-0">
+              <BellRing className="w-6 h-6 animate-bounce" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-xs font-extrabold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  Action Required
+                </span>
+                <span className="text-xs text-amber-600 font-semibold">
+                  {pendingLessons.length} {pendingLessons.length === 1 ? 'lesson is' : 'lessons are'} completed by teachers and awaiting student unlock approval
+                </span>
+              </div>
+              <h3 className="font-extrabold text-slate-800 text-base mb-3">
+                Completed Lessons Awaiting Student Access Approval 📚
+              </h3>
+              
+              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+                {pendingLessons.map((lesson) => {
+                  const actionKey = `${lesson.school_id}-${lesson.grade}-${lesson.lesson_id}`;
+                  const isActioning = actioningLessonId === actionKey;
+                  return (
+                    <div key={actionKey} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-white border border-amber-100 rounded-2xl shadow-xs hover:border-amber-200 transition-all">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-slate-400 uppercase">
+                            Grade {lesson.grade} • Term {lesson.term} • Week {lesson.week}
+                          </span>
+                          <span className="text-[10px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 px-1.5 py-0.5 rounded">
+                            {lesson.strand}
+                          </span>
+                        </div>
+                        <p className="font-extrabold text-slate-800 text-sm">
+                          {lesson.lessonTitle}
+                        </p>
+                        <p className="text-xs text-slate-500 mt-1">
+                          Completed by <span className="font-semibold text-slate-700">{lesson.teacherName}</span> at <span className="font-semibold text-indigo-600">{lesson.schoolName}</span>
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <Link
+                          href={`/dashboard/admin/lessons/${lesson.lesson_id}`}
+                          className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
+                        >
+                          <PlayCircle className="w-3.5 h-3.5" />
+                          Preview
+                        </Link>
+                        <button
+                          disabled={isActioning}
+                          onClick={() => handleLessonApprove(lesson.school_id, lesson.grade, lesson.lesson_id)}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white text-xs font-extrabold rounded-xl shadow-md shadow-emerald-600/10 transition-all active:scale-95 flex items-center gap-1.5"
+                        >
+                          {isActioning ? (
+                            <span>Unlocking...</span>
+                          ) : (
+                            <>
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>Unlock for Students</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Schools"
@@ -415,6 +578,83 @@ export default function SuperAdminDashboard() {
                 <CheckCircle className="w-10 h-10 text-emerald-500" />
                 <p className="font-semibold text-slate-700">All caught up!</p>
                 <p className="text-xs">There are currently no student, teacher, or admin accounts awaiting approval.</p>
+              </div>
+            )}
+          </DashboardCard>
+
+          <DashboardCard title="Pending Lesson Approvals (All Schools) 📚">
+            {lessonError ? (
+              <div className="p-4 bg-rose-50 border border-rose-150 text-rose-700 rounded-xl text-sm font-semibold">
+                ⚠️ Error: {lessonError}
+              </div>
+            ) : pendingLessons.length > 0 ? (
+              <>
+                <div className="mb-4">
+                  <p className="text-sm text-slate-500">
+                    Lessons completed by teachers that are awaiting superadmin approval to unlock for students:
+                  </p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                        <th className="py-3 px-4">School</th>
+                        <th className="py-3 px-4">Grade</th>
+                        <th className="py-3 px-4">Lesson Details</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-sm">
+                      {pendingLessons.map(lesson => {
+                        const actionKey = `${lesson.school_id}-${lesson.grade}-${lesson.lesson_id}`;
+                        const isActioning = actioningLessonId === actionKey;
+                        
+                        return (
+                          <tr key={actionKey} className="hover:bg-slate-50 transition-colors">
+                            <td className="py-3 px-4 font-bold text-slate-800">
+                              {lesson.schoolName}
+                            </td>
+                            <td className="py-3 px-4">
+                              <span className="w-7 h-7 bg-indigo-100 text-indigo-700 font-extrabold rounded-lg flex items-center justify-center text-xs">
+                                {lesson.grade}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-bold text-slate-400">TERM {lesson.term} • WEEK {lesson.week}</span>
+                                <span className="font-semibold text-slate-800 text-sm">{lesson.lessonTitle}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <div className="flex justify-end items-center space-x-3">
+                                <Link
+                                  href={`/dashboard/admin/lessons/${lesson.lesson_id}`}
+                                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shrink-0"
+                                >
+                                  <PlayCircle className="w-3.5 h-3.5" />
+                                  Preview
+                                </Link>
+                                <button
+                                  disabled={isActioning}
+                                  onClick={() => handleLessonApprove(lesson.school_id, lesson.grade, lesson.lesson_id)}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white text-xs font-bold rounded-lg shadow-xs transition-colors shrink-0"
+                                >
+                                  {isActioning ? 'Approving...' : 'Approve & Unlock Next'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-slate-500 flex flex-col items-center justify-center gap-2">
+                <CheckCircle className="w-10 h-10 text-emerald-500" />
+                <p className="font-semibold text-slate-700">All caught up!</p>
+                <p className="text-xs">There are currently no lesson unlock requests awaiting approval.</p>
               </div>
             )}
           </DashboardCard>

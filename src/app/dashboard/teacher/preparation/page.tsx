@@ -43,8 +43,8 @@ export default function TeacherPreparationPage() {
           .eq('id', session.user.id)
           .single();
           
-        if (profileData?.school_id) {
-          setSchoolId(profileData.school_id);
+        if (profileData) {
+          setTeacherId(session.user.id);
           // We will fetch statuses when activeGrade changes, but we can do an initial fetch if grade is single
         }
 
@@ -56,12 +56,24 @@ export default function TeacherPreparationPage() {
         // Fetch classes assigned to this teacher to get grades as fallback/addition
         const { data: teacherClasses, error: classesError } = await supabase
           .from('classes')
-          .select('grade')
+          .select('grade, school_id')
           .eq('teacher_id', session.user.id);
 
         if (classesError) throw classesError;
 
         const classGrades = teacherClasses?.map(c => c.grade) || [];
+        
+        // Resolve school_id with fallback to classes
+        let resolvedSchoolId = profileData?.school_id || '';
+        if (!resolvedSchoolId && teacherClasses) {
+          const classWithSchool = teacherClasses.find(c => c.school_id);
+          if (classWithSchool) {
+            resolvedSchoolId = classWithSchool.school_id;
+          }
+        }
+        if (resolvedSchoolId) {
+          setSchoolId(resolvedSchoolId);
+        }
         
         // Combine all unique grades
         const grades = Array.from(new Set([...profileGrades, ...classGrades])).sort((a, b) => {
@@ -88,6 +100,19 @@ export default function TeacherPreparationPage() {
 
     fetchLessons();
   }, []);
+
+  useEffect(() => {
+    if (!schoolId || !activeGrade) return;
+    async function loadStatuses() {
+      try {
+        const statuses = await fetchLessonStatuses(schoolId, activeGrade);
+        setLessonStatuses(statuses);
+      } catch (err) {
+        console.error('Failed to load lesson statuses for teacher:', err);
+      }
+    }
+    loadStatuses();
+  }, [schoolId, activeGrade]);
 
   const handleUpdateProgress = (weekKey: string, starsEarned: number, marksPossible?: number) => {
     setProgress(prev => {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Star, Sparkles, Trophy, Play, CheckCircle, ChevronDown, Award, Check, Volume2, VolumeX, Maximize2, Minimize2, ChevronRight } from 'lucide-react';
+import { BookOpen, Star, Sparkles, Trophy, Play, CheckCircle, ChevronDown, Award, Check, Volume2, VolumeX, Maximize2, Minimize2, ChevronRight, Clock, Lock } from 'lucide-react';
 import { CURRICULUM_LESSONS, GRADES } from '../curriculumData';
-import { GradeType, Lesson, UserProgress } from '../types';
+import { GradeType, Lesson, UserProgress, LessonStatus } from '../types';
+import { updateLessonStatus } from '../lib/lesson-status-service';
 import PatternActivity from './PatternActivity';
 import CodingGridActivity from './CodingGridActivity';
 import RoboticsActivity from './RoboticsActivity';
@@ -672,7 +673,12 @@ export default function Dashboard({
   updateProgress,
   onExit,
   initialLessonId,
-  isSuperAdmin
+  isSuperAdmin,
+  schoolId,
+  lessonStatuses = {},
+  setLessonStatuses,
+  isTeacherPreparation = false,
+  teacherId
 }: {
   activeStudentId: string;
   grade: GradeType;
@@ -682,15 +688,21 @@ export default function Dashboard({
   onExit: () => void;
   initialLessonId?: string;
   isSuperAdmin?: boolean;
+  schoolId?: string;
+  lessonStatuses?: Record<string, LessonStatus>;
+  setLessonStatuses?: React.Dispatch<React.SetStateAction<Record<string, LessonStatus>>>;
+  isTeacherPreparation?: boolean;
+  teacherId?: string;
 }) {
   const isGradeR = (grade as string) === 'R';
+  const lessonsForGrade = CURRICULUM_LESSONS.filter(lvl => lvl.grade === grade);
   const [activeTerm, setActiveTerm] = useState<number>(1);
   const [expandedWeek, setExpandedWeek] = useState<string | null>(null);
   const [resetCounter, setResetCounter] = useState<number>(0);
   const [checklistAnswers, setChecklistAnswers] = useState<Record<string, 'yes' | 'partly' | 'not'>>({});
   const [fullscreenLesson, setFullscreenLesson] = useState<Lesson | null>(null);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const [superAdminBypass, setSuperAdminBypass] = useState<boolean>(true);
+  const [superAdminBypass, setSuperAdminBypass] = useState<boolean>(!!isSuperAdmin);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
@@ -907,7 +919,7 @@ export default function Dashboard({
   };
 
   const checkIsLessonLocked = (lessonId: string) => {
-    if (superAdminBypass) return false;
+    if (isSuperAdmin && superAdminBypass) return false;
     const status = getLessonStatus(lessonId);
     
     if (isTeacherPreparation) {
@@ -1059,12 +1071,15 @@ export default function Dashboard({
                 const weekKey = `${grade}-${lesson.term}-${lesson.week}`;
                 const isCompleted = progress.completedWeeks[weekKey];
                 const isWeekExpanded = expandedWeek === lesson.id;
+                const isLessonLocked = checkIsLessonLocked(lesson.id);
 
                 return (
                   <div
                     key={lesson.id}
                     className={`border rounded-xl transition duration-150 ${
-                      isWeekExpanded 
+                      isLessonLocked
+                        ? 'border-slate-200 bg-slate-50/40 opacity-75 hover:bg-slate-50/60'
+                        : isWeekExpanded 
                         ? 'border-indigo-400 bg-indigo-50/5 shadow-xs' 
                         : 'border-slate-200 bg-white hover:bg-slate-50/50'
                     }`}
@@ -1076,12 +1091,16 @@ export default function Dashboard({
                       className="p-4 flex items-center justify-between gap-4 cursor-pointer selection:bg-transparent"
                     >
                       <div className="flex items-center gap-3.5">
-                        <span className="w-9 h-9 bg-slate-100 text-slate-700 font-extrabold text-xs flex items-center justify-center rounded-lg leading-none border border-slate-200/50 shrink-0">
+                        <span className={`w-9 h-9 font-extrabold text-xs flex items-center justify-center rounded-lg leading-none border shrink-0 ${
+                          isLessonLocked 
+                            ? 'bg-slate-100/50 text-slate-400 border-slate-200/30' 
+                            : 'bg-slate-100 text-slate-700 border-slate-200/50'
+                        }`}>
                           W {lesson.week}
                         </span>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h4 className="font-bold text-slate-950 text-xs md:text-sm">{lesson.title}</h4>
+                            <h4 className={`font-bold text-xs md:text-sm ${isLessonLocked ? 'text-slate-500' : 'text-slate-950'}`}>{lesson.title}</h4>
                             <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                               lesson.strand === 'Coding' 
                                 ? 'bg-sky-50 border border-sky-100 text-sky-600' 
@@ -1104,7 +1123,21 @@ export default function Dashboard({
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {isCompleted && (
+                        {isLessonLocked ? (
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {getLessonStatus(lesson.id) === 'pending_approval' ? (
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                                <Lock className="w-2.5 h-2.5" />
+                                Awaiting Unlock ⏳
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400 bg-slate-100 border border-slate-200/60 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                <Lock className="w-2.5 h-2.5" />
+                                Locked 🔒
+                              </span>
+                            )}
+                          </div>
+                        ) : isCompleted && (
                           <div className="flex items-center gap-1.5 animate-fade-in shrink-0">
                             <span className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
                               <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
@@ -1815,15 +1848,58 @@ export default function Dashboard({
                     <span>←</span>
                     <span className="hidden sm:inline">Previous Lesson</span>
                   </button>
-                  <button
-                    disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
-                    onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
-                    className="text-[11px] font-bold text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-xl transition cursor-pointer active:scale-95 flex items-center gap-1"
-                    title={!isCurrentLessonChecklistCompleted && nextLesson ? "Select 'Yes' for all 4 Assessment Checklist items to unlock this next lesson" : "Next Lesson"}
-                  >
-                    <span className="hidden sm:inline">Next Lesson</span>
-                    <span>→</span>
-                  </button>
+                  {isTeacherPreparation ? (
+                    (() => {
+                      const currentLessonStatus = getLessonStatus(fullscreenLesson.id);
+                      const isPendingApproval = currentLessonStatus === 'pending_approval';
+                      const isCompleted = currentLessonStatus === 'unlocked_for_students' || progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`];
+                      return (
+                        <button
+                          disabled={isPendingApproval || isCompleted || !isCurrentLessonChecklistCompleted}
+                          onClick={async () => {
+                            const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
+                            updateProgress(weekKey, 3, 3);
+                            if (schoolId) {
+                              await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
+                              if (setLessonStatuses) {
+                                setLessonStatuses(prev => ({ ...prev, [fullscreenLesson.id]: 'pending_approval' }));
+                              }
+                            }
+                          }}
+                          className={`text-[11px] font-bold px-3 py-2 rounded-xl transition cursor-pointer active:scale-95 flex items-center gap-1 ${
+                            isPendingApproval
+                              ? 'bg-amber-500 text-white cursor-not-allowed opacity-90'
+                              : isCompleted
+                              ? 'bg-emerald-600 text-white cursor-not-allowed opacity-90'
+                              : isCurrentLessonChecklistCompleted
+                              ? 'bg-indigo-600 text-white hover:bg-indigo-750 shadow-md shadow-indigo-600/20'
+                              : 'bg-slate-800 text-slate-400 cursor-not-allowed'
+                          }`}
+                          title={
+                            isPendingApproval
+                              ? "Awaiting Admin Approval"
+                              : isCompleted
+                              ? "Completed"
+                              : !isCurrentLessonChecklistCompleted
+                              ? "Complete the checklist"
+                              : "Complete and Notify Admin"
+                          }
+                        >
+                          <span>{isPendingApproval ? "Pending..." : isCompleted ? "Complete ✔" : "Complete & Notify"}</span>
+                        </button>
+                      );
+                    })()
+                  ) : (
+                    <button
+                      disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
+                      onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
+                      className="text-[11px] font-bold text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-xl transition cursor-pointer active:scale-95 flex items-center gap-1"
+                      title={!isCurrentLessonChecklistCompleted && nextLesson ? "Select 'Yes' for all 4 Assessment Checklist items to unlock this next lesson" : "Next Lesson"}
+                    >
+                      <span className="hidden sm:inline">Next Lesson</span>
+                      <span>→</span>
+                    </button>
+                  )}
                   <div className="w-px h-5 bg-slate-800 mx-1"></div>
                   <button
                     onClick={() => setResetCounter(prev => prev + 1)}
@@ -1938,6 +2014,11 @@ export default function Dashboard({
                             onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
                             isSuperAdmin={isSuperAdmin}
                             superAdminBypass={superAdminBypass}
+                            isTeacherPreparation={isTeacherPreparation}
+                            schoolId={schoolId}
+                            teacherId={teacherId}
+                            lessonStatuses={lessonStatuses}
+                            setLessonStatuses={setLessonStatuses}
                           />
                         ) : (
                           <GradeR1Workbook 
@@ -1951,6 +2032,11 @@ export default function Dashboard({
                             onNextLesson={() => handleGoToNextLesson(fullscreenLesson.id)}
                             isSuperAdmin={isSuperAdmin}
                             superAdminBypass={superAdminBypass}
+                            isTeacherPreparation={isTeacherPreparation}
+                            schoolId={schoolId}
+                            teacherId={teacherId}
+                            lessonStatuses={lessonStatuses}
+                            setLessonStatuses={setLessonStatuses}
                           />
                         );
                       })()}
@@ -2347,54 +2433,85 @@ export default function Dashboard({
                       <h5 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5 selection:bg-transparent">
                         🏆 Lesson Progress Status
                       </h5>
-                      {progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`] ? (
-                        <p className="text-[11px] font-medium text-emerald-600 flex items-center gap-1 leading-normal">
-                          ✔ This lesson and activity are complete! Dynamic progress has been recorded in your profile.
-                        </p>
-                      ) : isChecklistCompletedForLesson(fullscreenLesson.id) ? (
-                        <p className="text-[11px] font-medium text-indigo-600 flex items-center gap-1 leading-normal">
-                          🎉 All 4 assessment items are checked! Direct click below to submit and mark complete.
-                        </p>
-                      ) : (
-                        <p className="text-[11px] font-semibold text-rose-500 flex items-center gap-1 leading-normal">
-                          🔒 Please tick "Yes ✔" to all 4 Assessment Checklist skills above to unlock lesson completion.
-                        </p>
-                      )}
+                      {(() => {
+                        const currentLessonStatus = getLessonStatus(fullscreenLesson.id);
+                        const isPendingApproval = currentLessonStatus === 'pending_approval';
+
+                        if (isPendingApproval) {
+                          return (
+                            <p className="text-[11px] font-medium text-amber-600 flex items-center gap-1 leading-normal">
+                              ⏳ Lesson marked complete! Awaiting super admin unlock for students.
+                            </p>
+                          );
+                        }
+                        if (progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`]) {
+                          return (
+                            <p className="text-[11px] font-medium text-emerald-600 flex items-center gap-1 leading-normal">
+                              ✔ This lesson and activity are complete! Dynamic progress has been recorded in your profile.
+                            </p>
+                          );
+                        }
+                        if (isChecklistCompletedForLesson(fullscreenLesson.id)) {
+                          return (
+                            <p className="text-[11px] font-medium text-indigo-600 flex items-center gap-1 leading-normal">
+                              🎉 All 4 assessment items are checked! Direct click below to submit and mark complete.
+                            </p>
+                          );
+                        }
+                        return (
+                          <p className="text-[11px] font-semibold text-rose-500 flex items-center gap-1 leading-normal">
+                            🔒 Please tick "Yes ✔" to all 4 Assessment Checklist skills above to unlock lesson completion.
+                          </p>
+                        );
+                      })()}
                     </div>
 
-                    <button
-                      disabled={!isChecklistCompletedForLesson(fullscreenLesson.id)}
-                      onClick={async () => {
-                        const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                        updateProgress(weekKey, 3, 3);
-                        
-                        if (isTeacherPreparation && schoolId) {
-                           await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
-                           if (setLessonStatuses) {
-                             setLessonStatuses(prev => ({ ...prev, [fullscreenLesson.id]: 'pending_approval' }));
-                           }
-                        }
-                      }}
-                      className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer select-none active:scale-95 ${
-                        progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`]
-                          ? 'bg-emerald-50 border border-emerald-250 text-emerald-700 shadow-sm font-extrabold'
-                          : isChecklistCompletedForLesson(fullscreenLesson.id)
-                          ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10'
-                          : 'bg-slate-100 text-slate-450 cursor-not-allowed border border-slate-200'
-                      }`}
-                    >
-                      {progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`] ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-emerald-500" />
-                          <span>Lesson Complete ✔</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 text-amber-305" />
-                          <span>Mark Lesson Complete</span>
-                        </>
-                      )}
-                    </button>
+                    {(() => {
+                      const currentLessonStatus = getLessonStatus(fullscreenLesson.id);
+                      const isPendingApproval = currentLessonStatus === 'pending_approval';
+                      return (
+                        <button
+                          disabled={isPendingApproval || !isChecklistCompletedForLesson(fullscreenLesson.id)}
+                          onClick={async () => {
+                            const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
+                            updateProgress(weekKey, 3, 3);
+                            
+                            if (isTeacherPreparation && schoolId) {
+                               await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
+                               if (setLessonStatuses) {
+                                 setLessonStatuses(prev => ({ ...prev, [fullscreenLesson.id]: 'pending_approval' }));
+                               }
+                            }
+                          }}
+                          className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer select-none active:scale-95 ${
+                            isPendingApproval
+                              ? 'bg-amber-55 border border-amber-250 text-amber-700 shadow-xs cursor-not-allowed font-semibold'
+                              : progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`]
+                              ? 'bg-emerald-50 border border-emerald-250 text-emerald-700 shadow-sm font-extrabold'
+                              : isChecklistCompletedForLesson(fullscreenLesson.id)
+                              ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10'
+                              : 'bg-slate-100 text-slate-450 cursor-not-allowed border border-slate-200'
+                          }`}
+                        >
+                          {isPendingApproval ? (
+                            <>
+                              <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+                              <span>Awaiting Admin Unlock</span>
+                            </>
+                          ) : progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`] ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-emerald-500" />
+                              <span>Lesson Complete ✔</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4 text-amber-305" />
+                              <span>Mark Lesson Complete</span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })()}
                   </div>
                     </>
                   )}
@@ -2438,15 +2555,75 @@ export default function Dashboard({
                     <span>Select New Page / Roadmap</span>
                   </button>
 
-                  <button
-                    disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
-                    onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
-                    className="w-full sm:w-auto px-7 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs rounded-xl transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/30"
-                    title={!isCurrentLessonChecklistCompleted && nextLesson ? "Complete the observation checklist items with 'Yes' to proceed" : "Next Lesson Week"}
-                  >
-                    <span>Next Lesson Week</span>
-                    <ChevronRight className="w-4 h-4 shrink-0" />
-                  </button>
+                  {isTeacherPreparation ? (
+                    (() => {
+                      const currentLessonStatus = getLessonStatus(fullscreenLesson.id);
+                      const isPendingApproval = currentLessonStatus === 'pending_approval';
+                      const isCompleted = currentLessonStatus === 'unlocked_for_students' || progress.completedWeeks[`${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`];
+                      
+                      return (
+                        <button
+                          disabled={isPendingApproval || isCompleted || !isCurrentLessonChecklistCompleted}
+                          onClick={async () => {
+                            const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
+                            updateProgress(weekKey, 3, 3);
+                            
+                            if (schoolId) {
+                              await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
+                              if (setLessonStatuses) {
+                                setLessonStatuses(prev => ({ ...prev, [fullscreenLesson.id]: 'pending_approval' }));
+                              }
+                            }
+                          }}
+                          className={`w-full sm:w-auto px-7 py-3 font-black text-xs rounded-xl transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg ${
+                            isPendingApproval
+                              ? 'bg-amber-500 text-white shadow-amber-500/20 cursor-not-allowed opacity-90'
+                              : isCompleted
+                              ? 'bg-emerald-600 text-white shadow-emerald-600/20 cursor-not-allowed opacity-90'
+                              : isCurrentLessonChecklistCompleted
+                              ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-600/30'
+                              : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                          }`}
+                          title={
+                            isPendingApproval
+                              ? "Awaiting Admin Approval"
+                              : isCompleted
+                              ? "Lesson Complete & Approved"
+                              : !isCurrentLessonChecklistCompleted
+                              ? "Complete the observation checklist first"
+                              : "Submit lesson completion and notify admin"
+                          }
+                        >
+                          {isPendingApproval ? (
+                            <>
+                              <Clock className="w-4 h-4 text-white animate-pulse" />
+                              <span>Awaiting Admin Unlock</span>
+                            </>
+                          ) : isCompleted ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 text-white" />
+                              <span>Lesson Completed ✔</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-4 h-4 text-amber-305" />
+                              <span>Complete and Notify Admin</span>
+                            </>
+                          )}
+                        </button>
+                      );
+                    })()
+                  ) : (
+                    <button
+                      disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
+                      onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
+                      className="w-full sm:w-auto px-7 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs rounded-xl transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/30"
+                      title={!isCurrentLessonChecklistCompleted && nextLesson ? "Complete the observation checklist items with 'Yes' to proceed" : "Next Lesson Week"}
+                    >
+                      <span>Next Lesson Week</span>
+                      <ChevronRight className="w-4 h-4 shrink-0" />
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>

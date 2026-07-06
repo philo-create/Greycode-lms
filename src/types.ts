@@ -32,6 +32,7 @@ export interface StudentProfile {
   pin: string;    // optional 4-digit PIN
   progress: UserProgress;
   role?: 'teacher' | 'admin' | 'learner' | 'school_admin' | 'super_admin' | 'parent' | 'facilitator';
+  school_id?: string;
 }
 
 

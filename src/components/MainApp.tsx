@@ -10,7 +10,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown } from 'lucide-react';
 import { GRADES } from '../curriculumData';
-import { GradeType, UserProgress, StudentProfile } from '../types';
+import { GradeType, UserProgress, StudentProfile, LessonStatus } from '../types';
+import { fetchLessonStatuses } from '../lib/lesson-status-service';
 import Dashboard from './Dashboard';
 import LoginGate from './LoginGate';
 import ProgressDashboard from './ProgressDashboard';
@@ -30,6 +31,16 @@ export default function App() {
     marksPossible: {}
   });
   const [learningView, setLearningView] = useState<'map' | 'progress' | 'workstation'>('map');
+  const [lessonStatuses, setLessonStatuses] = useState<Record<string, LessonStatus>>({});
+
+  useEffect(() => {
+    async function loadStatuses() {
+      if (!activeStudent?.school_id || !selectedGrade) return;
+      const statuses = await fetchLessonStatuses(activeStudent.school_id, selectedGrade);
+      setLessonStatuses(statuses);
+    }
+    loadStatuses();
+  }, [activeStudent?.school_id, selectedGrade]);
 
   // We handle Supabase session in LoginGate, so if activeStudent is set, we are logged in.
   // When activeStudent is set, it means we fetched their profile successfully.
@@ -442,6 +453,9 @@ export default function App() {
                   progress={progress}
                   updateProgress={updateProgress}
                   onExit={() => setSelectedGrade(null)}
+                  schoolId={activeStudent.school_id}
+                  lessonStatuses={lessonStatuses}
+                  setLessonStatuses={setLessonStatuses}
                 />
               </motion.div>
             )}

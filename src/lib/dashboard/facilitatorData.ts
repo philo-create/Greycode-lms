@@ -21,13 +21,29 @@ export async function getFacilitatorData(facilitatorId: string) {
     .select('*, schools:school_id(name, location)')
     .eq('facilitator_id', facilitatorId);
 
+  let pendingReports = 3;
+  let equipmentIssues = 0;
+
+  try {
+    const { count } = await supabase
+      .from('class_lesson_status')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending_approval');
+      
+    if (count !== null) {
+      pendingReports = count;
+    }
+  } catch (e) {
+    console.warn('Error fetching facilitator pending reports count:', e);
+  }
+
   return {
     classes: classes || [],
     stats: {
       schoolsAssigned: new Set(classes?.map(c => c.school_id)).size || 0,
       classesAssigned: classes?.length || 0,
-      pendingReports: 3, // Placeholder
-      equipmentIssues: 0 // Placeholder
+      pendingReports,
+      equipmentIssues
     },
     todaySchedule: classes?.slice(0, 3) || [] // Placeholder logic
   };

@@ -46,6 +46,8 @@ import {
   XCircle,
   Clock
 } from 'lucide-react';
+import { LessonStatus } from '../types';
+import { updateLessonStatus } from '../lib/lesson-status-service';
 
 interface Grade1Week2WorkbookProps {
   activeStudentId?: string;
@@ -53,6 +55,11 @@ interface Grade1Week2WorkbookProps {
   onNextLesson?: () => void;
   isSuperAdmin?: boolean;
   superAdminBypass?: boolean;
+  isTeacherPreparation?: boolean;
+  schoolId?: string;
+  teacherId?: string;
+  lessonStatuses?: Record<string, LessonStatus>;
+  setLessonStatuses?: React.Dispatch<React.SetStateAction<Record<string, LessonStatus>>>;
 }
 
 export default function Grade1Week2Workbook({ 
@@ -60,7 +67,12 @@ export default function Grade1Week2Workbook({
   onComplete, 
   onNextLesson,
   isSuperAdmin = false,
-  superAdminBypass = false
+  superAdminBypass = false,
+  isTeacherPreparation = false,
+  schoolId = '',
+  teacherId = '',
+  lessonStatuses = {},
+  setLessonStatuses
 }: Grade1Week2WorkbookProps) {
   const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
 
@@ -1994,18 +2006,59 @@ export default function Grade1Week2Workbook({
                   <span>Go back to Discovery Guide Study</span>
                 </button>
                 {onNextLesson && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playChime();
-                      onComplete(hwScore ?? 3, 3);
-                      onNextLesson();
-                    }}
-                    className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-300" />
-                    <span>Continue to Next Lesson 🚀</span>
-                  </button>
+                  isTeacherPreparation ? (
+                    (() => {
+                      const currentStatus = lessonStatuses['1-T1-W2'] || 'locked';
+                      const isPending = currentStatus === 'pending_approval';
+                      const isApproved = currentStatus === 'unlocked_for_students';
+                      
+                      return (
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={async () => {
+                            playChime();
+                            onComplete(hwScore ?? 3, 3);
+                            if (schoolId) {
+                              await updateLessonStatus(schoolId, '1', '1-T1-W2', 'pending_approval', teacherId);
+                              if (setLessonStatuses) {
+                                setLessonStatuses(prev => ({ ...prev, ['1-T1-W2']: 'pending_approval' }));
+                              }
+                            }
+                          }}
+                          className={`px-5 py-2.5 font-extrabold rounded-xl text-xs transition shadow-md cursor-pointer inline-flex items-center gap-1.5 ${
+                            isPending
+                              ? 'bg-amber-500 text-white cursor-not-allowed opacity-95'
+                              : isApproved
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'
+                          }`}
+                        >
+                          <Sparkles className="w-4 h-4 text-amber-300" />
+                          <span>
+                            {isPending 
+                              ? 'Awaiting Admin Unlock ⏳' 
+                              : isApproved 
+                              ? 'Complete & Approved ✔' 
+                              : 'Complete and Notify Admin 🚀'}
+                          </span>
+                        </button>
+                      );
+                    })()
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playChime();
+                        onComplete(hwScore ?? 3, 3);
+                        onNextLesson();
+                      }}
+                      className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
+                    >
+                      <Sparkles className="w-4 h-4 text-amber-300" />
+                      <span>Continue to Next Lesson 🚀</span>
+                    </button>
+                  )
                 )}
               </div>
             </motion.div>

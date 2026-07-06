@@ -35,7 +35,8 @@ import {
   Play,
   RotateCcw
 } from 'lucide-react';
-import { GradeType, Lesson } from '../types';
+import { GradeType, Lesson, LessonStatus } from '../types';
+import { updateLessonStatus } from '../lib/lesson-status-service';
 import PatternActivity from './PatternActivity';
 import ColoringCanvas, { ColoringCanvasRef } from './ColoringCanvas';
 import CodingGridActivity from './CodingGridActivity';
@@ -63,7 +64,7 @@ import regeneratedMascotImgW8 from '../assets/images/regenerated_image_178197534
 // @ts-ignore
 import regeneratedMascotImgW7 from '../assets/images/regenerated_image_1782886931115.png';
 // @ts-ignore
-import regeneratedMascotImgW9 from '../assets/images/regenerated_image_1782888733687.png';
+import regeneratedMascotImgW9 from '../assets/images/regenerated_image_1783234133812.png';
 // @ts-ignore
 import braceletDesignImg1 from '../assets/images/regenerated_image_1782800047094.jpg';
 // @ts-ignore
@@ -307,6 +308,11 @@ interface GradeR1WorkbookProps {
   onNextLesson?: () => void;
   isSuperAdmin?: boolean;
   superAdminBypass?: boolean;
+  isTeacherPreparation?: boolean;
+  schoolId?: string;
+  teacherId?: string;
+  lessonStatuses?: Record<string, LessonStatus>;
+  setLessonStatuses?: React.Dispatch<React.SetStateAction<Record<string, LessonStatus>>>;
 }
 
 interface Question {
@@ -1471,13 +1477,27 @@ function DeviceSafetySandboxStage({ speakText, onComplete }: { speakText: (t: st
               <span>Verify Answer 🚀</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 animate-pulse"
-            >
-              <span>{currentScenario + 1 === scenarios.length ? 'Finish Game 🏆' : 'Next Lesson ➡️'}</span>
-            </button>
+            selectedOption !== scenarios[currentScenario].correctIndex ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setChecked(false);
+                  setSelectedOption(null);
+                  playLocalSound('pop');
+                }}
+                className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 animate-pulse"
+              >
+                <span>Try Again 🔄</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNext}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer transition-all shadow-md active:scale-95 animate-pulse"
+              >
+                <span>{currentScenario + 1 === scenarios.length ? 'Finish Game 🏆' : 'Next ➡️'}</span>
+              </button>
+            )
           )}
         </div>
       )}
@@ -5045,7 +5065,12 @@ export default function GradeR1Workbook({
   onComplete, 
   onNextLesson,
   isSuperAdmin = false,
-  superAdminBypass = false
+  superAdminBypass = false,
+  isTeacherPreparation = false,
+  schoolId = '',
+  teacherId = '',
+  lessonStatuses = {},
+  setLessonStatuses
 }: GradeR1WorkbookProps) {
   const [currentPage, setCurrentPage] = useState<1 | 2>(1);
   const [activeSpeech, setActiveSpeech] = useState<string | null>(null);
@@ -5863,7 +5888,9 @@ export default function GradeR1Workbook({
                     
                     let studentMission = "Complete the activity to earn your stars!";
                     
-                    if (lesson.id === 'R-T1-W2') {
+                    if (lesson.id === 'R-T1-W1') {
+                      studentMission = "Sipho's hands are muddy and sticky! What should he do before using his school tablet?";
+                    } else if (lesson.id === 'R-T1-W2') {
                       studentMission = "Which color circle comes next in Sipho’s repeating sequence?";
                     } else if (lesson.id === 'R-T1-W3') {
                       studentMission = "Level 1: Tap all the electronic computing devices!";
@@ -6785,7 +6812,7 @@ export default function GradeR1Workbook({
 
                       {/* Options */}
                       {!(lesson.id === 'R-T1-W9' && qIdx === 2) && (
-                        <div className={`grid ${q.opts.length === 2 ? 'grid-cols-2 max-w-md mx-auto' : 'grid-cols-3'} gap-2.5 pt-1`}>
+                        <div className={`grid ${q.opts.length === 2 ? 'grid-cols-2 max-w-md mx-auto' : (lesson.id === 'R-T1-W1' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-3')} gap-3 pt-1`}>
                           {q.opts.map((opt, oIdx) => {
                             const isOptionSelected = selectedId === oIdx;
 
@@ -6830,7 +6857,7 @@ export default function GradeR1Workbook({
                                 type="button"
                                 disabled={quizSubmitted}
                                 onClick={() => handleSelectQuizOpt(qIdx, oIdx)}
-                                className={`p-3 rounded-2xl border text-center transition cursor-pointer select-none active:scale-95 flex flex-col items-center justify-center gap-1 min-h-[5rem] ${btnStyle}`}
+                                className={`p-3 rounded-2xl border text-center transition cursor-pointer select-none active:scale-95 flex flex-col items-center justify-center gap-1 min-h-[5rem] ${btnStyle} ${lesson.id === 'R-T1-W1' ? 'py-4 min-h-[10rem] md:min-h-[12rem] shadow-xs hover:shadow-md' : ''}`}
                               >
                                 {lesson.id === 'R-T1-W9' && qIdx === 1 ? (
                                   <div className="flex flex-col items-center gap-2 w-full">
@@ -6867,6 +6894,177 @@ export default function GradeR1Workbook({
                                         <span className="text-[10px] md:text-xs font-bold text-slate-700 leading-tight">Random sounds</span>
                                       </>
                                     )}
+                                  </div>
+                                ) : lesson.id === 'R-T1-W1' ? (
+                                  <div className="flex flex-col items-center justify-center gap-2 w-full">
+                                    {qIdx === 0 && oIdx === 0 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#e0f2fe" stroke="#0284c7" strokeWidth="3"/>
+                                        <path d="M35,65 C30,60 25,55 22,62 C19,69 24,75 32,78 L42,80 Z" fill="#fbcfe8" stroke="#db2777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <path d="M65,65 C70,60 75,55 78,62 C81,69 76,75 68,78 L58,80 Z" fill="#fbcfe8" stroke="#db2777" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                        <circle cx="35" cy="40" r="7" fill="white" fillOpacity="0.8" stroke="#38bdf8" strokeWidth="1.5" />
+                                        <circle cx="65" cy="42" r="5" fill="white" fillOpacity="0.8" stroke="#38bdf8" strokeWidth="1.5" />
+                                        <circle cx="50" cy="52" r="9" fill="white" fillOpacity="0.8" stroke="#38bdf8" strokeWidth="2" />
+                                        <circle cx="48" cy="48" r="2" fill="white" fillOpacity="0.9" />
+                                        <circle cx="33" cy="38" r="1.5" fill="white" fillOpacity="0.9" />
+                                        <path d="M22,25 L24,28 L27,29 L24,30 L22,33 L20,30 L17,29 L20,28 Z" fill="#facc15" />
+                                        <path d="M78,25 L80,28 L83,29 L80,30 L78,33 L76,30 L73,29 L76,28 Z" fill="#facc15" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 0 && oIdx === 1 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#fce7f3" stroke="#db2777" strokeWidth="3"/>
+                                        <rect x="26" y="50" width="4" height="32" rx="2" fill="#d97706" />
+                                        <circle cx="28" cy="44" r="14" fill="#ef4444" stroke="#b91c1c" strokeWidth="1.5" />
+                                        <path d="M28,34 A10,10 0 0,0 28,54 A6,6 0 0,0 28,38 A2,2 0 0,0 28,48" fill="none" stroke="white" strokeWidth="2" />
+                                        <g transform="translate(54, 44) rotate(-15)">
+                                          <polygon points="0,0 -12,-8 -12,8" fill="#a855f7" stroke="#701a75" strokeWidth="1.5" />
+                                          <polygon points="24,0 36,-8 36,8" fill="#a855f7" stroke="#701a75" strokeWidth="1.5" />
+                                          <rect x="-2" y="-10" width="28" height="20" rx="8" fill="#ec4899" stroke="#701a75" strokeWidth="1.5" />
+                                          <path d="M4,-10 L8,10" stroke="white" strokeWidth="2" />
+                                          <path d="M14,-10 L18,10" stroke="white" strokeWidth="2" />
+                                        </g>
+                                        <path d="M45,70 C47,75 49,75 51,70 C52,68 53,72 55,70 C57,68 59,74 61,70" stroke="#f59e0b" strokeWidth="3" strokeLinecap="round" fill="none" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 0 && oIdx === 2 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#fef3c7" stroke="#b45309" strokeWidth="3"/>
+                                        <path d="M20,68 C25,62 38,64 45,72 C50,78 68,76 75,70 C80,66 85,74 72,82 C60,88 35,86 22,80 Z" fill="#78350f" />
+                                        <g transform="translate(25, 30) scale(0.45)" fill="#78350f">
+                                          <path d="M40,55 C35,42 45,35 55,42 C62,48 58,62 48,65 Z" />
+                                          <ellipse cx="28" cy="40" rx="3" ry="8" transform="rotate(-25 28 40)" />
+                                          <ellipse cx="36" cy="24" rx="3" ry="10" transform="rotate(-10 36 24)" />
+                                          <ellipse cx="48" cy="20" rx="3" ry="11" />
+                                          <ellipse cx="60" cy="26" rx="3" ry="10" transform="rotate(15 60 26)" />
+                                          <ellipse cx="68" cy="42" rx="4" ry="7" transform="rotate(35 68 42)" />
+                                        </g>
+                                        <g transform="translate(68, 48)">
+                                          <path d="M0,24 C5,12 -2,2 8,0 C8,8 6,18 0,24" fill="#22c55e" stroke="#15803d" strokeWidth="1.5" />
+                                          <path d="M0,24 C-5,14 2,4 -8,2 C-8,10 -6,20 0,24" fill="#4ade80" stroke="#15803d" strokeWidth="1.5" />
+                                          <line x1="0" y1="24" x2="0" y2="4" stroke="#15803d" strokeWidth="2" />
+                                        </g>
+                                      </svg>
+                                    )}
+
+                                    {qIdx === 1 && oIdx === 0 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#f0f9ff" stroke="#2563eb" strokeWidth="3"/>
+                                        <rect x="22" y="32" width="34" height="42" rx="4" fill="#64748b" stroke="#334155" strokeWidth="2" />
+                                        <rect x="25" y="35" width="28" height="32" rx="2" fill="#93c5fd" />
+                                        <circle cx="34" cy="46" r="2.5" fill="#1e293b" />
+                                        <circle cx="44" cy="46" r="2.5" fill="#1e293b" />
+                                        <circle cx="30" cy="50" r="2" fill="#f43f5e" fillOpacity="0.6" />
+                                        <circle cx="48" cy="50" r="2" fill="#f43f5e" fillOpacity="0.6" />
+                                        <path d="M37,52 Q39,55 41,52" stroke="#1e293b" strokeWidth="2" strokeLinecap="round" fill="none" />
+                                        <polygon points="62,48 78,48 75,78 65,78" fill="#e0f2fe" stroke="#0284c7" strokeWidth="1.5" />
+                                        <rect x="63" y="54" width="11" height="22" fill="#38bdf8" fillOpacity="0.7" />
+                                        <path d="M41,52 Q52,50 66,58 L68,70" stroke="#f43f5e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 1 && oIdx === 1 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#fef2f2" stroke="#dc2626" strokeWidth="3"/>
+                                        <g transform="translate(42, 45) rotate(10)">
+                                          <rect x="-16" y="-20" width="32" height="40" rx="3" fill="#475569" stroke="#1e293b" strokeWidth="2" />
+                                          <rect x="-13" y="-17" width="26" height="30" rx="1.5" fill="#cbd5e1" />
+                                          <line x1="-6" y1="-6" x2="-2" y2="-2" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
+                                          <line x1="-2" y1="-6" x2="-6" y2="-2" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
+                                          <line x1="2" y1="-6" x2="6" y2="-2" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
+                                          <line x1="6" y1="-6" x2="2" y2="-2" stroke="#475569" strokeWidth="2" strokeLinecap="round" />
+                                          <path d="M-4,4 Q0,1 4,4" stroke="#475569" strokeWidth="2" strokeLinecap="round" fill="none" />
+                                        </g>
+                                        <g transform="translate(18, 25) rotate(-65)">
+                                          <polygon points="0,0 12,0 10,24 2,24" fill="#e0f2fe" fillOpacity="0.8" stroke="#0284c7" strokeWidth="1.5" />
+                                          <path d="M6,-4 C12,-15 25,-15 28,10 C30,22 15,35 6,26" fill="#38bdf8" />
+                                        </g>
+                                        <path d="M72,25 L78,32 L72,34 L80,42" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                        <path d="M22,70 L26,75 L21,78 L28,82" stroke="#eab308" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                        <circle cx="50" cy="50" r="32" fill="none" stroke="#ef4444" strokeWidth="6" strokeOpacity="0.9" />
+                                        <line x1="28" y1="28" x2="72" y2="72" stroke="#ef4444" strokeWidth="6" strokeOpacity="0.9" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 1 && oIdx === 2 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#fff7ed" stroke="#ea580c" strokeWidth="3"/>
+                                        <polygon points="38,25 62,25 56,80 44,80" fill="#fef3c7" fillOpacity="0.6" stroke="#d97706" strokeWidth="2" />
+                                        <polygon points="40,38 60,38 56,78 44,78" fill="#f97316" />
+                                        <line x1="42" y1="14" x2="48" y2="30" stroke="#ec4899" strokeWidth="3.5" strokeLinecap="round" />
+                                        <line x1="48" y1="30" x2="52" y2="75" stroke="#ec4899" strokeWidth="3.5" strokeLinecap="round" />
+                                        <circle cx="62" cy="25" r="10" fill="#fb923c" stroke="#ea580c" strokeWidth="1.5" />
+                                        <circle cx="62" cy="25" r="7" fill="#fed7aa" />
+                                        <path d="M62,18 L62,32 M55,25 L69,25" stroke="#fb923c" stroke="none" strokeWidth="1" />
+                                        <path d="M26,35 L28,37 L29,35 L28,33 Z" fill="#eab308" />
+                                        <path d="M72,55 L74,57 L75,55 L74,53 Z" fill="#eab308" />
+                                      </svg>
+                                    )}
+
+                                    {qIdx === 2 && oIdx === 0 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#f5f5f5" stroke="#737373" strokeWidth="3"/>
+                                        <g transform="translate(50, 44) rotate(-35)">
+                                          <rect x="-18" y="-12" width="36" height="24" rx="3" fill="#4b5563" stroke="#1f2937" strokeWidth="2" />
+                                          <rect x="-15" y="-10" width="30" height="20" rx="1" fill="#9ca3af" />
+                                          <circle cx="-6" cy="-1" r="1.5" fill="#374151" />
+                                          <circle cx="6" cy="-1" r="1.5" fill="#374151" />
+                                          <path d="M-3,5 L3,5" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" />
+                                        </g>
+                                        <path d="M12,50 Q25,35 42,42" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4" fill="none" />
+                                        <path d="M18,58 Q32,48 46,52" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4" fill="none" />
+                                        <path d="M72,68 L84,80 M84,68 L72,80" stroke="#ef4444" strokeWidth="5" strokeLinecap="round" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 2 && oIdx === 1 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#ecfdf5" stroke="#059669" strokeWidth="3"/>
+                                        <g transform="translate(18, 55) scale(0.6)">
+                                          <circle cx="15" cy="15" r="8" fill="#b45309" />
+                                          <circle cx="45" cy="15" r="8" fill="#b45309" />
+                                          <circle cx="15" cy="15" r="4" fill="#fca5a5" />
+                                          <circle cx="45" cy="15" r="4" fill="#fca5a5" />
+                                          <circle cx="30" cy="30" r="18" fill="#d97706" />
+                                          <ellipse cx="30" cy="36" rx="7" ry="5" fill="#fef3c7" />
+                                          <polygon points="30,33 27,35 33,35" fill="#451a03" />
+                                          <circle cx="23" cy="26" r="2.5" fill="#451a03" />
+                                          <circle cx="37" cy="26" r="2.5" fill="#451a03" />
+                                        </g>
+                                        <rect x="42" y="24" width="34" height="46" rx="4" fill="#475569" stroke="#1e293b" strokeWidth="2" />
+                                        <rect x="45" y="27" width="28" height="36" rx="2" fill="#a7f3d0" />
+                                        <circle cx="54" cy="40" r="2" fill="#064e3b" />
+                                        <circle cx="64" cy="40" r="2" fill="#064e3b" />
+                                        <path d="M57,45 Q59,48 61,45" stroke="#064e3b" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                                        <path d="M36,44 C38,44 44,46 44,49 C44,52 38,54 36,54" fill="#fbcfe8" stroke="#db2777" strokeWidth="1.5" strokeLinecap="round" />
+                                        <path d="M82,44 C80,44 74,46 74,49 C74,52 80,54 82,54" fill="#fbcfe8" stroke="#db2777" strokeWidth="1.5" strokeLinecap="round" />
+                                        <path d="M54,14 C54,14 52,10 49,10 C46,10 45,13 47,15 L54,20 L61,15 C63,13 62,10 59,10 C56,10 54,14 54,14 Z" fill="#f43f5e" />
+                                        <path d="M78,16 C78,16 77,13 75,13 C73,13 72,15 73,16 L78,20 L83,16 C84,15 83,13 81,13 C79,13 78,16 78,16 Z" fill="#f43f5e" transform="scale(0.7) translate(35, 10)" />
+                                      </svg>
+                                    )}
+                                    {qIdx === 2 && oIdx === 2 && (
+                                      <svg viewBox="0 0 100 100" className="w-16 h-16 md:w-20 md:h-20 mb-1" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="50" cy="50" r="46" fill="#fffbeb" stroke="#d97706" strokeWidth="3"/>
+                                        <circle cx="75" cy="25" r="14" fill="#f59e0b" stroke="#b45309" strokeWidth="1.5" />
+                                        <line x1="75" y1="5" x2="75" y2="9" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="75" y1="41" x2="75" y2="45" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="55" y1="25" x2="59" y2="25" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="91" y1="25" x2="95" y2="25" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="61" y1="11" x2="64" y2="14" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="86" y1="36" x2="89" y2="39" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="89" y1="11" x2="86" y2="14" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="64" y1="36" x2="61" y2="39" stroke="#b45309" strokeWidth="2" strokeLinecap="round" />
+                                        <path d="M26,35 Q28,30 26,25" stroke="#ef4444" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                        <path d="M34,38 Q36,33 34,28" stroke="#ef4444" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                        <g transform="translate(38, 55) rotate(25)">
+                                          <rect x="-18" y="-12" width="36" height="24" rx="2" fill="#374151" stroke="#111827" strokeWidth="2" />
+                                          <rect x="-15" y="-10" width="30" height="20" rx="1" fill="#facc15" />
+                                          <circle cx="-5" cy="-1" r="1.5" fill="#78350f" />
+                                          <circle cx="5" cy="-1" r="1.5" fill="#78350f" />
+                                          <path d="M-3,5 Q0,2 3,5" stroke="#78350f" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+                                          <path d="M8,3 Q9,6 8,7 C7.5,7.5 6.5,7.5 6,7 C5.5,6.5 5.5,5.5 6,5 Z" fill="#38bdf8" />
+                                        </g>
+                                        <path d="M12,82 L15,75 L18,82 M22,82 L24,73 L26,82 M78,82 L80,74 L82,82" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                                      </svg>
+                                    )}
+                                    <span className="text-xs md:text-sm font-bold text-slate-700 pointer-events-none leading-tight">{textPart} {emojiPart}</span>
                                   </div>
                                 ) : lesson.grade === 'R' ? (
                                   <>
@@ -7014,18 +7212,59 @@ export default function GradeR1Workbook({
                     )}
 
                     {onNextLesson && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playChime();
-                          onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
-                          onNextLesson();
-                        }}
-                        className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                        <span>Continue to Next Lesson 🚀</span>
-                      </button>
+                      isTeacherPreparation ? (
+                        (() => {
+                          const currentStatus = lessonStatuses[lesson.id] || 'locked';
+                          const isPending = currentStatus === 'pending_approval';
+                          const isApproved = currentStatus === 'unlocked_for_students';
+                          
+                          return (
+                            <button
+                              type="button"
+                              disabled={isPending}
+                              onClick={async () => {
+                                playChime();
+                                onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
+                                if (schoolId) {
+                                  await updateLessonStatus(schoolId, lesson.grade, lesson.id, 'pending_approval', teacherId);
+                                  if (setLessonStatuses) {
+                                    setLessonStatuses(prev => ({ ...prev, [lesson.id]: 'pending_approval' }));
+                                  }
+                                }
+                              }}
+                              className={`px-5 py-2.5 font-extrabold rounded-xl text-xs transition shadow-md cursor-pointer inline-flex items-center gap-1.5 ${
+                                isPending
+                                  ? 'bg-amber-500 text-white cursor-not-allowed opacity-95'
+                                  : isApproved
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-indigo-600 hover:bg-indigo-700 text-white active:scale-95'
+                              }`}
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                              <span>
+                                {isPending 
+                                  ? 'Awaiting Admin Unlock ⏳' 
+                                  : isApproved 
+                                  ? 'Complete & Approved ✔' 
+                                  : 'Complete and Notify Admin 🚀'}
+                              </span>
+                            </button>
+                          );
+                        })()
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playChime();
+                            onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
+                            onNextLesson();
+                          }}
+                          className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
+                        >
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          <span>Continue to Next Lesson 🚀</span>
+                        </button>
+                      )
                     )}
                   </div>
                 </div>

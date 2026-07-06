@@ -6,8 +6,9 @@ import { BookOpen, CheckCircle, Lock, Unlock, School, AlertTriangle } from 'luci
 import { supabase } from '@/lib/supabase';
 import { LoadingState } from '@/components/dashboard/LoadingState';
 import { CURRICULUM_LESSONS } from '@/curriculumData';
-import { LessonStatus } from '@/types';
+import { LessonStatus, GradeType, UserProgress } from '@/types';
 import { fetchLessonStatuses, updateLessonStatus } from '@/lib/lesson-status-service';
+import Dashboard from '@/components/Dashboard';
 
 export default function AdminCurriculumPage() {
   const [schools, setSchools] = useState<any[]>([]);
@@ -15,6 +16,30 @@ export default function AdminCurriculumPage() {
   const [selectedSchool, setSelectedSchool] = useState<any | null>(null);
   const [schoolStatuses, setSchoolStatuses] = useState<Record<string, LessonStatus>>({});
   const [expandedGrade, setExpandedGrade] = useState<string | null>(null);
+  const [gradeViewModes, setGradeViewModes] = useState<Record<string, 'list' | 'interactive'>>({});
+  const [progress, setProgress] = useState<UserProgress>({
+    completedWeeks: {},
+    starsEarned: {},
+    totalStars: 0,
+    marksPossible: {}
+  });
+
+  const updateProgress = (weekKey: string, starsEarned: number, marksPossible?: number) => {
+    setProgress(prev => {
+      const newCompleted = { ...prev.completedWeeks, [weekKey]: true };
+      const newStars = { ...prev.starsEarned, [weekKey]: Math.max(prev.starsEarned[weekKey] || 0, starsEarned) };
+      const newPossible = { ...prev.marksPossible, [weekKey]: marksPossible || 3 };
+      const newTotal = Object.values(newStars).reduce((sum, current) => sum + current, 0);
+
+      return {
+        ...prev,
+        completedWeeks: newCompleted,
+        starsEarned: newStars,
+        totalStars: newTotal,
+        marksPossible: newPossible
+      };
+    });
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -157,7 +182,47 @@ export default function AdminCurriculumPage() {
                      </button>
                      
                      {expandedGrade === grade && (
-                       <div className="p-4 border-t border-slate-200 divide-y divide-slate-100">
+                       <div className="border-t border-slate-200">
+                          {/* Tabs for switching views */}
+                          <div className="flex border-b border-slate-200 bg-slate-50/50 px-4">
+                            <button
+                              onClick={() => setGradeViewModes(prev => ({ ...prev, [grade]: 'interactive' }))}
+                              className={`px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 ${
+                                (gradeViewModes[grade] || 'interactive') === 'interactive'
+                                  ? 'border-indigo-600 text-indigo-600'
+                                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              🗺️ Interactive Student Map (Super Admin)
+                            </button>
+                            <button
+                              onClick={() => setGradeViewModes(prev => ({ ...prev, [grade]: 'list' }))}
+                              className={`px-4 py-3 text-xs font-bold border-b-2 transition flex items-center gap-2 ${
+                                gradeViewModes[grade] === 'list'
+                                  ? 'border-indigo-600 text-indigo-600'
+                                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                              }`}
+                            >
+                              📋 Quick Approval List
+                            </button>
+                          </div>
+
+                          {(gradeViewModes[grade] || 'interactive') === 'interactive' ? (
+                            <div className="p-4 bg-slate-50/20 min-h-[500px]">
+                              <Dashboard 
+                                activeStudentId="super_admin_mock"
+                                grade={grade as GradeType}
+                                progress={progress}
+                                updateProgress={updateProgress}
+                                onExit={() => setExpandedGrade(null)}
+                                isSuperAdmin={true}
+                                schoolId={selectedSchool.id}
+                                lessonStatuses={schoolStatuses}
+                                setLessonStatuses={setSchoolStatuses}
+                              />
+                            </div>
+                          ) : (
+                            <div className="p-4 divide-y divide-slate-100">
                          {gradeLessons.map(lesson => {
                            const status = schoolStatuses[lesson.id];
                            const isWeek1 = lesson.term === 1 && lesson.week === 1;
@@ -184,8 +249,10 @@ export default function AdminCurriculumPage() {
                              </div>
                            );
                          })}
-                       </div>
-                     )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                    </div>
                  );
               })}

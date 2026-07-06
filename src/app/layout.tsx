@@ -5,6 +5,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Greycode LMS",
   description: "An interactive educational web app for Foundation Phase (Grade R - 3) students to learn coding, robotics, and digital concepts according to the school curriculum.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

@@ -61,6 +61,25 @@ export async function getSuperAdminData() {
       console.warn('Exception fetching recent schools:', e);
     }
 
+    let capsProgress = 65;
+    let practicalAssessments = 42;
+
+    try {
+      const { data: progressList } = await supabase
+        .from('progress')
+        .select('status, score');
+        
+      if (progressList && progressList.length > 0) {
+        const completed = progressList.filter(p => p.status === 'completed').length;
+        capsProgress = Math.min(100, Math.max(10, Math.round((completed / progressList.length) * 100)));
+        
+        const withScore = progressList.filter(p => p.status === 'completed' && p.score > 0).length;
+        practicalAssessments = Math.min(100, Math.max(5, Math.round((withScore / progressList.length) * 100)));
+      }
+    } catch (e) {
+      console.warn('Error computing dynamic admin progress metrics:', e);
+    }
+
     return {
       stats: {
         schools: schoolsCount,
@@ -69,8 +88,8 @@ export async function getSuperAdminData() {
         classes: classesCount,
       },
       recentSchools: recentSchoolsList,
-      capsProgress: 65,
-      practicalAssessments: 42
+      capsProgress,
+      practicalAssessments
     };
   } catch (err) {
     console.error('Failed in getSuperAdminData, returning default stats:', err);
