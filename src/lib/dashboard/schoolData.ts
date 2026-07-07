@@ -94,16 +94,46 @@ export async function getSchoolAdminData(schoolId: string) {
 
       if (students && students.length > 0) {
         const studentIds = students.map(s => s.id);
-        const { data: progressList } = await supabase
+        const { data: progressTableList } = await supabase
           .from('progress')
           .select('student_id, status, score')
           .in('student_id', studentIds);
 
+        let progressList: any[] = progressTableList || [];
+
+        if (progressList.length === 0) {
+          const { data: studentProfiles } = await supabase
+            .from('profiles')
+            .select('id, progress')
+            .in('id', studentIds);
+
+          if (studentProfiles && studentProfiles.length > 0) {
+            for (const p of studentProfiles) {
+              const pProgress = p.progress as any;
+              if (pProgress && typeof pProgress === 'object') {
+                const completedWeeks = pProgress.completedWeeks || {};
+                const starsEarned = pProgress.starsEarned || {};
+                for (const key of Object.keys(completedWeeks)) {
+                  if (completedWeeks[key]) {
+                    progressList.push({
+                      student_id: p.id,
+                      status: 'completed',
+                      score: starsEarned[key] || 3,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
         if (progressList && progressList.length > 0) {
           const completed = progressList.filter(p => p.status === 'completed').length;
-          learnerProgress = Math.min(100, Math.max(10, Math.round((completed / progressList.length) * 100)));
+          // Calculate learner progress as completed lessons out of total expected lessons (10 per student)
+          const totalExpected = students.length * 10;
+          learnerProgress = Math.min(100, Math.max(10, Math.round((completed / totalExpected) * 100)));
           
-          const incomplete = progressList.filter(p => p.status !== 'completed').length;
+          const incomplete = Math.max(0, totalExpected - completed);
           outstandingAssessments = incomplete || 0;
           
           const activeStudents = new Set(progressList.map(p => p.student_id)).size;

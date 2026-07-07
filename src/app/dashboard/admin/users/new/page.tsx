@@ -139,7 +139,26 @@ function NewUserForm() {
         throw new Error('User was not created successfully.');
       }
 
-      setSuccess(`User successfully registered! An approval record has been created for ${formData.firstName} ${formData.lastName}.`);
+      // Send branded Zoho Welcome/Invitation Email in the background
+      try {
+        await fetch('/api/email/send-welcome', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            role: formData.role
+          })
+        });
+      } catch (welcomeErr) {
+        console.warn('Failed to send welcome notification email:', welcomeErr);
+      }
+
+      setSuccess(`User successfully registered! An invitation email has been dispatched to ${formData.email}.`);
       
       // Delay navigation to let the success state render nicely
       setTimeout(() => {

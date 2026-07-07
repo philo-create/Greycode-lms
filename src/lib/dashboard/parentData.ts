@@ -17,19 +17,19 @@ export async function getParentData(parentId: string) {
   try {
     let children: any[] = [];
     try {
-      // Find parent profile to get their school
+      // Find parent profile to get their email
       const { data: parentProfile } = await supabase
         .from('profiles')
-        .select('school_id, last_name')
+        .select('school_id, last_name, parent_email')
         .eq('id', parentId)
         .maybeSingle();
 
-      if (parentProfile?.school_id) {
-        // Fetch student profiles in the same school as "children"
+      if (parentProfile?.parent_email) {
+        // Fetch student profiles linked to this parent's email
         const { data: studentProfiles, error } = await supabase
           .from('profiles')
           .select('id, full_name, first_name, last_name, email, grade, progress')
-          .eq('school_id', parentProfile.school_id)
+          .eq('parent_email', parentProfile.parent_email)
           .eq('role', 'learner');
 
         if (!error && studentProfiles) {
@@ -79,6 +79,39 @@ export async function getParentData(parentId: string) {
             completed_at: p.completed_at || p.created_at
           }));
         }
+
+        if (childrenProgress.length === 0) {
+          const { data: studentProfiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, first_name, last_name, progress, created_at')
+            .in('id', childIds);
+
+          if (studentProfiles && studentProfiles.length > 0) {
+            for (const p of studentProfiles) {
+              const pProgress = p.progress as any;
+              if (pProgress && typeof pProgress === 'object') {
+                const completedWeeks = pProgress.completedWeeks || {};
+                const starsEarned = pProgress.starsEarned || {};
+                for (const key of Object.keys(completedWeeks)) {
+                  if (completedWeeks[key]) {
+                    childrenProgress.push({
+                      id: `${p.id}-${key}`,
+                      student_id: p.id,
+                      status: 'completed',
+                      score: starsEarned[key] || 3,
+                      completed_at: p.created_at || new Date().toISOString(),
+                      lesson_title: `Lesson ${key}`,
+                      student_name: p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+                    });
+                  }
+                }
+              }
+            }
+          }
+          childrenProgress = childrenProgress
+            .sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime())
+            .slice(0, 10);
+        }
       } catch (e) {
         console.warn('Exception fetching progress:', e);
       }
@@ -90,10 +123,38 @@ export async function getParentData(parentId: string) {
     if (children && children.length > 0) {
       const childIds = children.map(c => c.id);
       try {
-        const { data: progressList } = await supabase
+        const { data: progressTableList } = await supabase
           .from('progress')
-          .select('status, score')
+          .select('status, score, student_id')
           .in('student_id', childIds);
+
+        let progressList: any[] = progressTableList || [];
+
+        if (progressList.length === 0) {
+          const { data: studentProfiles } = await supabase
+            .from('profiles')
+            .select('id, progress')
+            .in('id', childIds);
+
+          if (studentProfiles && studentProfiles.length > 0) {
+            for (const p of studentProfiles) {
+              const pProgress = p.progress as any;
+              if (pProgress && typeof pProgress === 'object') {
+                const completedWeeks = pProgress.completedWeeks || {};
+                const starsEarned = pProgress.starsEarned || {};
+                for (const key of Object.keys(completedWeeks)) {
+                  if (completedWeeks[key]) {
+                    progressList.push({
+                      student_id: p.id,
+                      status: 'completed',
+                      score: starsEarned[key] || 3,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
 
         if (progressList && progressList.length > 0) {
           const completedCount = progressList.filter(p => p.status === 'completed').length;

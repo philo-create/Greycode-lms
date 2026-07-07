@@ -65,16 +65,44 @@ export async function getSuperAdminData() {
     let practicalAssessments = 42;
 
     try {
-      const { data: progressList } = await supabase
+      const { data: progressTableList } = await supabase
         .from('progress')
         .select('status, score');
         
+      let progressList: any[] = progressTableList || [];
+
+      if (progressList.length === 0) {
+        const { data: studentProfiles } = await supabase
+          .from('profiles')
+          .select('id, progress')
+          .eq('role', 'learner');
+
+        if (studentProfiles && studentProfiles.length > 0) {
+          for (const p of studentProfiles) {
+            const pProgress = p.progress as any;
+            if (pProgress && typeof pProgress === 'object') {
+              const completedWeeks = pProgress.completedWeeks || {};
+              const starsEarned = pProgress.starsEarned || {};
+              for (const key of Object.keys(completedWeeks)) {
+                if (completedWeeks[key]) {
+                  progressList.push({
+                    status: 'completed',
+                    score: starsEarned[key] || 3,
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+
       if (progressList && progressList.length > 0) {
         const completed = progressList.filter(p => p.status === 'completed').length;
-        capsProgress = Math.min(100, Math.max(10, Math.round((completed / progressList.length) * 100)));
+        const totalExpected = (learnersCount || 1) * 10;
+        capsProgress = Math.min(100, Math.max(10, Math.round((completed / totalExpected) * 100)));
         
         const withScore = progressList.filter(p => p.status === 'completed' && p.score > 0).length;
-        practicalAssessments = Math.min(100, Math.max(5, Math.round((withScore / progressList.length) * 100)));
+        practicalAssessments = Math.min(100, Math.max(5, Math.round((withScore / totalExpected) * 100)));
       }
     } catch (e) {
       console.warn('Error computing dynamic admin progress metrics:', e);

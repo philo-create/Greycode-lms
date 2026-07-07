@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
-import { Users, UserPlus, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Users, UserPlus, CheckCircle, XCircle, Trash2, Key } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -14,6 +14,13 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Custom states for manual confirmation and password reset
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<any>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
+  const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
   
   useEffect(() => {
     const loadData = async () => {
@@ -60,15 +67,49 @@ export default function AdminUsersPage() {
         setSchools(schoolsData);
       }
 
-      // Fetch users
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (profilesError) {
-        console.error('Supabase query error in AdminUsersPage:', profilesError);
-        return;
+      let profiles: any[] = [];
+      let loadedFromApi = false;
+
+      // Try loading from our admin users endpoint which has auto-sync of email confirmation status
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          const response = await fetch('/api/admin/users', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data && Array.isArray(data.profiles)) {
+              profiles = data.profiles;
+              loadedFromApi = true;
+              console.log('Successfully loaded and synchronized users from server API');
+            }
+          } else {
+            const errData = await response.json();
+            console.error('Admin API fetch failed with status:', response.status, errData);
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Could not sync/fetch users via admin API, falling back to direct query:', apiErr);
+      }
+
+      // Fallback: Direct query if api fetch wasn't successful
+      if (!loadedFromApi) {
+        const { data: directProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (profilesError) {
+          console.error('Supabase query error in AdminUsersPage fallback:', profilesError);
+          return;
+        }
+        if (directProfiles) {
+          profiles = directProfiles;
+        }
       }
       
       if (profiles) {
@@ -148,6 +189,111 @@ export default function AdminUsersPage() {
       alert(`Failed to delete user: ${err.message || 'Unknown error'}`);
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleForceConfirmEmail = async (userId: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
+      const response = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ userId, emailConfirmed: true })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to confirm email');
+      }
+
+      // Update local state
+      setUsers(prev => prev.map(u => {
+        if (u.id === userId) {
+          return {
+            ...u,
+            email_confirmed: true
+          };
+        }
+        return u;
+      }));
+    } catch (err: any) {
+      console.error('Failed to confirm email:', err);
+      alert(`Failed to confirm email: ${err.message || 'Unknown error'}`);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleSetUserPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase || !selectedUserForPassword) return;
+    if (newPassword.length < 6) {
+      setPasswordErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    setPasswordSuccessMsg('');
+    setPasswordErrorMsg('');
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
+      const response = await fetch('/api/admin/users/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          userId: selectedUserForPassword.id, 
+          password: newPassword, 
+          emailConfirmed: true 
+        })
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update password');
+      }
+
+      setPasswordSuccessMsg(`Successfully set password for ${selectedUserForPassword.first_name || ''}!`);
+      
+      // Update local email confirmed state too
+      setUsers(prev => prev.map(u => {
+        if (u.id === selectedUserForPassword.id) {
+          return {
+            ...u,
+            email_confirmed: true
+          };
+        }
+        return u;
+      }));
+
+      setTimeout(() => {
+        setSelectedUserForPassword(null);
+        setNewPassword('');
+        setPasswordSuccessMsg('');
+      }, 2000);
+    } catch (err: any) {
+      console.error('Failed to update password:', err);
+      setPasswordErrorMsg(err.message || 'Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -366,6 +512,11 @@ export default function AdminUsersPage() {
                           <div className="text-[10px] text-slate-500">{user.parent_email}</div>
                           <div className="text-[10px] text-slate-500">{user.parent_phone}</div>
                         </div>
+                      ) : user.email ? (
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-slate-700">Account Email</div>
+                          <div className="text-[10px] text-slate-500 font-mono select-all">{user.email}</div>
+                        </div>
                       ) : (
                         <span className="text-slate-400">-</span>
                       )}
@@ -381,14 +532,26 @@ export default function AdminUsersPage() {
                         }
 
                         return (
-                          <span className={`px-2 py-1 rounded text-xs font-semibold capitalize whitespace-nowrap ${
-                            displayStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
-                            displayStatus === 'unconfirmed' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
-                            displayStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                            'bg-rose-100 text-rose-700'
-                          }`}>
-                            {displayStatus === 'unconfirmed' ? 'Pending Confirmation' : displayStatus}
-                          </span>
+                          <div className="flex flex-col items-start gap-1">
+                            <span className={`px-2 py-1 rounded text-xs font-semibold capitalize whitespace-nowrap ${
+                              displayStatus === 'pending' ? 'bg-amber-100 text-amber-700' :
+                              displayStatus === 'unconfirmed' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                              displayStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                              'bg-rose-100 text-rose-700'
+                            }`}>
+                              {displayStatus === 'unconfirmed' ? 'Pending Confirmation' : displayStatus}
+                            </span>
+                            {displayStatus === 'unconfirmed' && (
+                              <button
+                                onClick={() => handleForceConfirmEmail(user.id)}
+                                disabled={updatingId === user.id}
+                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold underline cursor-pointer disabled:opacity-50 mt-0.5"
+                                title="Click to manually confirm this user's email address"
+                              >
+                                {updatingId === user.id ? 'Confirming...' : 'Confirm Email'}
+                              </button>
+                            )}
+                          </div>
                         );
                       })()}
                     </td>
@@ -418,6 +581,21 @@ export default function AdminUsersPage() {
                             </>
                           );
                         })()}
+
+                        {/* Force Change Password Button */}
+                        <button
+                          onClick={() => {
+                            setSelectedUserForPassword(user);
+                            setNewPassword('');
+                            setPasswordSuccessMsg('');
+                            setPasswordErrorMsg('');
+                          }}
+                          className="p-1.5 text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                          title="Set / Reset User Password"
+                          disabled={updatingId === user.id}
+                        >
+                          <Key className="w-5 h-5" />
+                        </button>
 
                         {currentUser?.id !== user.id ? (
                           <button
@@ -449,6 +627,75 @@ export default function AdminUsersPage() {
           </div>
         )}
       </DashboardCard>
+
+      {/* Password Reset Modal */}
+      {selectedUserForPassword && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2.5 bg-amber-50 rounded-xl text-amber-600">
+                <Key className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-950 text-base">Set Password</h3>
+                <p className="text-xs text-slate-500">
+                  For {selectedUserForPassword.first_name} {selectedUserForPassword.last_name} ({selectedUserForPassword.role})
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSetUserPassword} className="space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed bg-amber-50/50 p-3 rounded-xl border border-amber-100">
+                This will update the user's password directly and automatically confirm their email address, allowing them to log in immediately.
+              </p>
+
+              {passwordErrorMsg && (
+                <div className="p-3 bg-rose-50 text-rose-700 border border-rose-100 rounded-xl text-xs font-bold">
+                  ⚠️ {passwordErrorMsg}
+                </div>
+              )}
+
+              {passwordSuccessMsg && (
+                <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-xl text-xs font-bold">
+                  ✅ {passwordSuccessMsg}
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">New Password</label>
+                <input
+                  type="text"
+                  required
+                  minLength={6}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"
+                  placeholder="Min 6 characters"
+                  disabled={isUpdatingPassword}
+                />
+              </div>
+
+              <div className="flex space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedUserForPassword(null)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition"
+                  disabled={isUpdatingPassword}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1"
+                  disabled={isUpdatingPassword}
+                >
+                  {isUpdatingPassword ? 'Updating...' : 'Set Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

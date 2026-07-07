@@ -178,16 +178,47 @@ export default function SuperAdminDashboard() {
         schoolsData.forEach(s => schoolsMap.set(s.id, s));
       }
 
-      // Fetch profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-        
-      if (profilesError) {
-        console.error('Supabase profiles query error details:', JSON.stringify(profilesError));
-        setPendingError(`${profilesError.message || 'No message'} (Code: ${profilesError.code || 'No code'})`);
-        return;
+      let profiles: any[] = [];
+      let loadedFromApi = false;
+
+      // Try loading from our admin users endpoint which has auto-sync of email confirmation status
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          const response = await fetch('/api/admin/users', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            if (data && Array.isArray(data.profiles)) {
+              profiles = data.profiles;
+              loadedFromApi = true;
+              console.log('Successfully loaded and synchronized profiles on main admin dashboard');
+            }
+          }
+        }
+      } catch (apiErr) {
+        console.warn('Could not sync/fetch users via admin API on dashboard, falling back to direct query:', apiErr);
+      }
+
+      // Fallback: Fetch profiles
+      if (!loadedFromApi) {
+        const { data: directProfiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (profilesError) {
+          console.error('Supabase profiles query error details:', JSON.stringify(profilesError));
+          setPendingError(`${profilesError.message || 'No message'} (Code: ${profilesError.code || 'No code'})`);
+          return;
+        }
+        if (directProfiles) {
+          profiles = directProfiles;
+        }
       }
       
       if (profiles) {

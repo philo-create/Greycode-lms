@@ -1,3 +1,4 @@
+'use client';
 import { localStore, migrateLocalStorageProgress, getStudentWorkbookStates, mergeProgress, restoreStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { getStudentProfiles } from '../lib/db';
 import { GRADES } from '../curriculumData';
 import { useRouter } from 'next/navigation';
+import FamilyRegistrationForm from './FamilyRegistrationForm';
 
 interface LoginGateProps {
   onLogin: (student: StudentProfile) => void;
@@ -116,25 +118,6 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       if (profileError) throw profileError;
       
       if (profile) {
-        // Sync email_confirmed status client-side as a fallback/backup
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email_confirmed_at && !profile.email_confirmed) {
-          try {
-            const { error: syncErr } = await supabase
-              .from('profiles')
-              .update({ email_confirmed: true })
-              .eq('id', userId);
-            
-            if (syncErr) {
-              console.warn("Could not sync email confirmation status:", syncErr);
-            } else {
-              profile.email_confirmed = true;
-            }
-          } catch (syncErr) {
-            console.warn("Exception syncing email confirmation status:", syncErr);
-          }
-        }
-
         // Determine if we should show the password reset screen based on URL refs captured on mount
         const hasRecoveryMarker = initialRecoveryRef.current;
         const hasResetMarker = initialResetRef.current;
@@ -251,9 +234,18 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
+            const meta = session.user.user_metadata || {};
+            const role = (meta.role || 'learner').toLowerCase();
+            if (role !== 'learner') {
+              // Non-learners should go straight to /dashboard to let it self-heal
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 500);
+              return;
+            }
             setSessionUser(session.user);
-            setFirstName(session.user.user_metadata?.first_name || session.user.user_metadata?.full_name?.split(' ')[0] || '');
-            setLastName(session.user.user_metadata?.last_name || session.user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '');
+            setFirstName(meta.first_name || meta.full_name?.split(' ')[0] || '');
+            setLastName(meta.last_name || meta.full_name?.split(' ').slice(1).join(' ') || '');
             setView('complete_profile');
           }
         } catch (e) {
@@ -435,7 +427,6 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
       
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await supabase.from('profiles').update({ email_confirmed: true }).eq('id', session.user.id);
         setTimeout(() => {
           setIsResettingPassword(false);
           fetchProfile(session.user.id, true);
@@ -539,7 +530,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
               setIsPendingApproval(false);
               setView('login');
             }}
-            className="px-6 py-3 bg-indigo-50 text-indigo-700 font-bold rounded-xl hover:bg-indigo-100 transition"
+            className="px-6 py-3 bg-blue-50 text-blue-700 font-bold rounded-xl hover:bg-blue-100 transition"
           >
             Return to Login
           </button>
@@ -552,6 +543,21 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
     <div className="w-full max-w-4xl mx-auto py-10 px-4 min-h-[80vh] flex flex-col justify-center items-center" id="login-portal-root">
       <AnimatePresence mode="wait">
         
+        {view === 'register' ? (
+          <FamilyRegistrationForm 
+            key="register"
+            schools={schools} 
+            onComplete={() => {
+              setView('login');
+              setSuccessText('Family registered successfully! Please check your emails to verify your accounts before logging in.');
+            }}
+            onCancel={() => {
+              setView('login');
+              setErrorText('');
+              setSuccessText('');
+            }}
+          />
+        ) : (
         <motion.div
           key={view}
           initial={{ opacity: 0, y: 20 }}
@@ -560,7 +566,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-2xl space-y-6 text-center"
         >
           <div className="space-y-3">
-            <div className="inline-flex p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-600 shadow-xs">
+            <div className="inline-flex p-3.5 bg-blue-50 border border-blue-100 rounded-2xl text-blue-600 shadow-xs">
               <svg 
                 id="Layer_2" 
                 data-name="Layer 2" 
@@ -630,11 +636,11 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 ? handleForgotPassword
                 : view === 'reset_password'
                 ? handleResetPassword
-                : handleRegister
+                : undefined
             } 
             className="space-y-4 text-left"
           >
-            {(view === 'register' || view === 'complete_profile') && (
+            {(view === 'complete_profile') && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -752,7 +758,9 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
             {view !== 'complete_profile' && view !== 'forgot_password' && view !== 'reset_password' && (
               <>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Email Address</label>
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    Email Address
+                  </label>
                   <input
                     type="email"
                     required
@@ -848,7 +856,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
                 ? 'Send Password Setup Link'
                 : view === 'reset_password'
                 ? 'Update Password & Log In'
-                : 'Create Account'
+                : 'Submit'
               }
               {view === 'login' ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
             </button>
@@ -922,17 +930,18 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
               <button
                 type="button"
                 onClick={() => {
-                  setView(view === 'login' ? 'register' : 'login');
+                  setView('register');
                   setErrorText('');
                   setSuccessText('');
                 }}
                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
               >
-                {view === 'login' ? "Don't have an account? Sign up" : "Already have an account? Log in"}
+                {view === 'login' ? "New Parent? Register Your Family Here" : "Already have an account? Log in"}
               </button>
             )}
           </div>
         </motion.div>
+        )}
 
       </AnimatePresence>
     </div>

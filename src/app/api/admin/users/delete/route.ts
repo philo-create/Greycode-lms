@@ -124,50 +124,39 @@ export async function POST(req: NextRequest) {
     };
 
     // 3. Perform deletion with appropriate privileges
-    if (supabaseServiceKey) {
-      console.log(`Using Service Role Key to delete auth user: ${userId}`);
-      const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-        }
-      });
+    if (!supabaseServiceKey) {
+      console.warn('Attempted to delete a user without SUPABASE_SERVICE_ROLE_KEY');
+      return NextResponse.json({ 
+        error: 'Complete deletion requires SUPABASE_SERVICE_ROLE_KEY. Please add this to your Environment Variables/Secrets to allow complete user removal.' 
+      }, { status: 500 });
+    }
 
-      // Clear any references first using the RLS-bypassing adminClient
-      await cleanDependentRecords(adminClient);
+    console.log(`Using Service Role Key to delete auth user: ${userId}`);
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      }
+    });
 
-      // Now delete the public.profiles record
-      const { error: deleteProfileError } = await adminClient
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+    // Clear any references first using the RLS-bypassing adminClient
+    await cleanDependentRecords(adminClient);
+
+    // Now delete the public.profiles record
+    const { error: deleteProfileError } = await adminClient
+      .from('profiles')
+      .delete()
+      .eq('id', userId);
       
-      if (deleteProfileError) {
-        console.warn('Profile deletion failed (or already deleted):', deleteProfileError);
-      }
+    if (deleteProfileError) {
+      console.warn('Profile deletion failed (or already deleted):', deleteProfileError);
+    }
 
-      // Finally, delete the auth user
-      const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId);
-      if (deleteAuthError) {
-        console.error('Failed to delete auth user:', deleteAuthError);
-        return NextResponse.json({ error: `Failed to delete auth user: ${deleteAuthError.message}` }, { status: 500 });
-      }
-    } else {
-      console.log(`No Service Role Key found. Deleting profile directly via caller session: ${userId}`);
-      
-      // Clear references first via userClient
-      await cleanDependentRecords(userClient);
-
-      // Delete from profiles table directly using userClient (authenticated as the admin caller)
-      const { error: deleteProfileError } = await userClient
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-
-      if (deleteProfileError) {
-        console.error('Failed to delete profile directly:', deleteProfileError);
-        return NextResponse.json({ error: `Failed to delete profile: ${deleteProfileError.message}` }, { status: 500 });
-      }
+    // Finally, delete the auth user
+    const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId);
+    if (deleteAuthError) {
+      console.error('Failed to delete auth user:', deleteAuthError);
+      return NextResponse.json({ error: `Failed to delete auth user: ${deleteAuthError.message}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

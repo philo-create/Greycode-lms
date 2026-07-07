@@ -45,14 +45,50 @@ export async function getTeacherData(teacherId: string) {
     const studentIds = studentClasses?.map(sc => sc.student_id) || [];
     
     if (studentIds.length > 0) {
-      const { data: progressData } = await supabase
+      const { data: progressTableData } = await supabase
         .from('progress')
         .select('status, score, completed_at, module_id, profiles(first_name, last_name)')
         .in('student_id', studentIds);
         
+      let progressData: any[] = progressTableData || [];
+
+      if (progressData.length === 0) {
+        const { data: studentProfiles } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, progress, created_at')
+          .in('id', studentIds);
+
+        if (studentProfiles && studentProfiles.length > 0) {
+          for (const p of studentProfiles) {
+            const pProgress = p.progress as any;
+            if (pProgress && typeof pProgress === 'object') {
+              const completedWeeks = pProgress.completedWeeks || {};
+              const starsEarned = pProgress.starsEarned || {};
+              for (const key of Object.keys(completedWeeks)) {
+                if (completedWeeks[key]) {
+                  progressData.push({
+                    student_id: p.id,
+                    status: 'completed',
+                    score: starsEarned[key] || 3,
+                    completed_at: p.created_at || new Date().toISOString(),
+                    module_id: key,
+                    profiles: {
+                      first_name: p.first_name,
+                      last_name: p.last_name
+                    }
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+        
       if (progressData && progressData.length > 0) {
         const completedCount = progressData.filter(p => p.status === 'completed').length;
-        averageCompletion = Math.round((completedCount / progressData.length) * 100);
+        // Total expected is student base * 10 expected lessons
+        const totalExpected = studentIds.length * 10;
+        averageCompletion = Math.min(100, Math.round((completedCount / totalExpected) * 100));
         
         const totalScore = progressData.reduce((sum, p) => sum + (p.score || 0), 0);
         averageScore = Math.round(totalScore / progressData.length);

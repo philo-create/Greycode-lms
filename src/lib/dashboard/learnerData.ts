@@ -47,6 +47,7 @@ export async function getLearnerData(userId: string) {
 
   const totalPoints = (profile.progress as any)?.totalStars || progress?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
   const completedLessons = progress?.filter(p => p.status === 'completed').length || Object.keys((profile.progress as any)?.completedWeeks || {}).length || 0;
+  const currentProgress = Math.min(100, Math.round((completedLessons / 10) * 100));
 
   return {
     learner,
@@ -54,7 +55,7 @@ export async function getLearnerData(userId: string) {
       points: totalPoints,
       completedLessons,
       badgesCount: 0,
-      currentProgress: 42 // Placeholder percentage
+      currentProgress
     },
     recentBadges: [],
     upcomingActivities: [], // Placeholder
