@@ -51,29 +51,29 @@ import SpeakableText from './SpeakableText';
 import { getZolaImage } from '../zolaImages';
 import { playDrumAudio } from './GradeRVisualBoard';
 // @ts-ignore
-import regeneratedMascotImg from '../assets/images/regenerated_image_1781464132397.png';
+const regeneratedMascotImg = '/assets/images/regenerated_image_1781464132397.png';
 // @ts-ignore
-import regeneratedMascotImgW3 from '../assets/images/regenerated_image_1781594542737.png';
+const regeneratedMascotImgW3 = '/assets/images/regenerated_image_1781594542737.png';
 // @ts-ignore
-import regeneratedMascotImgW2 from '../assets/images/regenerated_image_1781605049765.png';
+const regeneratedMascotImgW2 = '/assets/images/regenerated_image_1781605049765.png';
 // @ts-ignore
-import regeneratedMascotImgW4 from '../assets/images/regenerated_image_1781782896714.png';
+const regeneratedMascotImgW4 = '/assets/images/regenerated_image_1781782896714.png';
 // @ts-ignore
-import regeneratedMascotImgW5 from '../assets/images/regenerated_image_1781787379025.png';
+const regeneratedMascotImgW5 = '/assets/images/regenerated_image_1781787379025.png';
 // @ts-ignore
-import regeneratedMascotImgW8 from '../assets/images/regenerated_image_1781975348509.png';
+const regeneratedMascotImgW8 = '/assets/images/regenerated_image_1781975348509.png';
 // @ts-ignore
-import regeneratedMascotImgW7 from '../assets/images/regenerated_image_1782886931115.png';
+const regeneratedMascotImgW7 = '/assets/images/regenerated_image_1782886931115.png';
 // @ts-ignore
-import regeneratedMascotImgW9 from '../assets/images/regenerated_image_1783234133812.png';
+const regeneratedMascotImgW9 = '/assets/images/regenerated_image_1783234133812.png';
 // @ts-ignore
-import braceletDesignImg1 from '../assets/images/regenerated_image_1782800047094.jpg';
+const braceletDesignImg1 = '/assets/images/regenerated_image_1782800047094.jpg';
 // @ts-ignore
-import braceletDesignImg2 from '../assets/images/regenerated_image_1782800048375.jpg';
+const braceletDesignImg2 = '/assets/images/regenerated_image_1782800048375.jpg';
 // @ts-ignore
-import braceletDesignImg3 from '../assets/images/regenerated_image_1782800049266.jpg';
+const braceletDesignImg3 = '/assets/images/regenerated_image_1782800049266.jpg';
 // @ts-ignore
-import braceletDesignImg4 from '../assets/images/regenerated_image_1782800049988.jpg';
+const braceletDesignImg4 = '/assets/images/regenerated_image_1782800049988.jpg';
 
 
 const isLenientMatch = (input: string, targetBigWord: string, targetTracePrompt?: string): boolean => {

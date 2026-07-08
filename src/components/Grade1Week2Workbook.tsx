@@ -5,23 +5,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import MascotGirl from './MascotGirl';
 import ColoringCanvas from './ColoringCanvas';
 // @ts-ignore
-import mascotSuccessImg from '../assets/images/mascot_success_1781367071934.jpg';
+const mascotSuccessImg = '/assets/images/mascot_success_1781367071934.jpg';
 // @ts-ignore
-import laptopColoringImg from '../assets/images/laptop_coloring_1781368252058.jpg';
+const laptopColoringImg = '/assets/images/laptop_coloring_1781368252058.jpg';
 // @ts-ignore
-import computerColoringImg from '../assets/images/computer_coloring_1781368268068.jpg';
+const computerColoringImg = '/assets/images/computer_coloring_1781368268068.jpg';
 // @ts-ignore
-import treeColoringImg from '../assets/images/tree_coloring_1781378254000.jpg';
+const treeColoringImg = '/assets/images/tree_coloring_1781378254000.jpg';
 // @ts-ignore
-import carColoringImg from '../assets/images/car_coloring_1781378269045.jpg';
+const carColoringImg = '/assets/images/car_coloring_1781378269045.jpg';
 // @ts-ignore
-import actionPlayImg from '../assets/images/user_play_card_1781375108647.jpg';
+const actionPlayImg = '/assets/images/user_play_card_1781375108647.jpg';
 // @ts-ignore
-import actionTalkImg from '../assets/images/user_talk_card_1781375123550.jpg';
+const actionTalkImg = '/assets/images/user_talk_card_1781375123550.jpg';
 // @ts-ignore
-import actionLearnImg from '../assets/images/user_learn_card_1781375138753.jpg';
+const actionLearnImg = '/assets/images/user_learn_card_1781375138753.jpg';
 // @ts-ignore
-import actionListenImg from '../assets/images/user_listen_card_1781375154733.jpg';
+const actionListenImg = '/assets/images/user_listen_card_1781375154733.jpg';
 import { 
   Laptop, 
   Tv, 

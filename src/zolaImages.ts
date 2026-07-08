@@ -2,25 +2,25 @@
 // This maps poses of Zola to their actual SVG image files for high-contrast, scalable, offline use.
 
 // @ts-ignore
-import waving from './assets/images/zola/waving.svg';
+const waving = '/assets/images/zola/waving.svg';
 // @ts-ignore
-import highfive from './assets/images/zola/highfive.svg';
+const highfive = '/assets/images/zola/highfive.svg';
 // @ts-ignore
-import crayonBook from './assets/images/zola/crayon_book.svg';
+const crayonBook = '/assets/images/zola/crayon_book.svg';
 // @ts-ignore
-import reminder from './assets/images/zola/reminder.svg';
+const reminder = '/assets/images/zola/reminder.svg';
 // @ts-ignore
-import thumbsup from './assets/images/zola/thumbsup.svg';
+const thumbsup = '/assets/images/zola/thumbsup.svg';
 // @ts-ignore
-import clapping from './assets/images/zola/clapping.svg';
+const clapping = '/assets/images/zola/clapping.svg';
 // @ts-ignore
-import pointingIdea from './assets/images/zola/pointing_idea.svg';
+const pointingIdea = '/assets/images/zola/pointing_idea.svg';
 // @ts-ignore
-import pointingSide from './assets/images/zola/pointing_side.svg';
+const pointingSide = '/assets/images/zola/pointing_side.svg';
 // @ts-ignore
-import thinking from './assets/images/zola/thinking.svg';
+const thinking = '/assets/images/zola/thinking.svg';
 // @ts-ignore
-import armsCrossed from './assets/images/zola/arms_crossed.svg';
+const armsCrossed = '/assets/images/zola/arms_crossed.svg';
 
 export const zolaImages = {
   waving,
