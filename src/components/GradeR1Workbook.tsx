@@ -1,7 +1,8 @@
+"use client";
 import { localStore } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Volume2, 
   Check, 

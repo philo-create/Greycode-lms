@@ -1,14 +1,26 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
-import { Users, UserPlus, CheckCircle, XCircle, Trash2, Key } from 'lucide-react';
+import { Users, UserPlus, CheckCircle, XCircle, Trash2, Key, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function AdminUsersPage() {
+  return (
+    <Suspense fallback={
+        <div className="flex items-center justify-center min-h-[400px]">
+          <RefreshCw className="w-8 h-8 text-indigo-600 animate-spin" />
+        </div>
+    }>
+      <AdminUsersPageContent />
+    </Suspense>
+  );
+}
+
+function AdminUsersPageContent() {
   const [users, setUsers] = useState<any[]>([]);
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +87,7 @@ export default function AdminUsersPage() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
-          const response = await fetch('/api/admin/users', {
+          const response = await fetch('/api/platform/profiles', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -168,7 +180,7 @@ export default function AdminUsersPage() {
         throw new Error('You are not authenticated. Please log in again.');
       }
 
-      const response = await fetch('/api/admin/users/delete', {
+      const response = await fetch('/api/platform/profiles/remove', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,7 +214,7 @@ export default function AdminUsersPage() {
         throw new Error('Not authenticated. Please log in again.');
       }
 
-      const response = await fetch('/api/admin/users/update', {
+      const response = await fetch('/api/platform/profiles/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +265,7 @@ export default function AdminUsersPage() {
         throw new Error('Not authenticated. Please log in again.');
       }
 
-      const response = await fetch('/api/admin/users/update', {
+      const response = await fetch('/api/platform/profiles/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -539,7 +551,7 @@ export default function AdminUsersPage() {
                               displayStatus === 'approved' ? 'bg-emerald-100 text-emerald-700' :
                               'bg-rose-100 text-rose-700'
                             }`}>
-                              {displayStatus === 'unconfirmed' ? 'Pending Confirmation' : displayStatus}
+                              {displayStatus === 'unconfirmed' ? 'Pending Email Verification' : displayStatus === 'pending' ? 'Pending Admin Verification' : displayStatus}
                             </span>
                             {displayStatus === 'unconfirmed' && (
                               <button

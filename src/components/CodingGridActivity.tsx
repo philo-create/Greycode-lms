@@ -1,5 +1,6 @@
+"use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, ArrowUp, RotateCw, RefreshCw, Sparkles, Award } from 'lucide-react';
 import { GradeType } from '../types';
 import SpeakableText from './SpeakableText';

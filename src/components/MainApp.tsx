@@ -1,13 +1,14 @@
+"use client";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-"use client";
+
 
 import { localStore, getStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown } from 'lucide-react';
 import { GRADES } from '../curriculumData';
 import { GradeType, UserProgress, StudentProfile, LessonStatus } from '../types';

@@ -186,7 +186,7 @@ export default function SuperAdminDashboard() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
-          const response = await fetch('/api/admin/users', {
+          const response = await fetch('/api/platform/profiles', {
             headers: {
               'Authorization': `Bearer ${token}`
             }

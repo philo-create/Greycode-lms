@@ -1,5 +1,6 @@
+"use client";
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Users, BookOpen, GraduationCap, ArrowLeft, LogOut } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { StudentProfile } from '../types';

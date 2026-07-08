@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SECRET_KEY ||
       process.env.SUPABASE_ADMIN_KEY ||
       ''
-    ).trim();
+    ).replace(/['"]/g, '').trim();
 
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json({ error: 'Supabase URL or Anon Key is not configured' }, { status: 500 });
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     if (userError || !user) {
-      console.error('Failed to verify token user:', userError);
+      console.warn('Failed to verify token user (Unauthorized):', userError?.message || 'No user found');
       return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
     }
 

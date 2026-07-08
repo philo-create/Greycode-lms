@@ -1,5 +1,6 @@
+"use client";
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Star, Sparkles, Trophy, Play, CheckCircle, ChevronDown, Award, Check, Volume2, VolumeX, Maximize2, Minimize2, ChevronRight, Clock, Lock } from 'lucide-react';
 import { CURRICULUM_LESSONS, GRADES } from '../curriculumData';
 import { GradeType, Lesson, UserProgress, LessonStatus } from '../types';

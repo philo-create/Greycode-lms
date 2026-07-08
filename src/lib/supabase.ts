@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // The user may have accidentally pasted both lines into the URL field in AI Studio Secrets
-let rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-let rawKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+let rawUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/['"]/g, '').trim();
+let rawKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').replace(/['"]/g, '').trim();
 
 if (rawUrl.includes(' ')) {
   const parts = rawUrl.split(/\s+/);

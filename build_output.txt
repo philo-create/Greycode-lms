@@ -1,0 +1,754 @@
+
+> applet@0.1.0 build
+> next build
+
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
+  ▲ Next.js 14.2.3
+  - Experiments (use with caution):
+    · missingSuspenseWithCSRBailout
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/27) ...
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at Z (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
+    at I (/app/applet/.next/server/chunks/1682.js:6:1263)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/404". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at Z (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
+    at I (/app/applet/.next/server/chunks/1682.js:6:1263)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at Z (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
+    at I (/app/applet/.next/server/chunks/1682.js:6:1263)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+
+Error occurred prerendering page "/500". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: <Html> should not be imported outside of pages/_document.
+Read more: https://nextjs.org/docs/messages/no-document-import-in-page
+    at Z (/app/applet/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js:16:5430)
+    at I (/app/applet/.next/server/chunks/1682.js:6:1263)
+    at renderWithHooks (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5658:16)
+    at renderIndeterminateComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5732:15)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5957:7)
+    at renderNodeDestructiveImpl (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6115:11)
+    at renderNodeDestructive (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:6087:14)
+    at finishClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5688:3)
+    at renderClassComponent (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5696:3)
+    at renderElement (/app/applet/node_modules/react-dom/cjs/react-dom-server.browser.development.js:5954:7)
+   Generating static pages (6/27) 
+API GET Users handler failed: q [Error]: Dynamic server usage: Route /api/platform/profiles couldn't be rendered statically because it accessed `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at Object.get (/app/applet/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:37835)
+    at u (/app/applet/.next/server/app/api/platform/profiles/route.js:1:860)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:34672
+    at /app/applet/node_modules/next/dist/server/lib/trace/tracer.js:140:36
+    at NoopContextManager.with (/app/applet/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062)
+    at ContextAPI.with (/app/applet/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:518)
+    at NoopTracer.startActiveSpan (/app/applet/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18093)
+    at ProxyTracer.startActiveSpan (/app/applet/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:18854)
+    at /app/applet/node_modules/next/dist/server/lib/trace/tracer.js:122:103
+    at NoopContextManager.with (/app/applet/node_modules/next/dist/compiled/@opentelemetry/api/index.js:1:7062) {
+  description: "Route /api/platform/profiles couldn't be rendered statically because it accessed `request.headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin/curriculum". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin/schools/new". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+   Generating static pages (13/27) 
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin/schools". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin/users". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin/users/new". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/facilitator". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/learner". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/learner/workstation". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+   Generating static pages (20/27) 
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/parent". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/school". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/teacher/assessments". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/teacher". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/teacher/preparation". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908) {
+  digest: '665825850'
+}
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+
+Error occurred prerendering page "/dashboard/admin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at t.useContext (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:109363)
+    at f (/app/applet/.next/server/chunks/6938.js:1:21562)
+    at h (/app/applet/.next/server/chunks/6938.js:1:13450)
+    at au (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:10446)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:15122
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+    at a_ (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:49776)
+    at ab (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:11808)
+    at /app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16871
+    at aw (/app/applet/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:16908)
+ ✓ Generating static pages (27/27)
+
+> Export encountered errors on following paths:
+	/_error: /404
+	/_error: /500
+	/_not-found/page: /_not-found
+	/dashboard/admin/curriculum/page: /dashboard/admin/curriculum
+	/dashboard/admin/page: /dashboard/admin
+	/dashboard/admin/schools/new/page: /dashboard/admin/schools/new
+	/dashboard/admin/schools/page: /dashboard/admin/schools
+	/dashboard/admin/users/new/page: /dashboard/admin/users/new
+	/dashboard/admin/users/page: /dashboard/admin/users
+	/dashboard/facilitator/page: /dashboard/facilitator
+	/dashboard/learner/page: /dashboard/learner
+	/dashboard/learner/workstation/page: /dashboard/learner/workstation
+	/dashboard/page: /dashboard
+	/dashboard/parent/page: /dashboard/parent
+	/dashboard/school/page: /dashboard/school
+	/dashboard/teacher/assessments/page: /dashboard/teacher/assessments
+	/dashboard/teacher/page: /dashboard/teacher
+	/dashboard/teacher/preparation/page: /dashboard/teacher/preparation
+	/page: /

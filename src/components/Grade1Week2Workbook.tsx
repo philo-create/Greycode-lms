@@ -1,6 +1,7 @@
+"use client";
 import { localStore } from '../lib/localStore';
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import MascotGirl from './MascotGirl';
 import ColoringCanvas from './ColoringCanvas';
 // @ts-ignore

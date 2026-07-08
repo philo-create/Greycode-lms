@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SECRET_KEY ||
       process.env.SUPABASE_ADMIN_KEY ||
       ''
-    ).trim();
+    ).replace(/['"]/g, '').trim();
 
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json({ error: 'Supabase URL or Anon Key is not configured' }, { status: 500 });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
 
     if (userError || !user) {
-      console.error('Failed to verify token user:', userError);
+      console.warn('Failed to verify token user (Unauthorized):', userError?.message || 'No user found');
       return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
     }
 
@@ -125,10 +125,23 @@ export async function POST(req: NextRequest) {
 
     // 3. Perform deletion with appropriate privileges
     if (!supabaseServiceKey) {
-      console.warn('Attempted to delete a user without SUPABASE_SERVICE_ROLE_KEY');
-      return NextResponse.json({ 
-        error: 'Complete deletion requires SUPABASE_SERVICE_ROLE_KEY. Please add this to your Environment Variables/Secrets to allow complete user removal.' 
-      }, { status: 500 });
+      console.warn('No SUPABASE_SERVICE_ROLE_KEY found. Deleting profile directly via caller session (Auth user will remain).');
+      
+      // Clear references first via userClient
+      await cleanDependentRecords(userClient);
+
+      // Delete from profiles table directly using userClient (authenticated as the admin caller)
+      const { error: deleteProfileError } = await userClient
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (deleteProfileError) {
+        console.error('Failed to delete profile directly:', deleteProfileError);
+        return NextResponse.json({ error: `Failed to delete profile: ${deleteProfileError.message}` }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Profile deleted successfully. (Note: Auth user remains since no SUPABASE_SERVICE_ROLE_KEY was configured).' });
     }
 
     console.log(`Using Service Role Key to delete auth user: ${userId}`);

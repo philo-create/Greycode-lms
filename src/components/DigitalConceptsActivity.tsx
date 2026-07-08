@@ -1,5 +1,6 @@
+"use client";
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, MailWarning, Compass, Trophy, HelpCircle, Check, Smile, AlertCircle, Refrigerator, Microwave as MicrowaveIcon, Flame, MonitorSmartphone } from 'lucide-react';
 import { GradeType } from '../types';
 import SpeakableText from './SpeakableText';

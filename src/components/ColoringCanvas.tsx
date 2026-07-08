@@ -1,3 +1,4 @@
+"use client";
 import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { RotateCcw, Palette, CheckCircle } from 'lucide-react';
 

@@ -7,7 +7,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { Building2, Plus, Edit2, CheckCircle2, XCircle, Trash2, UserPlus, RefreshCw, X, ShieldAlert, Check, Loader2 } from 'lucide-react';
 import { supabase, supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function AdminSchoolsPage() {

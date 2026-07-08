@@ -1,7 +1,7 @@
 'use client';
 import { localStore, migrateLocalStorageProgress, getStudentWorkbookStates, mergeProgress, restoreStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, UserPlus, ArrowRight, LogIn } from 'lucide-react';
 import { StudentProfile, GradeType } from '../types';
 import { supabase } from '../lib/supabase';
@@ -123,8 +123,12 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
         const hasResetMarker = initialResetRef.current;
 
         if (!passwordAlreadyUpdated) {
-          // Both learners and non-learners must reset/set their password if arriving via any confirmation/signup/invite/recovery/reset link
-          if (hasRecoveryMarker || hasResetMarker) {
+          // Determine if they are non-self-registering (invited by admin)
+          const isInvitedRole = profile.role === 'teacher' || profile.role === 'school_admin' || profile.role === 'super_admin';
+          
+          // Show password reset if it's a recovery link, OR if it's an invite link for a teacher/admin.
+          // Learners and parents self-register, so they don't need to reset password after email confirmation.
+          if (hasRecoveryMarker || (hasResetMarker && isInvitedRole)) {
             setView('reset_password');
             setIsResettingPassword(true);
             return; // Halt further routing so they can set their password
