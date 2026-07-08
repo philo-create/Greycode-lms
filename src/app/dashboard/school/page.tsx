@@ -176,7 +176,7 @@ export default function SchoolAdminDashboard() {
           value={`${data.stats.attendance}%`}
           icon={<CalendarCheck className="w-6 h-6" />}
           color="amber"
-          trend={{ value: 2, isPositive: true }}
+          
         />
       </div>
 

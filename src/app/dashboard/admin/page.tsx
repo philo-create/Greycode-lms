@@ -409,6 +409,8 @@ export default function SuperAdminDashboard() {
     );
   }
 
+  if (!data || !data.stats) { return <DashboardLayout allowedRoles={['super_admin']}><div className="p-4">Failed to load data</div></DashboardLayout>; }
+
   if (error) {
     return (
       <DashboardLayout allowedRoles={['super_admin']}>
@@ -509,14 +511,14 @@ export default function SuperAdminDashboard() {
           value={data.stats.schools}
           icon={<Building2 className="w-6 h-6" />}
           color="indigo"
-          trend={{ value: 12, isPositive: true }}
+          
         />
         <StatCard
           title="Total Learners"
           value={data.stats.learners}
           icon={<GraduationCap className="w-6 h-6" />}
           color="blue"
-          trend={{ value: 5, isPositive: true }}
+          
         />
         <StatCard
           title="Total Teachers"
@@ -1122,11 +1124,11 @@ export default function SuperAdminDashboard() {
           </DashboardCard>
 
           <DashboardCard title="Recent Activity">
-            <ActivityFeed activities={[
-              { id: '1', title: 'New School Onboarded', description: 'Curro Academy registered on the platform.', time: '2 hours ago', icon: <Building2 className="w-5 h-5" />, color: 'bg-indigo-100 text-indigo-600' },
-              { id: '2', title: 'Content Update', description: 'Term 2 Robotics module published.', time: '5 hours ago', icon: <BookOpen className="w-5 h-5" />, color: 'bg-emerald-100 text-emerald-600' },
-              { id: '3', title: 'System Backup', description: 'Automated database backup completed.', time: '1 day ago', icon: <Server className="w-5 h-5" />, color: 'bg-slate-100 text-slate-600' },
-            ]} />
+            {data.recentSchools && data.recentSchools.length > 0 ? (
+              <ActivityFeed activities={data.recentSchools.map((s, i) => ({ id: s.id, title: "New School Onboarded", description: `${s.name} registered on the platform.`, time: new Date(s.created_at).toLocaleDateString(), icon: <Building2 className="w-5 h-5" />, color: "bg-indigo-100 text-indigo-600" }))} />
+            ) : (
+              <EmptyState title="No recent activity" description="Audit logs and system events will appear here." />
+            )}
           </DashboardCard>
         </div>
       </div>

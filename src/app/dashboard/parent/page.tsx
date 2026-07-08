@@ -6,13 +6,15 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
-import { getParentData } from '@/lib/dashboard/parentData';
+
 import { supabase } from '@/lib/supabase';
 import { 
   Users, BookOpen, CalendarCheck, FileText, 
   Download, Activity, AlertCircle
 } from 'lucide-react';
 import { LoadingState } from '@/components/dashboard/LoadingState';
+
+import Link from 'next/link';
 
 export default function ParentDashboard() {
   const [data, setData] = useState<any>(null);
@@ -25,7 +27,11 @@ export default function ParentDashboard() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
 
-        const parentData = await getParentData(session.user.id);
+        const response = await fetch(`/api/dashboard/parent?parentId=${session.user.id}`, { cache: 'no-store' });
+        console.log('Parent data fetched for ID:', session.user.id);
+        if (!response.ok) throw new Error('Failed to fetch parent data');
+        const parentData = await response.json();
+        console.log('Parent data result:', parentData);
         setData(parentData);
       } catch (err: any) {
         setError('Failed to load dashboard data. Please try again later.');
@@ -103,9 +109,7 @@ export default function ParentDashboard() {
                       </div>
                     </div>
                     <div className="flex space-x-3 w-full sm:w-auto">
-                      <button className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 text-sm font-medium">
-                        View Progress
-                      </button>
+                      <Link href={`/dashboard/parent/student/${child.id}`} className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-slate-50 text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-100 text-sm font-medium">View Progress</Link>
                       <button className="flex-1 sm:flex-none flex items-center justify-center px-4 py-2 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-lg hover:bg-indigo-100 text-sm font-medium">
                         <Download className="w-4 h-4 mr-2" />
                         Report

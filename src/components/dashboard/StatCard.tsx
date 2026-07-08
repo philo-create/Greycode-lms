@@ -23,7 +23,7 @@ const colorMap = {
 
 export function StatCard({ title, value, icon, description, trend, color = 'indigo' }: StatCardProps) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col transition-all duration-300 hover:shadow-md hover:border-slate-300 hover:-translate-y-1">
       <div className="flex justify-between items-start mb-4">
         <div className={`p-3 rounded-xl border ${colorMap[color]}`}>
           {icon}
