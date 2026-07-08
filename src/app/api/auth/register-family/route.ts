@@ -21,21 +21,28 @@ export async function POST(req: NextRequest) {
       }
     });
 
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+
     const createdUsers = [];
     const errors = [];
 
-    // 1. Register Parent
-    const { data: parentData, error: parentError } = await authClient.auth.admin.createUser({
+    // 1. Register Parent using anon client so they receive the verification email
+    const { data: parentData, error: parentError } = await anonClient.auth.signUp({
       email: parent.email,
       password: parent.password,
-      email_confirm: true,
-      user_metadata: {
+      options: {
+        data: {
           first_name: parent.firstName,
           last_name: parent.lastName,
           role: 'parent',
           parent_phone: parent.phone,
           parent_email: parent.email,
+          enrollment_status: 'pending'
+          
         }
+      }
     });
 
     if (parentError) {
@@ -49,14 +56,14 @@ export async function POST(req: NextRequest) {
     // 2. Register Children
     if (children && children.length > 0) {
       for (const child of children) {
-        const { data: childData, error: childError } = await authClient.auth.admin.createUser({
+        const { data: childData, error: childError } = await anonClient.auth.signUp({
           email: child.email,
           password: child.password,
-          email_confirm: true,
-          user_metadata: {
-            first_name: child.firstName,
-            last_name: child.lastName,
-            school_id: child.schoolId || null,
+          options: {
+            data: {
+              first_name: child.firstName,
+              last_name: child.lastName,
+              school_id: child.schoolId || null,
               grade: child.grade,
               role: 'learner',
               enrollment_status: 'pending',
@@ -65,6 +72,7 @@ export async function POST(req: NextRequest) {
               parent_phone: parent.phone,
               parent_relationship: child.relationship || 'Parent'
             }
+          }
         });
 
         if (childError) {

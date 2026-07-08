@@ -59,7 +59,7 @@ export default function FamilyRegistrationForm({ schools, onComplete, onCancel }
     e.preventDefault();
     setErrorText('');
 
-    if (!parentFirstName || !parentLastName || !parentEmail || !parentPassword) {
+    if (!parentFirstName || !parentLastName || !parentEmail || !parentPassword || !parentPhone) {
       setErrorText('Please fill in all required parent details.');
       return;
     }
@@ -190,6 +190,7 @@ export default function FamilyRegistrationForm({ schools, onComplete, onCancel }
               <label className="text-[10px] font-black uppercase tracking-wider text-slate-500">Phone Number</label>
               <input
                 type="tel"
+                required
                 value={parentPhone}
                 onChange={(e) => setParentPhone(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500"

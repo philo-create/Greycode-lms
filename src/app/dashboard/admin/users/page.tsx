@@ -421,7 +421,7 @@ function AdminUsersPageContent() {
           <div className="p-8 text-center text-slate-500">Loading users...</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full min-w-[900px] text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="py-3 px-4 font-semibold text-sm text-slate-600">Name</th>
@@ -467,9 +467,9 @@ function AdminUsersPageContent() {
                         ))}
                       </select>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600">
+                    <td className="py-3 px-4 text-sm text-slate-600 min-w-[200px]">
                       {user.role === 'teacher' ? (
-                        <div className="flex flex-wrap gap-1 max-w-[200px]" id={`teacher-grades-${user.id}`}>
+                        <div className="flex flex-wrap gap-1 w-full max-w-[250px]" id={`teacher-grades-${user.id}`}>
                           {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
                             const teacherGrades = user.grade ? user.grade.split(',') : [];
                             const isActive = teacherGrades.includes(g);
