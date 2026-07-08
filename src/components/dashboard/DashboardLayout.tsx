@@ -40,7 +40,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         .single();
 
       if (error || !data) {
-        console.error('Error fetching profile:', error);
+        console.error('Error fetching profile:', error); await supabase.auth.signOut();
         router.push('/');
         return;
       }

@@ -322,7 +322,7 @@ export default function LoginGate({ onLogin }: LoginGateProps) {
           data: {
             first_name: firstName,
             last_name: lastName,
-            school_id: selectedSchool,
+            school_id: selectedSchool || null,
             grade: selectedGrade,
             role: 'learner',
             parent_name: parentName,

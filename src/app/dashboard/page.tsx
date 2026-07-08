@@ -47,7 +47,7 @@ export default function DashboardIndex() {
             first_name: meta.first_name || meta.full_name?.split(' ')[0] || 'User',
             last_name: meta.last_name || meta.full_name?.split(' ').slice(1).join(' ') || '',
             role: fallbackRole,
-            school_id: meta.school_id || null,
+            school_id: (meta.school_id && meta.school_id !== "") ? meta.school_id : null,
             grade: meta.grade || null,
             enrollment_status: ['student', 'learner'].includes(fallbackRole.toLowerCase()) ? 'pending' : 'approved'
           };

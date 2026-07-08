@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase';
@@ -47,7 +48,6 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
 
     if (userError || !user) {
-      console.warn('Failed to verify token user (Unauthorized):', userError?.message || 'No user found');
       return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
     }
 

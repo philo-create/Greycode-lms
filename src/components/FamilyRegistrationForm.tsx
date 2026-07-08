@@ -100,8 +100,8 @@ export default function FamilyRegistrationForm({ schools, onComplete, onCancel }
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Registration failed');
+      if (!response.ok || data.errors?.length > 0) {
+        throw new Error(data.error || (data.errors ? data.errors.join(", ") : data.message) || 'Registration failed');
       }
 
       onComplete();

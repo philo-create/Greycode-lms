@@ -126,7 +126,9 @@ function AdminUsersPageContent() {
       
       if (profiles) {
         // Map schools to users
-        const mappedUsers = profiles.map(user => {
+        const mappedUsers = profiles
+          .filter(user => user.role !== 'super_admin')
+          .map(user => {
           const matchedSchool = user.school_id ? schoolsMap.get(user.school_id) : null;
           return {
             ...user,
