@@ -19,6 +19,7 @@ export default function LearnerHubView({ onSelectWorkstation }: { onSelectWorkst
   const [loading, setLoading] = useState(!cachedData || !cachedProfile);
   const [error, setError] = useState('');
   const [profile, setProfile] = useState<any>(cachedProfile);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -36,11 +37,10 @@ export default function LearnerHubView({ onSelectWorkstation }: { onSelectWorkst
           cachedProfile = userProfile;
         }
 
-        if (!cachedData) {
-          const learnerData = await getLearnerData(session.user.id);
-          setData(learnerData);
-          cachedData = learnerData;
-        }
+        // Always fetch to ensure assignments are up-to-date
+        const learnerData = await getLearnerData(session.user.id);
+        setData(learnerData);
+        cachedData = learnerData;
       } catch (err: any) {
         setError('Failed to load your hub. Please try again later.');
         console.error(err);
@@ -68,7 +68,7 @@ export default function LearnerHubView({ onSelectWorkstation }: { onSelectWorkst
   return (
     <div className="space-y-8 max-w-5xl mx-auto w-full">
       {/* Friendly Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl py-24 px-8 text-white min-h-[300px] flex flex-col justify-center shadow-lg relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-3xl font-extrabold mb-2 flex items-center">
             Hi, {firstName}! <Sparkles className="ml-2 w-8 h-8 text-yellow-300" />
@@ -115,16 +115,35 @@ export default function LearnerHubView({ onSelectWorkstation }: { onSelectWorkst
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <DashboardCard title="My Badges" className="border-4 border-slate-100 rounded-3xl">
-          {data?.recentBadges?.length > 0 ? (
-            <div className="flex flex-wrap gap-4">
-              {/* Maps out badges if they exist */}
+        <DashboardCard title="Assignments & Homework" className="border-4 border-slate-100 rounded-3xl overflow-y-auto max-h-[400px]">
+          {data?.assignments && data.assignments.length > 0 ? (
+            <div className="space-y-4">
+              {data.assignments.map((assignment: any) => (
+                <div key={assignment.id} className="p-4 border border-slate-200 rounded-xl bg-white shadow-sm hover:border-indigo-200 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="px-2 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded uppercase tracking-wider">
+                      {assignment.subject}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded">
+                      Due: {new Date(assignment.due_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-lg mb-1">{assignment.title}</h4>
+                  <p className="text-sm text-slate-600 line-clamp-2 mb-3">{assignment.description}</p>
+                  <button 
+                    onClick={() => setSelectedAssignment(assignment)}
+                    className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-sm font-semibold transition-colors"
+                  >
+                    Open
+                  </button>
+                </div>
+              ))}
             </div>
           ) : (
             <EmptyState 
-              title="No badges yet!" 
-              description="Keep completing lessons to earn cool badges."
-              icon={<Award className="w-16 h-16 text-slate-200" />}
+              title="No pending homework" 
+              description="You're all caught up! Great job!"
+              icon={<BookOpen className="w-16 h-16 text-slate-200" />}
             />
           )}
         </DashboardCard>
@@ -141,6 +160,45 @@ export default function LearnerHubView({ onSelectWorkstation }: { onSelectWorkst
           </div>
         </DashboardCard>
       </div>
+
+      {selectedAssignment && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl relative">
+            <button 
+              onClick={() => setSelectedAssignment(null)}
+              className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors"
+            >
+              ✕
+            </button>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-800">{selectedAssignment.title}</h3>
+                <p className="text-slate-500 font-medium">{selectedAssignment.subject}</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-50 rounded-2xl p-5 mb-6 border border-slate-100">
+              <h4 className="font-bold text-slate-700 mb-2">Instructions</h4>
+              <p className="text-slate-600 text-sm whitespace-pre-wrap">{selectedAssignment.description}</p>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-slate-400">
+                Due: {new Date(selectedAssignment.due_date).toLocaleDateString()}
+              </span>
+              <button 
+                onClick={() => setSelectedAssignment(null)}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

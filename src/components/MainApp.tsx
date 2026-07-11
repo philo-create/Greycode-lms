@@ -9,7 +9,7 @@
 import { localStore, getStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown } from 'lucide-react';
+import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown, Settings, LayoutDashboard, Palette } from 'lucide-react';
 import { GRADES } from '../curriculumData';
 import { GradeType, UserProgress, StudentProfile, LessonStatus } from '../types';
 import { fetchLessonStatuses } from '../lib/lesson-status-service';
@@ -150,15 +150,30 @@ export default function App() {
         <div className="p-6 flex-1 flex flex-col justify-between overflow-y-auto">
           <div>
             {/* School Logo */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-black text-xl shadow-md shadow-indigo-500/20">
-                <GraduationCap className="w-5 h-5" />
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-md shadow-indigo-500/20">
+                <GraduationCap className="w-6 h-6" />
               </div>
               <div className="flex flex-col">
-                <span className="text-white font-extrabold tracking-tight text-sm">EduPortal</span>
-                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Coding & Robotics</span>
+                <span className="text-white font-extrabold tracking-tight text-base">EduPortal</span>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">Coding & Robotics</span>
               </div>
             </div>
+
+            {/* Student Grade Badge (Highlighted Button) */}
+            {activeStudent?.role === 'learner' && (
+              <div className="mb-8">
+                <button className="w-full flex items-center justify-between p-3.5 rounded-xl bg-indigo-600 border border-indigo-500 text-white text-sm font-bold shadow-lg shadow-indigo-500/20 cursor-default hover:bg-indigo-500 transition-colors">
+                  <span className="flex items-center gap-2.5">
+                    <GraduationCap className="w-5 h-5" />
+                    My Grade: {activeStudent.grade}
+                  </span>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 rounded-full bg-indigo-200 animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                  </div>
+                </button>
+              </div>
+            )}
 
             {/* Select Grade Nav Group (Hidden for Learners) */}
             {activeStudent?.role !== 'learner' && (
@@ -215,87 +230,95 @@ export default function App() {
             </nav>
             )}
 
-            <nav className="space-y-2 mb-8">
+            <nav className="space-y-2">
               <button
                 onClick={() => setLearningView('learner-hub')}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
+                className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-sm font-bold transition-all text-left border-l-4 cursor-pointer ${
                   learningView === 'learner-hub'
-                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 font-bold'
+                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 shadow-inner'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent'
                 }`}
               >
-                <div className="w-4 h-4 flex items-center justify-center bg-slate-800 rounded shrink-0">
-                  <span className="text-[10px]">🏠</span>
+                <div className="w-7 h-7 flex items-center justify-center bg-slate-800/80 rounded-lg shrink-0 shadow-sm border border-slate-700/50">
+                  <span className="text-sm">🏠</span>
                 </div>
                 <span>Main Dashboard</span>
               </button>
-            </nav>
 
-            {/* Learning View and static guides */}
-            <nav className="space-y-2">
-              <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3 select-none">Learning View</p>
-              
               <button
                 onClick={() => setLearningView('workstation')}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
+                className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-sm font-bold transition-all text-left border-l-4 cursor-pointer ${
                   learningView === 'workstation'
-                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 font-bold'
+                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 shadow-inner'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent'
                 }`}
               >
-                <div className="w-4 h-4 flex items-center justify-center bg-slate-800 rounded shrink-0">
-                  <span className="text-[10px]">🎨</span>
+                <div className="w-7 h-7 flex items-center justify-center bg-slate-800/80 rounded-lg shrink-0 shadow-sm border border-slate-700/50">
+                  <span className="text-sm">🎨</span>
                 </div>
                 <span>Creative Workstation</span>
               </button>
 
               <button
                 onClick={() => setLearningView('map')}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
+                className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-sm font-bold transition-all text-left border-l-4 cursor-pointer ${
                   learningView === 'map'
-                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 font-bold'
+                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 shadow-inner'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent'
                 }`}
               >
-                <Award className="w-4 h-4 shrink-0" />
+                <div className="w-7 h-7 flex items-center justify-center bg-transparent rounded-lg shrink-0">
+                  <Award className="w-6 h-6 shrink-0" />
+                </div>
                 <span>Curriculum Map</span>
               </button>
 
               <button
                 onClick={() => setLearningView('progress')}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
+                className={`w-full flex items-center gap-4 p-3.5 rounded-xl text-sm font-bold transition-all text-left border-l-4 cursor-pointer ${
                   learningView === 'progress'
-                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 font-bold'
+                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 shadow-inner'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent'
                 }`}
                 id="sidebar-progress-btn"
               >
-                <Trophy className="w-4 h-4 shrink-0" />
+                <div className="w-7 h-7 flex items-center justify-center bg-transparent rounded-lg shrink-0">
+                  <Trophy className="w-6 h-6 shrink-0" />
+                </div>
                 <span>My Progress</span>
               </button>
             </nav>
           </div>
 
           {/* Student Profile Block at the bottom - Switching accounts enabled */}
-          <div className="pt-5 border-t border-slate-800 mt-auto flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-2xl border border-slate-705 shrink-0 select-none shadow-xs">
+          <div className="pt-6 border-t border-slate-800 mt-8 flex flex-col gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl border border-slate-700 shrink-0 select-none shadow-sm">
                 {activeStudent.avatar}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-white truncate">{activeStudent.name}</span>
-                <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold">
+                <span className="text-sm font-bold text-white truncate">{activeStudent.name}</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">
                   Grade {activeStudent.grade} Learner
                 </span>
               </div>
             </div>
             
-            <button
-              onClick={handleLogout}
-              className="w-full py-2 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg text-[10.5px] font-bold border border-slate-700/60 hover:border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
-            >
-              <span>🔄 Switch Student</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-bold border border-slate-700 hover:border-slate-600 transition cursor-pointer flex items-center justify-center gap-2 shadow-sm active:scale-95"
+              >
+                <span className="text-sm">🔄</span>
+                <span>Switch Student</span>
+              </button>
+              <button
+                className="w-10 h-10 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl border border-slate-700 hover:border-slate-600 transition cursor-pointer flex items-center justify-center shadow-sm active:scale-95 shrink-0"
+                title="Settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </aside>

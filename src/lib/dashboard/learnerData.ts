@@ -49,6 +49,33 @@ export async function getLearnerData(userId: string) {
   const completedLessons = progress?.filter(p => p.status === 'completed').length || Object.keys((profile.progress as any)?.completedWeeks || {}).length || 0;
   const currentProgress = Math.min(100, Math.round((completedLessons / 10) * 100));
 
+  
+  // Get assignments
+  let assignments = [];
+  const targetGrade = profile.grade || scData?.classes?.grade;
+  const targetSchool = profile.school_id || scData?.classes?.school_id;
+  
+  if (targetGrade) {
+    let query = supabase
+      .from('assignments')
+      .select('*')
+      .eq('grade', targetGrade)
+      .order('due_date', { ascending: true });
+      
+    // STRICT ISOLATION: Ensure students only see assignments for their specific school
+    if (targetSchool) {
+      query = query.eq('school_id', targetSchool);
+    } else {
+      // If the student has no school_id (e.g. demo account), only show global/demo assignments
+      query = query.is('school_id', null);
+    }
+      
+    const { data: assignmentsData } = await query;
+    if (assignmentsData) {
+      assignments = assignmentsData;
+    }
+  }
+
   return {
     learner,
     stats: {
@@ -59,6 +86,8 @@ export async function getLearnerData(userId: string) {
     },
     recentBadges: [],
     upcomingActivities: [], // Placeholder
-    continueLesson: null // Placeholder for next lesson
+    continueLesson: null, // Placeholder for next lesson
+    assignments // Add assignments here
   };
+
 }
