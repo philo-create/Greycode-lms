@@ -11,8 +11,7 @@ import {
   Settings, 
   LogOut,
   GraduationCap,
-  ClipboardList,
-  Award
+  ClipboardList
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
@@ -58,7 +57,6 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
         return [
           { href: `${base}/learner`, label: 'My Hub', icon: <LayoutDashboard className="w-5 h-5" /> },
           { href: `${base}/learner/lessons`, label: 'Lessons', icon: <BookOpen className="w-5 h-5" /> },
-          { href: `${base}/learner/badges`, label: 'Badges', icon: <Award className="w-5 h-5" /> },
         ];
       case 'parent':
         return [

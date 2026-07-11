@@ -4,11 +4,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { supabase } from '@/lib/supabase';
 import { LoadingState } from '@/components/dashboard/LoadingState';
 import { ArrowLeft, Star, Award, BookOpen, Clock } from 'lucide-react';
+import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import Link from 'next/link';
 
 export default function StudentProgress({ params }: { params: { id: string } }) {
   const [student, setStudent] = useState<any>(null);
   const [progress, setProgress] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +56,42 @@ export default function StudentProgress({ params }: { params: { id: string } }) 
         } else {
           setProgress([]);
         }
+
+        // Get student's class mapping to find the grade/school
+        const { data: scData } = await supabase
+          .from('students_classes')
+          .select('classes(grade, school_id)')
+          .eq('student_id', params.id)
+          .maybeSingle();
+
+        const targetGrade = profile?.grade || scData?.classes?.grade;
+        const targetSchool = profile?.school_id || scData?.classes?.school_id;
+
+        let studentAssignments: any[] = [];
+        if (targetGrade) {
+          let query = supabase
+            .from('assignments')
+            .select('*')
+            .eq('grade', targetGrade)
+            .order('due_date', { ascending: true });
+
+          if (targetSchool) {
+            query = query.eq('school_id', targetSchool);
+          } else {
+            query = query.is('school_id', null);
+          }
+
+          const { data: assignmentsData } = await query;
+          if (assignmentsData) {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            studentAssignments = assignmentsData.filter((a: any) => {
+              const dueDate = new Date(a.due_date);
+              return dueDate >= now;
+            });
+          }
+        }
+        setAssignments(studentAssignments);
       } catch (err) {
         console.error(err);
       } finally {
@@ -90,6 +128,10 @@ export default function StudentProgress({ params }: { params: { id: string } }) 
             {(student?.full_name || student?.first_name || 'S').charAt(0)}
           </div>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <DashboardCalendar assignments={assignments} role="learner" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

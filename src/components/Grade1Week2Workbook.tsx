@@ -52,6 +52,7 @@ import { updateLessonStatus } from '../lib/lesson-status-service';
 
 interface Grade1Week2WorkbookProps {
   activeStudentId?: string;
+  activeStudentName?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
   isSuperAdmin?: boolean;
@@ -65,6 +66,7 @@ interface Grade1Week2WorkbookProps {
 
 export default function Grade1Week2Workbook({ 
   activeStudentId, 
+  activeStudentName = 'Learner',
   onComplete, 
   onNextLesson,
   isSuperAdmin = false,
@@ -2070,7 +2072,7 @@ export default function Grade1Week2Workbook({
 
       {/* Friendly digital progress indicator footer */}
       <div className="py-6 text-center text-xs font-extrabold text-slate-400 tracking-wider border-t border-slate-200">
-        ⚡ Sipho's Coding Hub • Continuous Learner Workbook • Grade 1 Term 1
+        ⚡ {activeStudentName}&apos;s Coding Hub • Continuous Learner Workbook • Grade 1 Term 1
       </div>
 
     </div>

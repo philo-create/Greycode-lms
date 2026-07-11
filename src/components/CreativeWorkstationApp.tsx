@@ -165,6 +165,7 @@ interface CreativeWorkstationAppProps {
   speakText?: (text: string) => void;
   otherActivitiesCompleted?: boolean;
   activeStudentId?: string;
+  activeStudentName?: string;
   isLocked?: boolean;
   certifiedScore?: number | null;
 }
@@ -175,6 +176,7 @@ export default function CreativeWorkstationApp({
   speakText, 
   otherActivitiesCompleted = true,
   activeStudentId,
+  activeStudentName = 'Learner',
   isLocked = false,
   certifiedScore = null
 }: CreativeWorkstationAppProps) {
@@ -1384,11 +1386,11 @@ export default function CreativeWorkstationApp({
 
   useEffect(() => {
     if (isSimulating && poweredComponentsCount > prevPoweredCountRef.current && poweredComponentsCount > 0) {
-      speakTextLocal(`Fantastic! Sipho's circuit is active and flowing! ${poweredComponentsCount} electrical component${poweredComponentsCount > 1 ? 's are' : ' is'} fully powered!`);
+      speakTextLocal(`Fantastic! ${activeStudentName}'s circuit is active and flowing! ${poweredComponentsCount} electrical component${poweredComponentsCount > 1 ? 's are' : ' is'} fully powered!`);
       playSimulationSound('chime');
     }
     prevPoweredCountRef.current = poweredComponentsCount;
-  }, [poweredComponentsCount, isSimulating]);
+  }, [poweredComponentsCount, isSimulating, activeStudentName]);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [originalObjects, setOriginalObjects] = useState<CanvasObject[]>([]);
 
@@ -3142,7 +3144,7 @@ export default function CreativeWorkstationApp({
             <div>
               <div className="flex items-center gap-2">
                 <h4 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
-                  Sipho's Simulation Lab 🔬⚡
+                  {activeStudentName}&apos;s Simulation Lab 🔬⚡
                 </h4>
                 <div className="flex items-center gap-1 bg-slate-800/80 px-2 py-0.5 rounded-full border border-slate-700/40">
                   <div className={`w-1.5 h-1.5 rounded-full ${isSimulating ? 'bg-emerald-500 animate-pulse' : 'bg-slate-500'}`} />

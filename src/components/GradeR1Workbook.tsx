@@ -305,6 +305,7 @@ function DrumSandboxStage({ speakText, onComplete }: { speakText: (t: string) =>
 interface GradeR1WorkbookProps {
   lesson: Lesson;
   activeStudentId?: string;
+  activeStudentName?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
   isSuperAdmin?: boolean;
@@ -5063,6 +5064,7 @@ function LessonConceptExplainer({ lesson, speakText, onComplete, isCompleted, is
 export default function GradeR1Workbook({ 
   lesson, 
   activeStudentId, 
+  activeStudentName = 'Learner',
   onComplete, 
   onNextLesson,
   isSuperAdmin = false,
@@ -5969,6 +5971,7 @@ export default function GradeR1Workbook({
                     speakText={speakText} 
                     otherActivitiesCompleted={isSection3Unlocked || (isSuperAdmin && superAdminBypass)} 
                     activeStudentId={activeStudentId}
+                    activeStudentName={activeStudentName}
                     isLocked={quizSubmitted}
                     certifiedScore={quizFinalScore}
                   />

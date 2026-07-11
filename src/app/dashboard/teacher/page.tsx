@@ -9,6 +9,7 @@ import { QuickActions } from '@/components/dashboard/QuickActions';
 import { ProgressCard } from '@/components/dashboard/ProgressCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { getTeacherData } from '@/lib/dashboard/teacherData';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -29,7 +30,37 @@ export default function TeacherDashboard() {
         if (!session) return;
 
         const teacherData = await getTeacherData(session.user.id);
-        setData(teacherData);
+        
+        let assignments: any[] = [];
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('school_id')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profile) {
+            let query = supabase
+              .from('assignments')
+              .select('*')
+              .order('due_date', { ascending: true });
+              
+            if (profile.school_id) {
+              query = query.eq('school_id', profile.school_id);
+            }
+            const { data: assignmentsData } = await query;
+            if (assignmentsData) {
+              assignments = assignmentsData;
+            }
+          }
+        } catch (asgErr) {
+          console.warn('Could not fetch assignments for teacher:', asgErr);
+        }
+
+        setData({
+          ...teacherData,
+          assignments
+        });
       } catch (err: any) {
         setError('Failed to load dashboard data. Please try again later.');
         console.error(err);
@@ -91,6 +122,10 @@ export default function TeacherDashboard() {
           icon={<Target className="w-6 h-6" />}
           color="purple"
         />
+      </div>
+
+      <div className="mb-8">
+        <DashboardCalendar assignments={data?.assignments || []} role="teacher" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">

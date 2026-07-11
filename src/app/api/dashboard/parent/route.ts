@@ -181,7 +181,13 @@ export async function GET(req: Request) {
           .order('due_date', { ascending: true });
           
         if (!aError && assignmentsData) {
-          assignments = assignmentsData;
+          // Automatically remove assignments that are past due
+          const now = new Date();
+          now.setHours(0, 0, 0, 0); // Normalize to start of today
+          assignments = assignmentsData.filter((a: any) => {
+            const dueDate = new Date(a.due_date);
+            return dueDate >= now;
+          });
         }
       }
     }

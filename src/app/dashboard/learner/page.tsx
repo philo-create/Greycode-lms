@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
+import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 import { getLearnerData } from '@/lib/dashboard/learnerData';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -146,6 +147,10 @@ export default function LearnerDashboard() {
           <h3 className="text-slate-500 font-bold mb-1 uppercase tracking-wider text-sm">Lessons Done</h3>
           <p className="text-4xl font-black text-slate-800">{data?.stats?.completedLessons || 0}</p>
         </div>
+      </div>
+
+      <div className="mb-8">
+        <DashboardCalendar assignments={data?.assignments || []} role="learner" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

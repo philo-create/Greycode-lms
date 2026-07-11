@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
+import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 
 import { supabase } from '@/lib/supabase';
 import { 
@@ -88,6 +89,10 @@ export default function ParentDashboard() {
           icon={<FileText className="w-6 h-6" />}
           color="amber"
         />
+      </div>
+
+      <div className="mb-8">
+        <DashboardCalendar assignments={data?.assignments || []} role="parent" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

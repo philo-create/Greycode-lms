@@ -325,47 +325,6 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <h1 className="text-sm md:text-base font-extrabold text-slate-900 tracking-tight" id="top-header-title">
-              {learningView === 'workstation'
-                ? `${activeStudent.name}'s Creative Workstation`
-                : learningView === 'progress' 
-                ? `${activeStudent.name}'s Academic Progress Tracker` 
-                : selectedGrade 
-                ? `Grade ${selectedGrade} - Learning Classroom` 
-                : 'Educational Portal Dashboard'}
-            </h1>
-            <div className="h-4 w-px bg-slate-200"></div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-green-50 border border-green-200 text-green-700 text-[9px] font-bold rounded uppercase tracking-wider">
-                CAPS 2025 ALIGNED
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            {/* Combined Star counts */}
-            <div className="flex items-center gap-2 text-amber-600 font-bold bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-full text-xs" id="nav-star-pill">
-              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
-              <span>{progress.totalStars} Stars Earned</span>
-            </div>
-
-            {activeStudent.role !== 'learner' && selectedGrade && (
-              <button
-                onClick={() => {
-                  setSelectedGrade(null);
-                  setLearningView('map');
-                }}
-                className="px-3.5 py-1.5 bg-slate-900 text-white rounded-lg text-xs font-semibold hover:bg-slate-800 transition active:scale-95"
-              >
-                Change Grade
-              </button>
-            )}
-          </div>
-        </header>
-
         {/* Scrollable Body Content */}
         <div id="main-scroll-content" className="p-8 flex-1 overflow-y-auto flex flex-col min-h-0">
           <AnimatePresence mode="wait">
@@ -389,7 +348,7 @@ export default function App() {
                 transition={{ duration: 0.15 }}
                 className="w-full h-full pb-8"
               >
-                <CreativeWorkstationApp activeStudentId={activeStudent.id} />
+                <CreativeWorkstationApp activeStudentId={activeStudent.id} activeStudentName={activeStudent.name} />
               </motion.div>
             ) : learningView === 'progress' ? (
               <motion.div
@@ -493,6 +452,7 @@ export default function App() {
               >
                 <Dashboard
                   activeStudentId={activeStudent.id}
+                  activeStudentName={activeStudent.name}
                   grade={selectedGrade}
                   progress={progress}
                   updateProgress={updateProgress}

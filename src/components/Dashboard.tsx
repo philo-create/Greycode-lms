@@ -408,6 +408,7 @@ function JuniorLessonView({
                     {lesson.id === '1-T1-W2' ? (
                       <Grade1Week2Workbook 
                         activeStudentId={activeStudentId}
+                        activeStudentName={activeStudentName}
                         onComplete={(stars, possible) => {
                           updateProgress(weekKey, stars, possible);
                         }} 
@@ -418,6 +419,7 @@ function JuniorLessonView({
                     ) : (
                       <GradeR1Workbook 
                         activeStudentId={activeStudentId}
+                        activeStudentName={activeStudentName}
                         lesson={lesson}
                         onComplete={(stars, possible) => {
                           updateProgress(weekKey, stars, possible);
@@ -669,6 +671,7 @@ function JuniorLessonView({
 
 export default function Dashboard({
   activeStudentId,
+  activeStudentName,
   grade,
   progress,
   updateProgress,
@@ -682,6 +685,7 @@ export default function Dashboard({
   teacherId
 }: {
   activeStudentId: string;
+  activeStudentName?: string;
   grade: GradeType;
   progress: UserProgress;
   className?: string; // Adding optional className as per guidelines
@@ -1256,6 +1260,7 @@ export default function Dashboard({
                                   return lesson.id === '1-T1-W2' ? (
                                     <Grade1Week2Workbook 
                                       activeStudentId={activeStudentId}
+                                      activeStudentName={activeStudentName}
                                       onComplete={(stars, possible) => {
                                         const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
                                         updateProgress(weekKey, stars, possible);
@@ -1268,6 +1273,7 @@ export default function Dashboard({
                                   ) : (
                                     <GradeR1Workbook 
                                       activeStudentId={activeStudentId}
+                                      activeStudentName={activeStudentName}
                                       lesson={lesson}
                                       onComplete={(stars, possible) => {
                                         const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
@@ -1542,6 +1548,7 @@ export default function Dashboard({
                                       {lesson.id === '1-T1-W2' ? (
                                         <Grade1Week2Workbook 
                                           activeStudentId={activeStudentId}
+                                          activeStudentName={activeStudentName}
                                           onComplete={(stars, possible) => {
                                             const weekKey = `${grade as string}-${lesson.term}-${lesson.week}`;
                                             updateProgress(weekKey, stars, possible);
@@ -2007,6 +2014,7 @@ export default function Dashboard({
                         return fullscreenLesson.id === '1-T1-W2' ? (
                           <Grade1Week2Workbook 
                             activeStudentId={activeStudentId}
+                            activeStudentName={activeStudentName}
                             onComplete={(stars, possible) => {
                               const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
                               updateProgress(weekKey, stars, possible);
@@ -2024,6 +2032,7 @@ export default function Dashboard({
                         ) : (
                           <GradeR1Workbook 
                             activeStudentId={activeStudentId}
+                            activeStudentName={activeStudentName}
                             lesson={fullscreenLesson}
                             onComplete={(stars, possible) => {
                               const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
@@ -2303,6 +2312,7 @@ export default function Dashboard({
                             {fullscreenLesson.id === '1-T1-W2' ? (
                               <Grade1Week2Workbook 
                                 activeStudentId={activeStudentId}
+                                activeStudentName={activeStudentName}
                                 onComplete={(stars, possible) => {
                                   const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
                                   updateProgress(weekKey, stars, possible);
