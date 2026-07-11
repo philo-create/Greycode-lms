@@ -29,7 +29,7 @@ export async function GET(req: Request) {
     if (parentProfile?.parent_email) {
       const { data: studentProfiles, error } = await supabase
         .from('profiles')
-        .select('id, full_name, first_name, last_name, grade, progress')
+        .select('id, full_name, first_name, last_name, grade, progress, school_id')
         .eq('parent_email', parentProfile.parent_email)
         .eq('role', 'learner');
 
@@ -41,14 +41,19 @@ export async function GET(req: Request) {
             .eq('student_id', student.id)
             .maybeSingle();
 
+          // Fetch student email
+          const { data: authData } = await supabase.auth.admin.getUserById(student.id);
+          const studentEmail = authData?.user?.email || '';
+          
           console.log('Pushing child:', student);
           children.push({
             id: student.id,
             profiles: {
               full_name: student.full_name || `${student.first_name || ''} ${student.last_name || ''}`.trim(),
-              email: ''
+              email: studentEmail
             },
             grade: student.grade,
+            school_id: student.school_id,
             classes: scData?.classes || (student.grade ? { grade: student.grade, class_name: `Grade ${student.grade}` } : null)
           });
         }
@@ -157,11 +162,36 @@ export async function GET(req: Request) {
       }
     }
 
+    let assignments = [];
+    if (children && children.length > 0) {
+      const childGrades = [...new Set(children.map(c => c.grade).filter(Boolean))];
+      const childSchoolIds = [...new Set(children.map(c => c.school_id || (c.classes && c.classes.school_id)).filter(Boolean))];
+      
+
+      
+      const uniqueSchoolIds = [...new Set(childSchoolIds)];
+      const targetSchoolId = parentProfile?.school_id || (uniqueSchoolIds.length > 0 ? uniqueSchoolIds[0] : null);
+
+      if (childGrades.length > 0 && targetSchoolId) {
+        const { data: assignmentsData, error: aError } = await supabase
+          .from('assignments')
+          .select('*')
+          .eq('school_id', targetSchoolId)
+          .in('grade', childGrades)
+          .order('due_date', { ascending: true });
+          
+        if (!aError && assignmentsData) {
+          assignments = assignmentsData;
+        }
+      }
+    }
+
     return NextResponse.json({
       children,
       recentProgress: childrenProgress,
       overallAttendance,
       upcomingAssessments,
+      assignments,
     });
   } catch (err) {
     console.error('Failed to load parent data via API:', err);

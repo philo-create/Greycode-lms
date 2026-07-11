@@ -2,33 +2,22 @@ import { supabase } from './supabase';
 import { LessonStatus } from '@/types';
 
 export async function fetchLessonStatuses(schoolId: string, grade?: string): Promise<Record<string, LessonStatus>> {
-  if (!supabase) return {};
   try {
-    let query = supabase
-      .from('class_lesson_status')
-      .select('lesson_id, status')
-      .eq('school_id', schoolId);
-      
+    const url = new URL('/api/lesson-status', window.location.origin);
+    url.searchParams.append('schoolId', schoolId);
     if (grade) {
-      query = query.eq('grade', grade);
+      url.searchParams.append('grade', grade);
     }
-      
-    const { data, error } = await query;
-      
-    if (error) {
-      console.warn("Could not fetch class_lesson_status:", error.message);
-      return {};
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      throw new Error(`Failed to fetch statuses: ${response.statusText}`);
     }
-    
-    const statuses: Record<string, LessonStatus> = {};
-    if (data) {
-      data.forEach(item => {
-        statuses[item.lesson_id] = item.status as LessonStatus;
-      });
-    }
-    return statuses;
+
+    const data = await response.json();
+    return data.statuses || {};
   } catch (err) {
-    console.warn("Error fetching lesson statuses:", err);
+    console.warn("Error fetching lesson statuses via API:", err);
     return {};
   }
 }

@@ -61,6 +61,7 @@ export default function TeacherDashboard() {
   const quickActions = [
     { label: 'Start Lesson', href: '/dashboard/teacher/preparation', icon: <PlayCircle className="w-5 h-5" />, color: 'text-indigo-600 bg-indigo-100' },
     { label: 'Capture Marks', href: '/dashboard/teacher/assessments', icon: <Target className="w-5 h-5" />, color: 'text-rose-600 bg-rose-100' },
+    { label: 'Assign Homework', href: '/dashboard/teacher/assignments', icon: <BookOpen className="w-5 h-5" />, color: 'text-emerald-600 bg-emerald-100' },
   ];
 
   return (

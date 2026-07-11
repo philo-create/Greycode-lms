@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       }
     });
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await userClient.auth.getUserById(token);
     if (userError || !user) {
       return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
     }
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
         // If the password was updated successfully, send a notification email
         if (password) {
           try {
-            const { data: { user: targetAuthUser } } = await adminClient.auth.admin.getUser(userId);
+            const { data: { user: targetAuthUser } } = await adminClient.auth.admin.getUserById(userId);
             if (targetAuthUser && targetAuthUser.email) {
               const { data: targetProfile } = await adminClient
                 .from('profiles')

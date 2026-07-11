@@ -1,0 +1,16 @@
+--- src/components/MainApp.tsx
++++ src/components/MainApp.tsx
+@@ -160,2 +160,3 @@
+ 
+             {/* Select Grade Nav Group */}
++            {activeStudent.role !== 'learner' && (
+             <nav className="space-y-1 mb-8">
+@@ -212,2 +213,3 @@
+             </nav>
++            )}
+ 
+@@ -223,3 +225,3 @@
+                 </div>
+-                <span>Hub Dashboard</span>
++                <span>Main Dashboard</span>
+               </button>

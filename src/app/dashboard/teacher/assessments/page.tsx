@@ -45,7 +45,7 @@ export default function TeacherAssessmentsPage() {
         </div>
       </div>
 
-      <DashboardCard>
+      <DashboardCard title="Assessments">
         <EmptyState 
           title="No Assessments Found"
           description="You haven't created any assessments yet."

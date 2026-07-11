@@ -17,6 +17,7 @@ import Dashboard from './Dashboard';
 import LoginGate from './LoginGate';
 import ProgressDashboard from './ProgressDashboard';
 import TeacherDashboard from './TeacherDashboard';
+import LearnerHubView from './LearnerHubView';
 import CreativeWorkstationApp from './CreativeWorkstationApp';
 
 import { useRouter } from 'next/navigation';
@@ -31,7 +32,7 @@ export default function App() {
     totalStars: 0,
     marksPossible: {}
   });
-  const [learningView, setLearningView] = useState<'map' | 'progress' | 'workstation'>('map');
+  const [learningView, setLearningView] = useState<'map' | 'progress' | 'workstation' | 'learner-hub'>('map');
   const [lessonStatuses, setLessonStatuses] = useState<Record<string, LessonStatus>>({});
 
   useEffect(() => {
@@ -159,7 +160,8 @@ export default function App() {
               </div>
             </div>
 
-            {/* Select Grade Nav Group */}
+            {/* Select Grade Nav Group (Hidden for Learners) */}
+            {activeStudent?.role !== 'learner' && (
             <nav className="space-y-1 mb-8">
               <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3 select-none">Select Grade</p>
               
@@ -211,21 +213,28 @@ export default function App() {
                 })}
               </div>
             </nav>
+            )}
+
+            <nav className="space-y-2 mb-8">
+              <button
+                onClick={() => setLearningView('learner-hub')}
+                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
+                  learningView === 'learner-hub'
+                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500 font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent'
+                }`}
+              >
+                <div className="w-4 h-4 flex items-center justify-center bg-slate-800 rounded shrink-0">
+                  <span className="text-[10px]">🏠</span>
+                </div>
+                <span>Main Dashboard</span>
+              </button>
+            </nav>
 
             {/* Learning View and static guides */}
             <nav className="space-y-2">
               <p className="text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-3 select-none">Learning View</p>
               
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer text-slate-400 hover:text-white hover:bg-slate-800/30 border-transparent"
-              >
-                <div className="w-4 h-4 flex items-center justify-center bg-slate-800 rounded shrink-0">
-                  <span className="text-[10px]">🏠</span>
-                </div>
-                <span>Hub Dashboard</span>
-              </button>
-
               <button
                 onClick={() => setLearningView('workstation')}
                 className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-xs font-semibold transition-all text-left border-l-2 cursor-pointer ${
@@ -337,7 +346,18 @@ export default function App() {
         {/* Scrollable Body Content */}
         <div id="main-scroll-content" className="p-8 flex-1 overflow-y-auto flex flex-col min-h-0">
           <AnimatePresence mode="wait">
-            {learningView === 'workstation' ? (
+            {learningView === 'learner-hub' ? (
+              <motion.div
+                key="learner-hub-view"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-8 max-w-5xl mx-auto py-4 w-full"
+              >
+                <LearnerHubView onSelectWorkstation={() => setLearningView('workstation')} />
+              </motion.div>
+            ) : learningView === 'workstation' ? (
               <motion.div
                 key="workstation-view"
                 initial={{ opacity: 0, y: 15 }}

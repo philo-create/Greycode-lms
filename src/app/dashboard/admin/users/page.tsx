@@ -87,7 +87,7 @@ function AdminUsersPageContent() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
-          const response = await fetch('/api/platform/profiles', {
+          const response = await fetch('/api/platform/profiles', { cache: 'no-store',
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -97,7 +97,10 @@ function AdminUsersPageContent() {
             if (data && Array.isArray(data.profiles)) {
               profiles = data.profiles;
               loadedFromApi = true;
-              console.log('Successfully loaded and synchronized users from server API');
+              console.log('Successfully loaded and synchronized users from server API', data.debug);
+              if (data.debug && data.debug.mode === 'user') {
+                setApiError('Warning: Supabase Service Role Key is missing or invalid in environment variables. Email confirmation status may be inaccurate.');
+              }
             }
           } else {
             const errData = await response.json();
@@ -438,6 +441,9 @@ function AdminUsersPageContent() {
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="py-3 px-4">
                       <div className="font-medium text-slate-800">{user.first_name} {user.last_name}</div>
+                      {user.email && (
+                        <div className="text-xs text-slate-500 mt-0.5">{user.email}</div>
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       <select

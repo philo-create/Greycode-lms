@@ -186,7 +186,7 @@ export default function SuperAdminDashboard() {
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
-          const response = await fetch('/api/platform/profiles', {
+          const response = await fetch('/api/platform/profiles', { cache: 'no-store',
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -564,6 +564,7 @@ export default function SuperAdminDashboard() {
                         <tr key={req.id} className="hover:bg-slate-50 transition-colors">
                           <td className="py-3 px-4 font-medium text-slate-800">
                             {req.first_name} {req.last_name}
+                            {req.email && <div className="text-xs font-normal text-slate-500 mt-0.5">{req.email}</div>}
                           </td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-semibold capitalize">
