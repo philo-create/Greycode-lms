@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Palette, PenTool, Battery, Lightbulb, Zap, 
   Settings, MousePointer2, Trash2, Undo2, Redo2, Copy,
@@ -300,6 +301,10 @@ export default function CreativeWorkstationApp({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSimulatedFullscreen, setIsSimulatedFullscreen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [showActivities, setShowActivities] = useState(true);
   const [checkingActivityId, setCheckingActivityId] = useState<string | null>(null);
   const [isSubmittingWorkstation, setIsSubmittingWorkstation] = useState(false);
@@ -3378,7 +3383,7 @@ export default function CreativeWorkstationApp({
     }
   }
 
-  return (
+  const element = (
     <div className={`bg-white select-none flex flex-col transition-all duration-300 ${
       isSimulatedFullscreen 
         ? 'fixed inset-0 z-[9999] w-screen h-screen p-4 bg-slate-100 overflow-hidden' 
@@ -5579,5 +5584,10 @@ export default function CreativeWorkstationApp({
       )}
     </div>
   );
+
+  if (isSimulatedFullscreen && mounted && typeof window !== 'undefined') {
+    return createPortal(element, document.body);
+  }
+  return element;
 }
 

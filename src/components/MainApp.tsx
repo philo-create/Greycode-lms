@@ -113,6 +113,7 @@ export default function App() {
       const workbookStates = getStudentWorkbookStates(activeStudent.id);
 
       const updated = {
+        ...prev,
         completedWeeks: newCompleted,
         starsEarned: newStars,
         totalStars: newTotal,

@@ -157,30 +157,6 @@ export default function StudentAnalyticsPage() {
         }
       }
       setActivitiesLoaded(true);
-      
-      // Auto-cleanup orphaned marks from the database if they were deleted from activities
-      if (student && student.progress && student.progress.subjectGrades) {
-        let changed = false;
-        const validActivityIds = new Set(currentActivities.map((a: any) => a.id));
-        const newSubjectGrades = { ...student.progress.subjectGrades };
-        
-        for (const subject in newSubjectGrades) {
-          const list = newSubjectGrades[subject] || [];
-          const filtered = list.filter((g: any) => !g.activityId || validActivityIds.has(g.activityId));
-          if (filtered.length !== list.length) {
-            newSubjectGrades[subject] = filtered;
-            changed = true;
-          }
-        }
-        
-        if (changed) {
-          const newProgress = { ...student.progress, subjectGrades: newSubjectGrades };
-          saveStudentProgress(student.id, newProgress).then(() => {
-             console.log('Cleaned up orphaned marks from database');
-          });
-          // Note: local student state will be updated by the memo, or we can let it be
-        }
-      }
     }
   }, [student?.grade, student?.id]); // Note: intentionally omitting student.progress to avoid loops, this just runs on mount/grade change
 
@@ -251,6 +227,122 @@ export default function StudentAnalyticsPage() {
           const { data: gradePeers } = await peersQuery;
           if (gradePeers) {
             setClassPeers(gradePeers);
+          }
+        }
+
+        // Load defined activities from the database teachers to support cross-machine and parent views
+        let dbActivities: any[] = [];
+        const activityIds = new Set();
+
+        try {
+          // 1. Fetch current logged-in teacher's profile/progress
+          const { data: teacherProfile } = await supabase
+            .from('profiles')
+            .select('progress')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (teacherProfile?.progress?.definedActivities) {
+            teacherProfile.progress.definedActivities.forEach((act: any) => {
+              if (act && act.id && !activityIds.has(act.id)) {
+                dbActivities.push(act);
+                activityIds.add(act.id);
+              }
+            });
+          }
+
+          // 2. Fetch all teachers in same school (or any teachers) to capture all activities
+          let teachersQuery = supabase
+            .from('profiles')
+            .select('progress')
+            .eq('role', 'teacher');
+            
+          if (profile?.school_id) {
+            teachersQuery = teachersQuery.eq('school_id', profile.school_id);
+          }
+          
+          const { data: otherTeachers } = await teachersQuery;
+          if (otherTeachers) {
+            otherTeachers.forEach((t: any) => {
+              if (t?.progress?.definedActivities) {
+                t.progress.definedActivities.forEach((act: any) => {
+                  if (act && act.id && !activityIds.has(act.id)) {
+                    dbActivities.push(act);
+                    activityIds.add(act.id);
+                  }
+                });
+              }
+            });
+          }
+        } catch (actErr) {
+          console.error('Error loading db activities:', actErr);
+        }
+
+        // Merge with local storage activities
+        let localActivities: any[] = [];
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('caps_defined_activities_v2');
+          if (stored) {
+            try {
+              localActivities = JSON.parse(stored);
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+
+        const mergedActivities = [...dbActivities];
+        const mergedIds = new Set(mergedActivities.map(a => a.id));
+        localActivities.forEach(act => {
+          if (act && act.id && !mergedIds.has(act.id)) {
+            mergedActivities.push(act);
+            mergedIds.add(act.id);
+          }
+        });
+
+        // Seed activities fallback if completely empty
+        if (mergedActivities.length === 0) {
+          mergedActivities.push(
+            {
+              id: 'act-seed-1',
+              name: 'Mathematics Counting Test 1',
+              type: 'test',
+              subject: 'Mathematics',
+              strand: 'Numbers, Operations & Relationships',
+              outOf: 20,
+              date: new Date().toISOString().substring(0, 10),
+              grade: profile?.grade || '3'
+            },
+            {
+              id: 'act-seed-2',
+              name: 'Grid Map Navigation Practical',
+              type: 'practical test',
+              subject: 'Coding and Robotics',
+              strand: 'Algorithms & Coding',
+              outOf: 15,
+              date: new Date().toISOString().substring(0, 10),
+              grade: profile?.grade || '3'
+            },
+            {
+              id: 'act-seed-3',
+              name: 'Phonics Homework Week 2',
+              type: 'home',
+              subject: 'Home Language',
+              strand: 'Reading & Phonics',
+              outOf: 10,
+              date: new Date().toISOString().substring(0, 10),
+              grade: profile?.grade || 'R'
+            }
+          );
+        }
+
+        setActivities(mergedActivities);
+        setActivitiesLoaded(true);
+
+        if (profile?.grade) {
+          const filtered = mergedActivities.filter((a: any) => a.grade === profile.grade);
+          if (filtered.length > 0) {
+            setSelectedActivityId(filtered[0].id);
           }
         }
 
@@ -456,26 +548,100 @@ export default function StudentAnalyticsPage() {
       codingMarks = [...codingMarks, ...autoMarks];
     }
 
+    const getBestStrandForMark = (m: any, validStrands: string[]) => {
+      if (validStrands.length === 0) return 'General Skills';
+
+      // 1. If the mark has a strand and it is already in validStrands, use it
+      if (m.strand) {
+        const found = validStrands.find(s => s.toLowerCase() === m.strand.toLowerCase());
+        if (found) return found;
+      }
+
+      // 2. Look up the defined activity to see if its strand is valid
+      const act = activities.find(a => a.id === m.activityId || a.name === m.name);
+      if (act && act.strand) {
+        const found = validStrands.find(s => s.toLowerCase() === act.strand.toLowerCase());
+        if (found) return found;
+      }
+
+      // 3. Fallback matching keywords in name / activity name
+      const name = (m.name || act?.name || '').toLowerCase();
+      
+      for (const st of validStrands) {
+        const stLower = st.toLowerCase();
+        
+        // Mathematics
+        if (stLower.includes('number') && (name.includes('count') || name.includes('math') || name.includes('number') || name.includes('add') || name.includes('sub') || name.includes('calc') || name.includes('arithmetic'))) {
+          return st;
+        }
+        if (stLower.includes('pattern') && (name.includes('pattern') || name.includes('shape') || name.includes('sequence') || name.includes('algebra') || name.includes('function'))) {
+          return st;
+        }
+        if (stLower.includes('space') && (name.includes('space') || name.includes('shape') || name.includes('geometry') || name.includes('draw') || name.includes('map') || name.includes('grid'))) {
+          return st;
+        }
+        if (stLower.includes('measure') && (name.includes('measure') || name.includes('time') || name.includes('clock') || name.includes('date') || name.includes('weight') || name.includes('height'))) {
+          return st;
+        }
+        if (stLower.includes('data') && (name.includes('data') || name.includes('graph') || name.includes('chart') || name.includes('table') || name.includes('sort'))) {
+          return st;
+        }
+
+        // Home Language / FAL
+        if (stLower.includes('listen') && (name.includes('listen') || name.includes('speak') || name.includes('oral') || name.includes('talk') || name.includes('present'))) {
+          return st;
+        }
+        if (stLower.includes('read') && (name.includes('read') || name.includes('phonics') || name.includes('sound') || name.includes('word') || name.includes('book') || name.includes('story'))) {
+          return st;
+        }
+        if (stLower.includes('write') && (name.includes('write') || name.includes('spelling') || name.includes('handwriting') || name.includes('alphabet') || name.includes('letter'))) {
+          return st;
+        }
+        if (stLower.includes('think') && (name.includes('think') || name.includes('reason') || name.includes('comprehend') || name.includes('understand') || name.includes('logic'))) {
+          return st;
+        }
+
+        // Life Skills
+        if (stLower.includes('begin') && (name.includes('begin') || name.includes('know') || name.includes('world') || name.includes('science') || name.includes('history') || name.includes('society'))) {
+          return st;
+        }
+        if (stLower.includes('personal') && (name.includes('person') || name.includes('social') || name.includes('well') || name.includes('health') || name.includes('safe') || name.includes('hygiene') || name.includes('feel') || name.includes('emotion'))) {
+          return st;
+        }
+        if (stLower.includes('create') && (name.includes('create') || name.includes('art') || name.includes('paint') || name.includes('draw') || name.includes('music') || name.includes('sing') || name.includes('dance') || name.includes('craft'))) {
+          return st;
+        }
+        if (stLower.includes('physic') && (name.includes('physic') || name.includes('sport') || name.includes('game') || name.includes('exercise') || name.includes('play') || name.includes('run') || name.includes('jump'))) {
+          return st;
+        }
+
+        // Coding and Robotics
+        if (stLower.includes('algorithm') && (name.includes('algorithm') || name.includes('coding') || name.includes('code') || name.includes('program') || name.includes('sequence') || name.includes('loop'))) {
+          return st;
+        }
+        if (stLower.includes('robot') && (name.includes('robot') || name.includes('automat') || name.includes('sensor') || name.includes('engine') || name.includes('hardware'))) {
+          return st;
+        }
+        if (stLower.includes('digital') && (name.includes('digital') || name.includes('citizen') || name.includes('cyber') || name.includes('internet') || name.includes('computer') || name.includes('tech'))) {
+          return st;
+        }
+      }
+
+      // 4. Fallback distribution based on ID/Name hash
+      const hashInput = m.id || m.name || 'fallback';
+      let hash = 0;
+      for (let i = 0; i < hashInput.length; i++) {
+        hash += hashInput.charCodeAt(i);
+      }
+      const index = hash % validStrands.length;
+      return validStrands[index];
+    };
+
     return strands.map(st => {
       // Find assessments that belong to this strand
       const strandMarks = codingMarks.filter((m: any) => {
-        // If the mark has a pre-assigned strand from autoMarks
-        if (m.strand) {
-          return m.strand.toLowerCase() === st.toLowerCase();
-        }
-        // Otherwise look up defined activity
-        const act = activities.find(a => a.id === m.activityId || a.name === m.name);
-        if (act && act.strand) {
-          return act.strand.toLowerCase() === st.toLowerCase();
-        }
-        // Fallback matching substring in name
-        const n = (m.name || '').toLowerCase();
-        if (st.toLowerCase().includes('number') && (n.includes('count') || n.includes('math') || n.includes('number') || n.includes('add') || n.includes('sub'))) return true;
-        if (st.toLowerCase().includes('pattern') && (n.includes('pattern') || n.includes('shape') || n.includes('sequence'))) return true;
-        if (st.toLowerCase().includes('reading') && (n.includes('read') || n.includes('phonics') || n.includes('sound') || n.includes('word'))) return true;
-        if (st.toLowerCase().includes('writing') && (n.includes('write') || n.includes('spelling') || n.includes('handwriting'))) return true;
-        if (st.toLowerCase().includes('listening') && (n.includes('listen') || n.includes('speak') || n.includes('oral'))) return true;
-        return false;
+        const assignedStrand = getBestStrandForMark(m, strands);
+        return assignedStrand.toLowerCase() === st.toLowerCase();
       });
 
       let avgScore = 0;
@@ -1098,6 +1264,7 @@ export default function StudentAnalyticsPage() {
                             progressData={selectedAnalyticsSubject === 'Coding and Robotics' ? progressData : []}
                             role="teacher"
                             initialBasicRecommendation={aiRecommendation}
+                            hidePremium={true}
                           />
 
                           <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl mt-4">

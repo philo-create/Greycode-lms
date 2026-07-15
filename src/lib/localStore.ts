@@ -58,13 +58,29 @@ export function migrateLocalStorageProgress(targetStudentId: string) {
 
 export function mergeProgress(localProgress: any, dbProgress: any) {
   const merged = {
+    ...dbProgress,
+    ...localProgress,
     completedWeeks: { ...(localProgress?.completedWeeks || {}), ...(dbProgress?.completedWeeks || {}) },
     starsEarned: { ...(localProgress?.starsEarned || {}), ...(dbProgress?.starsEarned || {}) },
     marksPossible: { ...(localProgress?.marksPossible || {}), ...(dbProgress?.marksPossible || {}) },
-    totalStars: 0,
     workbookStates: { ...(localProgress?.workbookStates || {}), ...(dbProgress?.workbookStates || {}) }
   };
   
+  // Merge subjectGrades array list to avoid losing marks
+  const mergedSubjectGrades = { ...(dbProgress?.subjectGrades || {}), ...(localProgress?.subjectGrades || {}) };
+  Object.keys(mergedSubjectGrades).forEach((subject) => {
+    const dbList = dbProgress?.subjectGrades?.[subject] || [];
+    const localList = localProgress?.subjectGrades?.[subject] || [];
+    const map = new Map();
+    dbList.forEach((g: any) => { if (g && (g.id || g.activityId)) map.set(g.id || g.activityId, g); });
+    localList.forEach((g: any) => { if (g && (g.id || g.activityId)) map.set(g.id || g.activityId, g); });
+    mergedSubjectGrades[subject] = Array.from(map.values());
+  });
+  merged.subjectGrades = mergedSubjectGrades;
+
+  // Merge attendance
+  merged.attendance = { ...(dbProgress?.attendance || {}), ...(localProgress?.attendance || {}) };
+
   merged.totalStars = Object.values(merged.starsEarned).reduce((sum: number, current: any) => sum + (Number(current) || 0), 0);
   return merged;
 }

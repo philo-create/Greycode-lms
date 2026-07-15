@@ -12,6 +12,7 @@ interface DeepDiveAIReportProps {
   progressData: any[];
   role: 'teacher' | 'parent';
   initialBasicRecommendation?: string;
+  hidePremium?: boolean;
 }
 
 export function DeepDiveAIReport({
@@ -20,7 +21,8 @@ export function DeepDiveAIReport({
   marks,
   progressData,
   role,
-  initialBasicRecommendation
+  initialBasicRecommendation,
+  hidePremium = false
 }: DeepDiveAIReportProps) {
   const [reportText, setReportText] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -59,7 +61,7 @@ export function DeepDiveAIReport({
       )}
 
       {/* Action Button */}
-      {!reportText && (
+      {!reportText && !hidePremium && (
         <div className="flex flex-col items-center justify-center p-8 bg-slate-950 rounded-2xl border border-indigo-500/30 shadow-[0_0_40px_-10px_rgba(79,70,229,0.3)] relative overflow-hidden group">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 p-4 opacity-5 transition-transform duration-700 group-hover:scale-110 group-hover:rotate-12">

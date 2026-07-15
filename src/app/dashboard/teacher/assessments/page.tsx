@@ -336,10 +336,12 @@ export default function TeacherAssessmentsPage() {
               ...tProg,
               definedActivities: mergedActivities
             };
-            await supabase
-              .from('profiles')
-              .update({ progress: updatedProgress })
-              .eq('id', session.user.id);
+            // Use the secure server-side API to bypass RLS and guarantee saving
+            await fetch('/api/dashboard/teacher/save-progress', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ studentId: session.user.id, progress: updatedProgress })
+            });
           } catch (err) {
             console.error('Error saving merged activities to database:', err);
           }
@@ -442,10 +444,12 @@ export default function TeacherAssessmentsPage() {
         definedActivities: updatedList
       };
 
-      await supabase
-        .from('profiles')
-        .update({ progress: updatedProgress })
-        .eq('id', session.user.id);
+      // Use the secure server-side API to bypass RLS and guarantee saving
+      await fetch('/api/dashboard/teacher/save-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: session.user.id, progress: updatedProgress })
+      });
     } catch (err) {
       console.error('Error saving activities to database:', err);
     }
