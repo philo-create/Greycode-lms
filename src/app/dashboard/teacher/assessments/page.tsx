@@ -89,11 +89,103 @@ export default function TeacherAssessmentsPage() {
 
         const teacherData = await getTeacherData(session.user.id);
         if (teacherData && teacherData.students) {
-          setStudents(teacherData.students);
+          // Load local student profiles from localStorage for syncing
+          let localStudents: any[] = [];
+          if (typeof window !== 'undefined') {
+            const storedLocal = localStorage.getItem('caps_student_profiles_v1');
+            if (storedLocal) {
+              try {
+                localStudents = JSON.parse(storedLocal);
+              } catch (e) {
+                console.error('Error parsing local student profiles:', e);
+              }
+            }
+          }
+
+          const parsedStudents = await Promise.all(teacherData.students.map(async (student: any) => {
+            let dbProg = student.progress || {};
+            if (typeof dbProg === 'string') {
+              try {
+                dbProg = JSON.parse(dbProg);
+              } catch (e) {
+                dbProg = {};
+              }
+            }
+
+            // Sync with local student progress if any
+            const localStud = localStudents.find((ls: any) => ls.id === student.id);
+            let localProg = localStud?.progress || {};
+            if (typeof localProg === 'string') {
+              try {
+                localProg = JSON.parse(localProg);
+              } catch (e) {
+                localProg = {};
+              }
+            }
+
+            // Merge logic
+            let mergedProgress = { ...dbProg };
+            let hasMergeChanges = false;
+
+            // Merge subjectGrades
+            const localSubjectGrades = localProg.subjectGrades || {};
+            const dbSubjectGrades = dbProg.subjectGrades || {};
+            const mergedSubjectGrades = { ...dbSubjectGrades };
+
+            Object.keys(localSubjectGrades).forEach((subject) => {
+              const localList = localSubjectGrades[subject] || [];
+              const dbList = dbSubjectGrades[subject] || [];
+              
+              const combinedMap = new Map();
+              dbList.forEach((g: any) => {
+                if (g && g.activityId) combinedMap.set(g.activityId, g);
+              });
+              
+              localList.forEach((g: any) => {
+                if (g && g.activityId && !combinedMap.has(g.activityId)) {
+                  combinedMap.set(g.activityId, g);
+                  hasMergeChanges = true;
+                }
+              });
+              
+              mergedSubjectGrades[subject] = Array.from(combinedMap.values());
+            });
+
+            // Merge attendance
+            const localAttendance = localProg.attendance || {};
+            const dbAttendance = dbProg.attendance || {};
+            const mergedAttendance = { ...dbAttendance };
+
+            Object.keys(localAttendance).forEach((date) => {
+              if (localAttendance[date] && !dbAttendance[date]) {
+                mergedAttendance[date] = localAttendance[date];
+                hasMergeChanges = true;
+              }
+            });
+
+            // Combine anything else
+            if (hasMergeChanges) {
+              mergedProgress = {
+                ...mergedProgress,
+                subjectGrades: mergedSubjectGrades,
+                attendance: mergedAttendance
+              };
+              // Persist the merged progress to the database securely via our new server-side API!
+              try {
+                await saveStudentProgress(student.id, mergedProgress);
+              } catch (err) {
+                console.error('Failed to save merged student progress to DB:', err);
+              }
+            }
+
+            return { ...student, progress: mergedProgress };
+          }));
+
+          setStudents(parsedStudents);
           
           // Deduplicate teacher grades
           const gradesSet = new Set<string>();
-          teacherData.students.forEach((s: any) => {
+          parsedStudents.forEach((s: any) => {
             if (s.grade) gradesSet.add(s.grade);
           });
           const grades = Array.from(gradesSet);
@@ -105,9 +197,9 @@ export default function TeacherAssessmentsPage() {
             setNewActivitySubject(firstGradeSubjects[0] || '');
           }
 
-          if (teacherData.students.length > 0) {
-            setSelectedStudent(teacherData.students[0]);
-            const firstStudentSubjects = getSubjectsForGrade(teacherData.students[0].grade);
+          if (parsedStudents.length > 0) {
+            setSelectedStudent(parsedStudents[0]);
+            const firstStudentSubjects = getSubjectsForGrade(parsedStudents[0].grade);
             setSelectedSubject(firstStudentSubjects[0] || '');
           }
 
@@ -119,17 +211,20 @@ export default function TeacherAssessmentsPage() {
             .single();
 
           let dbActivities: DefinedActivity[] = [];
-          if (teacherProfile?.progress && typeof teacherProfile.progress === 'object') {
-            const prog = teacherProfile.progress as any;
-            if (Array.isArray(prog.definedActivities)) {
-              dbActivities = [...prog.definedActivities];
-            }
+          let tProg = teacherProfile?.progress || {};
+          if (typeof tProg === 'string') {
+            try {
+              tProg = JSON.parse(tProg);
+            } catch (e) {}
+          }
+          if (tProg && typeof tProg === 'object' && Array.isArray(tProg.definedActivities)) {
+            dbActivities = [...tProg.definedActivities];
           }
 
           // Reconstruct activities from student subjectGrades or student definedActivities as robust fallback
           const activityIds = new Set(dbActivities.map(a => a.id));
           
-          teacherData.students.forEach((student: any) => {
+          parsedStudents.forEach((student: any) => {
             const sProg = student.progress || {};
             // Check student definedActivities list if any
             if (Array.isArray(sProg.definedActivities)) {
@@ -165,21 +260,33 @@ export default function TeacherAssessmentsPage() {
             });
           });
 
-          // Fallback to local storage or defaults if both db and reconstruction are empty
-          if (dbActivities.length === 0 && typeof window !== 'undefined') {
+          // ALWAYS load local storage activities as well and merge them
+          let localActivities: DefinedActivity[] = [];
+          if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('caps_defined_activities_v2');
             if (stored) {
               try {
-                dbActivities = JSON.parse(stored);
+                localActivities = JSON.parse(stored);
               } catch (e) {
                 console.error('Error parsing stored activities', e);
               }
             }
           }
 
+          // Merge local activities into dbActivities if they don't exist
+          let mergedActivities = [...dbActivities];
+          const mergedIds = new Set(mergedActivities.map(a => a.id));
+
+          localActivities.forEach(localAct => {
+            if (localAct && localAct.id && !mergedIds.has(localAct.id)) {
+              mergedActivities.push(localAct);
+              mergedIds.add(localAct.id);
+            }
+          });
+
           // If still empty, use initial seed activities
-          if (dbActivities.length === 0) {
-            dbActivities = [
+          if (mergedActivities.length === 0) {
+            mergedActivities = [
               {
                 id: 'act-seed-1',
                 name: 'Mathematics Counting Test 1',
@@ -213,10 +320,28 @@ export default function TeacherAssessmentsPage() {
             ];
           }
 
-          setActivities(dbActivities);
-          if (dbActivities.length > 0) {
-            setSelectedBulkActivityId(dbActivities[0].id);
-            setSelectedSingleActivityId(dbActivities[0].id);
+          setActivities(mergedActivities);
+          if (mergedActivities.length > 0) {
+            setSelectedBulkActivityId(mergedActivities[0].id);
+            setSelectedSingleActivityId(mergedActivities[0].id);
+          }
+
+          // Write the merged activities list back to BOTH local storage and cloud database to keep them in 100% sync!
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('caps_defined_activities_v2', JSON.stringify(mergedActivities));
+          }
+
+          try {
+            const updatedProgress = {
+              ...tProg,
+              definedActivities: mergedActivities
+            };
+            await supabase
+              .from('profiles')
+              .update({ progress: updatedProgress })
+              .eq('id', session.user.id);
+          } catch (err) {
+            console.error('Error saving merged activities to database:', err);
           }
         }
       } catch (err) {

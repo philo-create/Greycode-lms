@@ -24,20 +24,39 @@ export async function getStudentProfiles(): Promise<StudentProfile[]> {
 export async function saveStudentProgress(studentId: string, progress: UserProgress): Promise<void> {
   let dbSuccess = false;
   
-  if (supabase) {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ progress })
-      .eq('id', studentId);
-      
-    if (error) {
-      console.warn('Supabase update failed (might be missing column or RLS), falling back to local storage.', error);
-    } else {
+  // Try to use our server-side API first, which uses service-role to bypass RLS policies
+  try {
+    const response = await fetch('/api/dashboard/teacher/save-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, progress })
+    });
+    
+    if (response.ok) {
       dbSuccess = true;
+    } else {
+      console.warn('Admin API progress save failed, falling back to direct update or local storage');
+    }
+  } catch (err) {
+    console.warn('API route call error, falling back', err);
+  }
+
+  // Fallback to direct client-side update if the API call failed
+  if (!dbSuccess && supabase) {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ progress })
+        .eq('id', studentId);
+      if (!error) {
+        dbSuccess = true;
+      }
+    } catch (e) {
+      console.warn('Direct Supabase update failed', e);
     }
   }
 
-  // Fallback to local storage
+  // Always keep local storage updated as a fallback/cache
   if (typeof window !== 'undefined') {
     const profiles = await getStudentProfiles();
     const updated = profiles.map(p => p.id === studentId ? { ...p, progress } : p);
