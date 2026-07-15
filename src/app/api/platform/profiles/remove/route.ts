@@ -145,6 +145,28 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         console.warn('Non-blocking: Exception during school_lesson_status cleanup:', e);
       }
+
+      // 7. Delete lesson_unlock_requests created by this user, and clear reviewed_by
+      try {
+        const { error: lurDelErr } = await clientInstance.from('lesson_unlock_requests').delete().eq('teacher_id', userId);
+        if (lurDelErr) console.warn('Non-blocking: lesson_unlock_requests deletion returned error code:', lurDelErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during lesson_unlock_requests deletion:', e);
+      }
+      try {
+        const { error: lurUpdErr } = await clientInstance.from('lesson_unlock_requests').update({ reviewed_by: null }).eq('reviewed_by', userId);
+        if (lurUpdErr) console.warn('Non-blocking: lesson_unlock_requests update returned error code:', lurUpdErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during lesson_unlock_requests update:', e);
+      }
+
+      // 8. Clear performed_by in lesson_unlock_audit
+      try {
+        const { error: luaErr } = await clientInstance.from('lesson_unlock_audit').update({ performed_by: null }).eq('performed_by', userId);
+        if (luaErr) console.warn('Non-blocking: lesson_unlock_audit update returned error code:', luaErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during lesson_unlock_audit update:', e);
+      }
     };
 
     // 3. Perform deletion with appropriate privileges
