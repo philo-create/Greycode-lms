@@ -6,6 +6,7 @@ import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
 import { getTeacherData } from '@/lib/dashboard/teacherData';
 import { supabase } from '@/lib/supabase';
+import { saveStudentProgress } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -42,7 +43,7 @@ export default function ClassRegisterPage() {
     return localDate.toISOString().split('T')[0];
   });
   
-  // Attendance records state loaded from/saved to localStorage
+  // Attendance records state loaded from/saved to cloud database
   const [attendance, setAttendance] = useState<AttendanceRecord>({});
   const [successMsg, setSuccessMsg] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -51,22 +52,25 @@ export default function ClassRegisterPage() {
     loadData();
   }, []);
 
-  // Reload or load local storage attendance when date or data changes
+  // Reload/load attendance from student profile progress when date or students change
   useEffect(() => {
     if (!data?.students) return;
     
-    const key = `class_register_attendance_${selectedDate}`;
-    const stored = localStorage.getItem(key);
-    if (stored) {
-      try {
-        setAttendance(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse stored attendance:', e);
-        initializeUnmarkedAttendance();
+    const initial: AttendanceRecord = {};
+    data.students.forEach((student: any) => {
+      let prog = student.progress || {};
+      if (typeof prog === 'string') {
+        try {
+          prog = JSON.parse(prog);
+        } catch (e) {
+          prog = {};
+        }
       }
-    } else {
-      initializeUnmarkedAttendance();
-    }
+      const studentAttendance = prog.attendance || {};
+      const recordForDate = studentAttendance[selectedDate] || 'unmarked';
+      initial[student.id] = { status: recordForDate };
+    });
+    setAttendance(initial);
   }, [selectedDate, data?.students]);
 
   const loadData = async () => {
@@ -129,17 +133,63 @@ export default function ClassRegisterPage() {
     });
   };
 
-  // Save attendance register to local storage
-  const saveAttendance = () => {
+  // Save attendance register directly to the cloud database!
+  const saveAttendance = async () => {
+    if (!filteredStudents || filteredStudents.length === 0) return;
     setIsSaving(true);
-    const key = `class_register_attendance_${selectedDate}`;
-    localStorage.setItem(key, JSON.stringify(attendance));
+    setError('');
     
-    setTimeout(() => {
+    try {
+      const updatedStudents = [...data.students];
+      
+      for (const student of filteredStudents) {
+        const currentRecord = attendance[student.id];
+        const status = currentRecord?.status || 'unmarked';
+        
+        let prog = student.progress || {};
+        if (typeof prog === 'string') {
+          try {
+            prog = JSON.parse(prog);
+          } catch (e) {
+            prog = {};
+          }
+        }
+        
+        const attendanceObj = { ...(prog.attendance || {}) };
+        attendanceObj[selectedDate] = status;
+        
+        const updatedProgress = {
+          ...prog,
+          attendance: attendanceObj
+        };
+        
+        // Update database for student
+        await saveStudentProgress(student.id, updatedProgress);
+        
+        // Update local memory state
+        const idx = updatedStudents.findIndex(s => s.id === student.id);
+        if (idx !== -1) {
+          updatedStudents[idx] = {
+            ...updatedStudents[idx],
+            progress: updatedProgress
+          };
+        }
+      }
+      
+      // Update local state with the newly updated students
+      setData((prev: any) => ({
+        ...prev,
+        students: updatedStudents
+      }));
+      
+      setSuccessMsg('Attendance register successfully saved to the cloud database!');
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err: any) {
+      console.error('Error saving attendance register:', err);
+      setError('Failed to save attendance register to the database. Please try again.');
+    } finally {
       setIsSaving(false);
-      setSuccessMsg('Attendance register saved successfully!');
-      setTimeout(() => setSuccessMsg(''), 3000);
-    }, 600);
+    }
   };
 
   // Export current register as simulated CSV

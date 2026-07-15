@@ -80,7 +80,7 @@ export default function TeacherAssessmentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-  // Load students & grades on mount
+  // Load students, grades & defined activities on mount
   useEffect(() => {
     async function loadData() {
       try {
@@ -110,73 +110,122 @@ export default function TeacherAssessmentsPage() {
             const firstStudentSubjects = getSubjectsForGrade(teacherData.students[0].grade);
             setSelectedSubject(firstStudentSubjects[0] || '');
           }
+
+          // LOAD DEFINED ACTIVITIES FROM CLOUD DATABASE (TEACHER PROFILE)
+          const { data: teacherProfile } = await supabase
+            .from('profiles')
+            .select('progress')
+            .eq('id', session.user.id)
+            .single();
+
+          let dbActivities: DefinedActivity[] = [];
+          if (teacherProfile?.progress && typeof teacherProfile.progress === 'object') {
+            const prog = teacherProfile.progress as any;
+            if (Array.isArray(prog.definedActivities)) {
+              dbActivities = [...prog.definedActivities];
+            }
+          }
+
+          // Reconstruct activities from student subjectGrades or student definedActivities as robust fallback
+          const activityIds = new Set(dbActivities.map(a => a.id));
+          
+          teacherData.students.forEach((student: any) => {
+            const sProg = student.progress || {};
+            // Check student definedActivities list if any
+            if (Array.isArray(sProg.definedActivities)) {
+              sProg.definedActivities.forEach((act: any) => {
+                if (act && act.id && !activityIds.has(act.id)) {
+                  dbActivities.push(act);
+                  activityIds.add(act.id);
+                }
+              });
+            }
+            
+            // Check student actual grades
+            const subjectGrades = sProg.subjectGrades || {};
+            Object.entries(subjectGrades).forEach(([subjectName, gradesList]: [string, any]) => {
+              if (Array.isArray(gradesList)) {
+                gradesList.forEach((g: any) => {
+                  if (g && g.activityId && !activityIds.has(g.activityId)) {
+                    const reconstructed: DefinedActivity = {
+                      id: g.activityId,
+                      name: g.name || 'Unnamed Activity',
+                      type: g.type || 'classwork',
+                      subject: subjectName,
+                      strand: g.strand || 'General Skills',
+                      outOf: g.outOf || 10,
+                      date: g.date ? new Date(g.date).toISOString().substring(0, 10) : new Date().toISOString().substring(0, 10),
+                      grade: student.grade || '3'
+                    };
+                    dbActivities.push(reconstructed);
+                    activityIds.add(g.activityId);
+                  }
+                });
+              }
+            });
+          });
+
+          // Fallback to local storage or defaults if both db and reconstruction are empty
+          if (dbActivities.length === 0 && typeof window !== 'undefined') {
+            const stored = localStorage.getItem('caps_defined_activities_v2');
+            if (stored) {
+              try {
+                dbActivities = JSON.parse(stored);
+              } catch (e) {
+                console.error('Error parsing stored activities', e);
+              }
+            }
+          }
+
+          // If still empty, use initial seed activities
+          if (dbActivities.length === 0) {
+            dbActivities = [
+              {
+                id: 'act-seed-1',
+                name: 'Mathematics Counting Test 1',
+                type: 'test',
+                subject: 'Mathematics',
+                strand: 'Numbers, Operations & Relationships',
+                outOf: 20,
+                date: new Date().toISOString().substring(0, 10),
+                grade: '3'
+              },
+              {
+                id: 'act-seed-2',
+                name: 'Grid Map Navigation Practical',
+                type: 'practical test',
+                subject: 'Coding and Robotics',
+                strand: 'Algorithms & Coding',
+                outOf: 15,
+                date: new Date().toISOString().substring(0, 10),
+                grade: '3'
+              },
+              {
+                id: 'act-seed-3',
+                name: 'Phonics Homework Week 2',
+                type: 'home',
+                subject: 'Home Language',
+                strand: 'Reading & Phonics',
+                outOf: 10,
+                date: new Date().toISOString().substring(0, 10),
+                grade: 'R'
+              }
+            ];
+          }
+
+          setActivities(dbActivities);
+          if (dbActivities.length > 0) {
+            setSelectedBulkActivityId(dbActivities[0].id);
+            setSelectedSingleActivityId(dbActivities[0].id);
+          }
         }
       } catch (err) {
-        console.error('Error loading students for assessments:', err);
+        console.error('Error loading students or activities for assessments:', err);
       } finally {
         setLoading(false);
       }
     }
     loadData();
-  }, []);
-
-  // Load Activities from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('caps_defined_activities_v2');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setActivities(parsed);
-          if (parsed.length > 0) {
-            setSelectedBulkActivityId(parsed[0].id);
-            setSelectedSingleActivityId(parsed[0].id);
-          }
-        } catch (e) {
-          console.error('Error parsing stored activities', e);
-        }
-      } else {
-        // Seed initial mock activities matching typical school subjects
-        const initial: DefinedActivity[] = [
-          {
-            id: 'act-seed-1',
-            name: 'Mathematics Counting Test 1',
-            type: 'test',
-            subject: 'Mathematics',
-            strand: 'Numbers, Operations & Relationships',
-            outOf: 20,
-            date: new Date().toISOString().substring(0, 10),
-            grade: '3'
-          },
-          {
-            id: 'act-seed-2',
-            name: 'Grid Map Navigation Practical',
-            type: 'practical test',
-            subject: 'Coding and Robotics',
-            strand: 'Algorithms & Coding',
-            outOf: 15,
-            date: new Date().toISOString().substring(0, 10),
-            grade: '3'
-          },
-          {
-            id: 'act-seed-3',
-            name: 'Phonics Homework Week 2',
-            type: 'home',
-            subject: 'Home Language',
-            strand: 'Reading & Phonics',
-            outOf: 10,
-            date: new Date().toISOString().substring(0, 10),
-            grade: 'R'
-          }
-        ];
-        localStorage.setItem('caps_defined_activities_v2', JSON.stringify(initial));
-        setActivities(initial);
-        if (initial.length > 0) {
-          setSelectedBulkActivityId(initial[0].id);
-          setSelectedSingleActivityId(initial[0].id);
-        }
-      }
-    }
   }, []);
 
   // Update subject when grade changes in Activity setup
@@ -246,10 +295,34 @@ export default function TeacherAssessmentsPage() {
   }, [selectedStudent, selectedSingleActivityId, activities]);
 
   // Save Activities helper
-  const updateActivitiesList = (updatedList: DefinedActivity[]) => {
+  const updateActivitiesList = async (updatedList: DefinedActivity[]) => {
     setActivities(updatedList);
     if (typeof window !== 'undefined') {
       localStorage.setItem('caps_defined_activities_v2', JSON.stringify(updatedList));
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: teacherProfile } = await supabase
+        .from('profiles')
+        .select('progress')
+        .eq('id', session.user.id)
+        .single();
+
+      const currentProgress = teacherProfile?.progress || {};
+      const updatedProgress = {
+        ...currentProgress,
+        definedActivities: updatedList
+      };
+
+      await supabase
+        .from('profiles')
+        .update({ progress: updatedProgress })
+        .eq('id', session.user.id);
+    } catch (err) {
+      console.error('Error saving activities to database:', err);
     }
   };
 

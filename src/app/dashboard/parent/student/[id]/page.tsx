@@ -600,8 +600,131 @@ export default function StudentProgress({ params }: { params: { id: string } }) 
           </div>
         </div>
 
-        {/* CAPS Achievement Info Sidebar */}
+        {/* Daily Attendance & CAPS Achievement Info Sidebar */}
         <div className="space-y-6">
+          {/* Daily Attendance Tracker */}
+          <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+            <ClipboardCheck className="w-5 h-5 text-indigo-600" />
+            Daily Attendance
+          </h2>
+
+          <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+            {(() => {
+              const attendanceHistory = student?.progress?.attendance || {};
+              const attendanceDays = Object.entries(attendanceHistory).sort(
+                (a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime()
+              );
+              
+              const totalDays = attendanceDays.length;
+              const presentDays = attendanceDays.filter(([_, status]) => status === 'present').length;
+              const lateDays = attendanceDays.filter(([_, status]) => status === 'late').length;
+              const absentDays = attendanceDays.filter(([_, status]) => status === 'absent').length;
+              
+              const attendancePercentage = totalDays > 0 
+                ? Math.round(((presentDays + lateDays) / totalDays) * 100) 
+                : 100;
+
+              return (
+                <>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                      <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Attendance Rate</span>
+                      <span className="text-2xl font-black text-slate-800">{totalDays > 0 ? `${attendancePercentage}%` : '100%'}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="block text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Days Logged</span>
+                      <span className="text-sm font-extrabold text-slate-600">{totalDays} school day{totalDays !== 1 && 's'}</span>
+                    </div>
+                  </div>
+
+                  {totalDays > 0 ? (
+                    <>
+                      {/* Modern Multi-Colored Progress Bar */}
+                      <div className="h-2.5 bg-slate-100 rounded-full flex overflow-hidden">
+                        <div 
+                          className="bg-emerald-500 h-full transition-all duration-500" 
+                          style={{ width: `${(presentDays / totalDays) * 100}%` }}
+                          title={`Present: ${presentDays} days`}
+                        />
+                        <div 
+                          className="bg-amber-400 h-full transition-all duration-500" 
+                          style={{ width: `${(lateDays / totalDays) * 100}%` }}
+                          title={`Late: ${lateDays} days`}
+                        />
+                        <div 
+                          className="bg-rose-500 h-full transition-all duration-500" 
+                          style={{ width: `${(absentDays / totalDays) * 100}%` }}
+                          title={`Absent: ${absentDays} days`}
+                        />
+                      </div>
+
+                      {/* Detail Counters */}
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="bg-emerald-50/50 border border-emerald-100/50 p-2 rounded-xl">
+                          <span className="block text-[9px] font-black text-emerald-700 uppercase tracking-wider">Present</span>
+                          <span className="text-sm font-black text-emerald-800">{presentDays}</span>
+                        </div>
+                        <div className="bg-amber-50/50 border border-amber-100/50 p-2 rounded-xl">
+                          <span className="block text-[9px] font-black text-amber-700 uppercase tracking-wider">Late</span>
+                          <span className="text-sm font-black text-amber-800">{lateDays}</span>
+                        </div>
+                        <div className="bg-rose-50/50 border border-rose-100/50 p-2 rounded-xl">
+                          <span className="block text-[9px] font-black text-rose-700 uppercase tracking-wider">Absent</span>
+                          <span className="text-sm font-black text-rose-800">{absentDays}</span>
+                        </div>
+                      </div>
+
+                      {/* Daily History list (Last 5) */}
+                      <div>
+                        <span className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-2">Recent Logs</span>
+                        <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                          {attendanceDays.slice(0, 5).map(([dateStr, status]) => {
+                            const dateObj = new Date(dateStr);
+                            const formattedDate = dateObj.toLocaleDateString(undefined, {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            });
+
+                            let badgeColor = '';
+                            let badgeText = '';
+
+                            if (status === 'present') {
+                              badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+                              badgeText = 'Present';
+                            } else if (status === 'late') {
+                              badgeColor = 'bg-amber-50 text-amber-700 border-amber-100';
+                              badgeText = 'Late';
+                            } else {
+                              badgeColor = 'bg-rose-50 text-rose-700 border-rose-100';
+                              badgeText = 'Absent';
+                            }
+
+                            return (
+                              <div key={dateStr} className="flex items-center justify-between p-2 hover:bg-slate-50 border border-slate-100/50 rounded-xl transition text-[11px] font-semibold text-slate-600">
+                                <span className="flex items-center gap-1.5">
+                                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                  {formattedDate}
+                                </span>
+                                <span className={`px-2 py-0.5 border text-[9px] font-black uppercase rounded ${badgeColor}`}>
+                                  {badgeText}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-4 text-slate-400 text-xs italic">
+                      No attendance register has been filled in yet by the school teachers.
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+
           <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
             <Award className="w-5 h-5 text-indigo-600" />
             National Standards
