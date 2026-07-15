@@ -121,6 +121,30 @@ export async function POST(req: NextRequest) {
       } catch (e) {
         console.warn('Non-blocking: Exception during classes teacher cleanup:', e);
       }
+
+      // 4. Delete from assignments created by this teacher
+      try {
+        const { error: aErr } = await clientInstance.from('assignments').delete().eq('teacher_id', userId);
+        if (aErr) console.warn('Non-blocking: assignments deletion returned error code:', aErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during assignments cleanup:', e);
+      }
+
+      // 5. Delete from class_lesson_status managed by this teacher
+      try {
+        const { error: clsErr } = await clientInstance.from('class_lesson_status').delete().eq('teacher_id', userId);
+        if (clsErr) console.warn('Non-blocking: class_lesson_status deletion returned error code:', clsErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during class_lesson_status cleanup:', e);
+      }
+
+      // 6. Clear prepared_by association in school_lesson_status
+      try {
+        const { error: slsErr } = await clientInstance.from('school_lesson_status').update({ prepared_by: null }).eq('prepared_by', userId);
+        if (slsErr) console.warn('Non-blocking: school_lesson_status update returned error code:', slsErr);
+      } catch (e) {
+        console.warn('Non-blocking: Exception during school_lesson_status cleanup:', e);
+      }
     };
 
     // 3. Perform deletion with appropriate privileges
@@ -162,7 +186,10 @@ export async function POST(req: NextRequest) {
       .eq('id', userId);
       
     if (deleteProfileError) {
-      console.warn('Profile deletion failed (or already deleted):', deleteProfileError);
+      console.error('Profile deletion failed:', deleteProfileError);
+      return NextResponse.json({ 
+        error: `Failed to permanently delete user database record: ${deleteProfileError.message}. Please verify if this user has dependent records or if you have sufficient permissions.` 
+      }, { status: 500 });
     }
 
     // Finally, delete the auth user
