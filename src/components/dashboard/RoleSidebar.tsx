@@ -45,6 +45,7 @@ export function RoleSidebar({ role }: RoleSidebarProps) {
       case 'teacher':
         return [
           { href: `${base}/teacher`, label: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+          { href: `${base}/teacher/register`, label: 'Class Register', icon: <Users className="w-5 h-5" /> },
           { href: `${base}/teacher/preparation`, label: 'Preparation', icon: <BookOpen className="w-5 h-5" /> },
           { href: `${base}/teacher/assessments`, label: 'Assessments', icon: <ClipboardList className="w-5 h-5" /> },
         ];

@@ -14,6 +14,7 @@ import { getTeacherData } from '@/lib/dashboard/teacherData';
 import { CURRICULUM_LESSONS } from '@/curriculumData';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Users, BookOpen, PlayCircle, ClipboardCheck, 
   Target, TrendingUp, Clock, CheckCircle2, Sparkles, Megaphone, X, Plus, LineChart,
@@ -22,6 +23,8 @@ import {
 import { LoadingState } from '@/components/dashboard/LoadingState';
 
 export default function TeacherDashboard() {
+  const router = useRouter();
+  const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -338,57 +341,108 @@ export default function TeacherDashboard() {
             </DashboardCard>
           </div>
 
-          <DashboardCard title="Class Register">
-            {data.students && data.students.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
-                    <tr>
-                      <th className="px-4 py-3 font-medium">Student Name</th>
-                      <th className="px-4 py-3 font-medium">Grade</th>
-                      <th className="px-4 py-3 font-medium">Joined Date</th>
-                      <th className="px-4 py-3 font-medium text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {data.students.map((student: any) => (
-                      <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-slate-800">
-                          {student.first_name} {student.last_name}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          Grade {student.grade || 'N/A'}
-                        </td>
-                        <td className="px-4 py-3 text-slate-600">
-                          {new Date(student.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end space-x-3">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                              Active
-                            </span>
-                            <Link 
-                              href={`/dashboard/teacher/student/${student.id}`}
-                              className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                              title="View Analytics"
-                            >
-                              <LineChart className="w-5 h-5" />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <EmptyState 
-                title="No Students" 
-                description="There are no students registered in your classes yet."
-                icon={<Users className="h-10 w-10 text-slate-300" />}
-              />
-            )}
-          </DashboardCard>
+          {/* Class Register Card with Selector */}
+          {(() => {
+            const selectedClass = data.classes?.find((cls: any) => cls.id === selectedClassId);
+            const filteredStudents = data.students?.filter((student: any) => {
+              if (selectedClassId === 'all') return true;
+              return selectedClass && student.grade === selectedClass.grade;
+            }) || [];
+
+            return (
+              <DashboardCard 
+                title="Class Register"
+                className="cursor-pointer hover:shadow-md transition-all hover:border-indigo-200"
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest('a') || target.closest('button') || target.closest('select') || target.closest('input')) {
+                    return;
+                  }
+                  router.push('/dashboard/teacher/register');
+                }}
+                action={
+                  <div className="flex items-center gap-3">
+                    <select
+                      id="class-selector"
+                      value={selectedClassId}
+                      onChange={(e) => setSelectedClassId(e.target.value)}
+                      onClick={(e) => e.stopPropagation()} // Prevent card click
+                      className="text-xs font-bold text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                    >
+                      <option value="all">All Classes</option>
+                      {data.classes?.map((cls: any) => (
+                        <option key={cls.id} value={cls.id}>
+                          {cls.class_name || `Grade ${cls.grade} Class`}
+                        </option>
+                      ))}
+                    </select>
+                    <Link
+                      href="/dashboard/teacher/register"
+                      onClick={(e) => e.stopPropagation()} // Prevent card click
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-xl transition-all whitespace-nowrap"
+                    >
+                      View Register Page
+                    </Link>
+                  </div>
+                }
+              >
+                {filteredStudents.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Student Name</th>
+                          <th className="px-4 py-3 font-medium">Grade</th>
+                          <th className="px-4 py-3 font-medium">Joined Date</th>
+                          <th className="px-4 py-3 font-medium text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredStudents.map((student: any) => (
+                          <tr key={student.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="px-4 py-3 font-medium text-slate-800">
+                              {student.first_name} {student.last_name}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">
+                              Grade {student.grade || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-slate-600">
+                              {new Date(student.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end space-x-3">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                  Active
+                                </span>
+                                <Link 
+                                  href={`/dashboard/teacher/student/${student.id}`}
+                                  onClick={(e) => e.stopPropagation()} // Prevent card click
+                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                  title="View Analytics"
+                                >
+                                  <LineChart className="w-5 h-5" />
+                                </Link>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <EmptyState 
+                    title="No Students" 
+                    description={
+                      selectedClassId === 'all' 
+                        ? "There are no students registered in your classes yet." 
+                        : `There are no students registered in ${selectedClass?.class_name || 'this class'} yet.`
+                    }
+                    icon={<Users className="h-10 w-10 text-slate-300" />}
+                  />
+                )}
+              </DashboardCard>
+            );
+          })()}
         </div>
 
         <div className="space-y-8">
