@@ -15,6 +15,10 @@ export async function getSuperAdminData() {
 
   try {
     if (!supabase) return defaultData;
+    
+    // Ensure the session is fresh (auto-refreshes if expired)
+    await supabase.auth.getUser().catch(() => {});
+    
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       return defaultData;

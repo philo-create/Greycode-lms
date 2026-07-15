@@ -36,7 +36,9 @@ function NewUserForm() {
     password: '',
     role: initialRole,
     school_id: '',
-    grade: ''
+    grade: '',
+    subjects: 'Coding and Robotics',
+    class_name: ''
   });
 
   // Pre-fill a generated password on component mount
@@ -137,6 +139,45 @@ function NewUserForm() {
 
       if (!data.user) {
         throw new Error('User was not created successfully.');
+      }
+
+      // 2.5 Resiliently update the created profile with subjects, class, and progress JSONB
+      try {
+        const subjectsArray = formData.subjects ? formData.subjects.split(',').map((x: string) => x.trim()) : [];
+        const { error: colUpdateError } = await tempSupabase
+          .from('profiles')
+          .update({
+            subjects: formData.subjects || null,
+            class_name: formData.class_name || null,
+            progress: {
+              completedWeeks: {},
+              starsEarned: {},
+              totalStars: 0,
+              marksPossible: {},
+              subjects: subjectsArray,
+              class_name: formData.class_name || ''
+            }
+          })
+          .eq('id', data.user.id);
+
+        if (colUpdateError) {
+          console.warn("Direct column update failed (probably column doesn't exist yet), falling back to progress JSON update...", colUpdateError);
+          await tempSupabase
+            .from('profiles')
+            .update({
+              progress: {
+                completedWeeks: {},
+                starsEarned: {},
+                totalStars: 0,
+                marksPossible: {},
+                subjects: subjectsArray,
+                class_name: formData.class_name || ''
+              }
+            })
+            .eq('id', data.user.id);
+        }
+      } catch (profileUpdateErr) {
+        console.warn("Could not write extra profile fields to DB:", profileUpdateErr);
       }
 
       // Send branded Zoho Welcome/Invitation Email in the background
@@ -319,28 +360,99 @@ function NewUserForm() {
           )}
 
           {showGradeSelect && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                {formData.role === 'teacher' ? 'Assigned Grades (Select multiple)' : 'Grade'}
-              </label>
-              {formData.role === 'teacher' ? (
-                <div className="grid grid-cols-4 gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3" id="select-grade">
-                  {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
-                    const selectedGrades = formData.grade ? formData.grade.split(',') : [];
-                    const isSelected = selectedGrades.includes(g);
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {formData.role === 'teacher' ? 'Assigned Grades (Select multiple)' : 'Grade'}
+                </label>
+                {formData.role === 'teacher' ? (
+                  <div className="grid grid-cols-4 gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3" id="select-grade">
+                    {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
+                      const selectedGrades = formData.grade ? formData.grade.split(',') : [];
+                      const isSelected = selectedGrades.includes(g);
+                      return (
+                        <button
+                          key={g}
+                          type="button"
+                          onClick={() => {
+                            let newGrades;
+                            if (isSelected) {
+                              newGrades = selectedGrades.filter((x: string) => x !== g);
+                            } else {
+                              newGrades = [...selectedGrades, g];
+                            }
+                            const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
+                            setFormData({ ...formData, grade: sortedGrades.join(',') });
+                          }}
+                          className={`py-2 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          <span>Grade {g}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <select
+                    required
+                    value={formData.grade}
+                    onChange={e => setFormData({...formData, grade: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
+                    id="select-grade"
+                  >
+                    <option value="">-- Select Grade --</option>
+                    <option value="R">Grade R</option>
+                    <option value="1">Grade 1</option>
+                    <option value="2">Grade 2</option>
+                    <option value="3">Grade 3</option>
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                  </select>
+                )}
+              </div>
+
+              {formData.role === 'learner' && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Class Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.class_name}
+                    onChange={e => setFormData({...formData, class_name: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    placeholder="e.g. Grade 3A or Section B"
+                    id="input-class-name"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Assigned Subjects (Select multiple)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-200 rounded-xl p-3" id="select-subjects">
+                  {['Coding and Robotics', 'Mathematics', 'Life Skills', 'Home Language', 'First Additional Language'].map(s => {
+                    const selectedSubjects = formData.subjects ? formData.subjects.split(',') : [];
+                    const isSelected = selectedSubjects.includes(s);
                     return (
                       <button
-                        key={g}
+                        key={s}
                         type="button"
                         onClick={() => {
-                          let newGrades;
+                          let newSubjs;
                           if (isSelected) {
-                            newGrades = selectedGrades.filter((x: string) => x !== g);
+                            newSubjs = selectedSubjects.filter((x: string) => x !== s);
                           } else {
-                            newGrades = [...selectedGrades, g];
+                            newSubjs = [...selectedSubjects, s];
                           }
-                          const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
-                          setFormData({ ...formData, grade: sortedGrades.join(',') });
+                          setFormData({ ...formData, subjects: newSubjs.join(',') });
                         }}
                         className={`py-2 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
                           isSelected
@@ -348,31 +460,13 @@ function NewUserForm() {
                             : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                         }`}
                       >
-                        <span>Grade {g}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                        <span className="truncate">{s}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white shrink-0" />}
                       </button>
                     );
                   })}
                 </div>
-              ) : (
-                <select
-                  required
-                  value={formData.grade}
-                  onChange={e => setFormData({...formData, grade: e.target.value})}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all cursor-pointer"
-                  id="select-grade"
-                >
-                  <option value="">-- Select Grade --</option>
-                  <option value="R">Grade R</option>
-                  <option value="1">Grade 1</option>
-                  <option value="2">Grade 2</option>
-                  <option value="3">Grade 3</option>
-                  <option value="4">Grade 4</option>
-                  <option value="5">Grade 5</option>
-                  <option value="6">Grade 6</option>
-                  <option value="7">Grade 7</option>
-                </select>
-              )}
+              </div>
             </div>
           )}
 

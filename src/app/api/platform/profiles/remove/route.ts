@@ -168,8 +168,18 @@ export async function POST(req: NextRequest) {
     // Finally, delete the auth user
     const { error: deleteAuthError } = await adminClient.auth.admin.deleteUser(userId);
     if (deleteAuthError) {
-      console.error('Failed to delete auth user:', deleteAuthError);
-      return NextResponse.json({ error: `Failed to delete auth user: ${deleteAuthError.message}` }, { status: 500 });
+      const errMsg = deleteAuthError.message || '';
+      const isUserNotFound = 
+        errMsg.toLowerCase().includes('user not found') || 
+        errMsg.toLowerCase().includes('not found') || 
+        deleteAuthError.status === 404;
+
+      if (!isUserNotFound) {
+        console.error('Failed to delete auth user:', deleteAuthError);
+        return NextResponse.json({ error: `Failed to delete auth user: ${deleteAuthError.message}` }, { status: 500 });
+      } else {
+        console.warn('Auth user not found during deletion (already deleted from Auth). Continuing as success.');
+      }
     }
 
     return NextResponse.json({ success: true });

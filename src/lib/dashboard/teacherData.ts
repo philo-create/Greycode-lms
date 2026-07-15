@@ -1,6 +1,39 @@
 import { supabase } from '../supabase';
 import { scaleOldProgressScore } from '../../curriculumData';
 
+export function getProfileSubjects(profile: any): string[] {
+  if (!profile) return [];
+  // 1. Try to read from direct column `subjects`
+  if (profile.subjects && typeof profile.subjects === 'string') {
+    return profile.subjects.split(',').map((s: string) => s.trim()).filter(Boolean);
+  }
+  // 2. Try to read from `progress.subjects`
+  const progressObj = typeof profile.progress === 'string' ? JSON.parse(profile.progress) : profile.progress;
+  if (progressObj && progressObj.subjects && Array.isArray(progressObj.subjects)) {
+    return progressObj.subjects;
+  }
+  if (progressObj && typeof progressObj.subjects === 'string') {
+    return progressObj.subjects.split(',').map((s: string) => s.trim()).filter(Boolean);
+  }
+  // 3. Fallback: Default to "Coding and Robotics"
+  return ['Coding and Robotics'];
+}
+
+export function getProfileClassName(profile: any): string {
+  if (!profile) return '';
+  // 1. Try to read from direct column `class_name`
+  if (profile.class_name && typeof profile.class_name === 'string') {
+    return profile.class_name.trim();
+  }
+  // 2. Try to read from `progress.class_name`
+  const progressObj = typeof profile.progress === 'string' ? JSON.parse(profile.progress) : profile.progress;
+  if (progressObj && progressObj.class_name && typeof progressObj.class_name === 'string') {
+    return progressObj.class_name.trim();
+  }
+  // 3. Fallback: Grade-based default
+  return profile.grade ? `Grade ${profile.grade} Class` : '';
+}
+
 export async function getTeacherData(teacherId: string) {
   if (!teacherId) throw new Error('No teacher ID provided');
 
@@ -18,23 +51,65 @@ export async function getTeacherData(teacherId: string) {
     };
   }
 
-  // Get the teacher's profile to retrieve school_id and grade
+  // Get the teacher's profile to retrieve school_id, grade, and subjects
   const { data: teacherProfile } = await supabase
     .from('profiles')
-    .select('school_id, grade')
+    .select('*')
     .eq('id', teacherId)
     .single();
+
+  const teacherGrades = teacherProfile?.grade ? teacherProfile.grade.split(',').map((g: string) => g.trim()) : [];
+  const teacherSubjects = getProfileSubjects(teacherProfile);
 
   // Get classes assigned to this teacher
   let { data: classes } = await supabase
     .from('classes')
     .select('*')
     .eq('teacher_id', teacherId);
+
+  // Find all student profiles who are registered as learners in the same school and grade(s)
+  let studentProfiles: any[] = [];
+  if (teacherProfile?.school_id) {
+    let query = supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'learner')
+      .eq('school_id', teacherProfile.school_id);
+      
+    if (teacherGrades.length > 0) {
+      query = query.in('grade', teacherGrades);
+    }
     
-  // If no classes are set in the classes table, dynamically generate class objects
-  // based on the teacher's grade(s) so their scheduled lessons and filters work correctly.
+    const { data: profiles } = await query;
+    const candidates = profiles || [];
+
+    // Filter student profiles to only those who do at least one of the subjects offered by the teacher
+    studentProfiles = candidates.filter(student => {
+      const studentSubjs = getProfileSubjects(student);
+      return studentSubjs.some((subj: string) => teacherSubjects.includes(subj));
+    });
+  }
+
+  // Build classes list dynamically from actual student registrations if table is empty
+  if (studentProfiles.length > 0 && (!classes || classes.length === 0)) {
+    const uniqueClassNames = Array.from(new Set(studentProfiles.map(s => getProfileClassName(s)).filter(Boolean)));
+    if (uniqueClassNames.length > 0) {
+      classes = uniqueClassNames.map((cName: string, idx: number) => {
+        const matchStudent = studentProfiles.find(s => getProfileClassName(s) === cName);
+        return {
+          id: `class-${idx}`,
+          class_name: cName,
+          grade: matchStudent?.grade || teacherGrades[0] || '1',
+          teacher_id: teacherId,
+          school_id: teacherProfile.school_id,
+          created_at: new Date().toISOString()
+        };
+      });
+    }
+  }
+
+  // If still no classes, fallback to grade classes
   if (teacherProfile && (!classes || classes.length === 0)) {
-    const teacherGrades = teacherProfile.grade ? teacherProfile.grade.split(',').map((g: string) => g.trim()) : [];
     classes = teacherGrades.map((g: string) => ({
       id: `class-${g}`,
       class_name: `Grade ${g} Class`,
@@ -43,24 +118,6 @@ export async function getTeacherData(teacherId: string) {
       school_id: teacherProfile.school_id,
       created_at: new Date().toISOString()
     }));
-  }
-
-  // Find all student profiles who are registered as learners in the same school and grade(s)
-  let studentProfiles: any[] = [];
-  if (teacherProfile?.school_id) {
-    let query = supabase
-      .from('profiles')
-      .select('id, first_name, last_name, progress, created_at, grade')
-      .eq('role', 'learner')
-      .eq('school_id', teacherProfile.school_id);
-      
-    const teacherGrades = teacherProfile.grade ? teacherProfile.grade.split(',').map((g: string) => g.trim()) : [];
-    if (teacherGrades.length > 0) {
-      query = query.in('grade', teacherGrades);
-    }
-    
-    const { data: profiles } = await query;
-    studentProfiles = profiles || [];
   }
 
   const studentIds = studentProfiles.map(p => p.id);

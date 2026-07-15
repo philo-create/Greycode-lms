@@ -183,6 +183,7 @@ export default function SuperAdminDashboard() {
 
       // Try loading from our admin users endpoint which has auto-sync of email confirmation status
       try {
+        await supabase.auth.getUser().catch(() => {});
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {

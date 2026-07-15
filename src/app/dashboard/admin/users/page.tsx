@@ -33,6 +33,151 @@ function AdminUsersPageContent() {
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState('');
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState('');
+
+  const getProfileSubjects = (user: any): string[] => {
+    if (!user) return [];
+    if (user.subjects && typeof user.subjects === 'string') {
+      return user.subjects.split(',').map((s: string) => s.trim()).filter(Boolean);
+    }
+    const progressObj = typeof user.progress === 'string' ? JSON.parse(user.progress) : user.progress;
+    if (progressObj && progressObj.subjects && Array.isArray(progressObj.subjects)) {
+      return progressObj.subjects;
+    }
+    if (progressObj && typeof progressObj.subjects === 'string') {
+      return progressObj.subjects.split(',').map((s: string) => s.trim()).filter(Boolean);
+    }
+    return ['Coding and Robotics'];
+  };
+
+  const getProfileClassName = (user: any): string => {
+    if (!user) return '';
+    if (user.class_name && typeof user.class_name === 'string') {
+      return user.class_name.trim();
+    }
+    const progressObj = typeof user.progress === 'string' ? JSON.parse(user.progress) : user.progress;
+    if (progressObj && progressObj.class_name && typeof progressObj.class_name === 'string') {
+      return progressObj.class_name.trim();
+    }
+    return '';
+  };
+
+  const handleSubjectsChange = async (userId: string, subjects: string[]) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const subjectsStr = subjects.join(',');
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ subjects: subjectsStr })
+        .eq('id', userId);
+        
+      if (error) {
+        console.warn('Direct column update failed, retrying via progress JSON...', error);
+        
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('progress')
+          .eq('id', userId)
+          .single();
+          
+        let currentProgress = userProfile?.progress || {};
+        if (typeof currentProgress === 'string') {
+          try { currentProgress = JSON.parse(currentProgress); } catch(e) { currentProgress = {}; }
+        }
+        
+        const updatedProgress = {
+          ...currentProgress,
+          subjects: subjects
+        };
+        
+        await supabase
+          .from('profiles')
+          .update({ progress: updatedProgress })
+          .eq('id', userId);
+      }
+      
+      setUsers(prev => prev.map(user => {
+        if (user.id === userId) {
+          let updatedProgress = user.progress || {};
+          if (typeof updatedProgress === 'string') {
+            try { updatedProgress = JSON.parse(updatedProgress); } catch(e) { updatedProgress = {}; }
+          }
+          return {
+            ...user,
+            subjects: subjectsStr,
+            progress: {
+              ...updatedProgress,
+              subjects: subjects
+            }
+          };
+        }
+        return user;
+      }));
+    } catch (err) {
+      console.error('Failed to update subjects:', err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleClassNameChange = async (userId: string, className: string) => {
+    if (!supabase) return;
+    setUpdatingId(userId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ class_name: className })
+        .eq('id', userId);
+        
+      if (error) {
+        console.warn('Direct column update failed, retrying via progress JSON...', error);
+        
+        const { data: userProfile } = await supabase
+          .from('profiles')
+          .select('progress')
+          .eq('id', userId)
+          .single();
+          
+        let currentProgress = userProfile?.progress || {};
+        if (typeof currentProgress === 'string') {
+          try { currentProgress = JSON.parse(currentProgress); } catch(e) { currentProgress = {}; }
+        }
+        
+        const updatedProgress = {
+          ...currentProgress,
+          class_name: className
+        };
+        
+        await supabase
+          .from('profiles')
+          .update({ progress: updatedProgress })
+          .eq('id', userId);
+      }
+      
+      setUsers(prev => prev.map(user => {
+        if (user.id === userId) {
+          let updatedProgress = user.progress || {};
+          if (typeof updatedProgress === 'string') {
+            try { updatedProgress = JSON.parse(updatedProgress); } catch(e) { updatedProgress = {}; }
+          }
+          return {
+            ...user,
+            class_name: className,
+            progress: {
+              ...updatedProgress,
+              class_name: className
+            }
+          };
+        }
+        return user;
+      }));
+    } catch (err) {
+      console.error('Failed to update class name:', err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
   
   useEffect(() => {
     const loadData = async () => {
@@ -84,6 +229,7 @@ function AdminUsersPageContent() {
 
       // Try loading from our admin users endpoint which has auto-sync of email confirmation status
       try {
+        await supabase.auth.getUser().catch(() => {});
         const { data: { session } } = await supabase.auth.getSession();
         const token = session?.access_token;
         if (token) {
@@ -178,6 +324,7 @@ function AdminUsersPageContent() {
     }
     setUpdatingId(userId);
     try {
+      await supabase.auth.getUser().catch(() => {});
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       
@@ -213,6 +360,7 @@ function AdminUsersPageContent() {
     if (!supabase) return;
     setUpdatingId(userId);
     try {
+      await supabase.auth.getUser().catch(() => {});
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -264,6 +412,7 @@ function AdminUsersPageContent() {
     setPasswordErrorMsg('');
 
     try {
+      await supabase.auth.getUser().catch(() => {});
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) {
@@ -473,56 +622,136 @@ function AdminUsersPageContent() {
                         ))}
                       </select>
                     </td>
-                    <td className="py-3 px-4 text-sm text-slate-600 min-w-[200px]">
+                    <td className="py-3 px-4 text-sm text-slate-600 min-w-[250px]">
                       {user.role === 'teacher' ? (
-                        <div className="flex flex-wrap gap-1 w-full max-w-[250px]" id={`teacher-grades-${user.id}`}>
-                          {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
-                            const teacherGrades = user.grade ? user.grade.split(',') : [];
-                            const isActive = teacherGrades.includes(g);
-                            return (
-                              <button
-                                key={g}
+                        <div className="space-y-3">
+                          <div>
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Grades</span>
+                            <div className="flex flex-wrap gap-1" id={`teacher-grades-${user.id}`}>
+                              {['R', '1', '2', '3', '4', '5', '6', '7'].map(g => {
+                                const teacherGrades = user.grade ? user.grade.split(',') : [];
+                                const isActive = teacherGrades.includes(g);
+                                return (
+                                  <button
+                                    key={g}
+                                    disabled={updatingId === user.id}
+                                    onClick={async () => {
+                                      let newGrades;
+                                      if (isActive) {
+                                        newGrades = teacherGrades.filter((x: string) => x !== g);
+                                      } else {
+                                        newGrades = [...teacherGrades, g];
+                                      }
+                                      const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
+                                      await handleGradeChange(user.id, sortedGrades.join(','));
+                                    }}
+                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
+                                      isActive 
+                                        ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500 scale-105' 
+                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
+                                    }`}
+                                    title={`Toggle Grade ${g}`}
+                                  >
+                                    {g}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subjects Offered</span>
+                            <div className="flex flex-wrap gap-1">
+                              {['Coding and Robotics', 'Mathematics', 'Life Skills', 'Home Language', 'First Additional Language'].map(s => {
+                                const userSubjs = getProfileSubjects(user);
+                                const isSelected = userSubjs.includes(s);
+                                return (
+                                  <button
+                                    key={s}
+                                    disabled={updatingId === user.id}
+                                    onClick={() => {
+                                      const newSubjs = isSelected
+                                        ? userSubjs.filter(x => x !== s)
+                                        : [...userSubjs, s];
+                                      handleSubjectsChange(user.id, newSubjs);
+                                    }}
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                                      isSelected
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ) : user.role === 'learner' ? (
+                        <div className="space-y-3">
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Grade</span>
+                              <select
+                                value={user.grade || ''}
+                                onChange={(e) => handleGradeChange(user.id, e.target.value)}
                                 disabled={updatingId === user.id}
-                                onClick={async () => {
-                                  let newGrades;
-                                  if (isActive) {
-                                    newGrades = teacherGrades.filter((x: string) => x !== g);
-                                  } else {
-                                    newGrades = [...teacherGrades, g];
-                                  }
-                                  // Sort them naturally so they display in order
-                                  const sortedGrades = ['R', '1', '2', '3', '4', '5', '6', '7'].filter(x => newGrades.includes(x));
-                                  await handleGradeChange(user.id, sortedGrades.join(','));
-                                }}
-                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black transition-all ${
-                                  isActive 
-                                    ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-500 scale-105' 
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700'
-                                }`}
-                                title={`Toggle Grade ${g}`}
+                                className="w-full px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none cursor-pointer transition-colors"
                               >
-                                {g}
-                              </button>
-                            );
-                          })}
+                                <option value="">No Grade</option>
+                                <option value="R">Grade R</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Class</span>
+                              <input
+                                type="text"
+                                placeholder="e.g. 3A"
+                                value={getProfileClassName(user)}
+                                onChange={(e) => handleClassNameChange(user.id, e.target.value)}
+                                disabled={updatingId === user.id}
+                                className="w-full px-2 py-0.5 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:border-indigo-500 transition-all"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subjects Enrolled</span>
+                            <div className="flex flex-wrap gap-1">
+                              {['Coding and Robotics', 'Mathematics', 'Life Skills', 'Home Language', 'First Additional Language'].map(s => {
+                                const userSubjs = getProfileSubjects(user);
+                                const isSelected = userSubjs.includes(s);
+                                return (
+                                  <button
+                                    key={s}
+                                    disabled={updatingId === user.id}
+                                    onClick={() => {
+                                      const newSubjs = isSelected
+                                        ? userSubjs.filter(x => x !== s)
+                                        : [...userSubjs, s];
+                                      handleSubjectsChange(user.id, newSubjs);
+                                    }}
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all ${
+                                      isSelected
+                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                        : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    {s}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <select
-                          value={user.grade || ''}
-                          onChange={(e) => handleGradeChange(user.id, e.target.value)}
-                          disabled={updatingId === user.id}
-                          className="px-2 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer transition-colors"
-                        >
-                          <option value="">No Grade</option>
-                          <option value="R">Grade R</option>
-                          <option value="1">Grade 1</option>
-                          <option value="2">Grade 2</option>
-                          <option value="3">Grade 3</option>
-                          <option value="4">Grade 4</option>
-                          <option value="5">Grade 5</option>
-                          <option value="6">Grade 6</option>
-                          <option value="7">Grade 7</option>
-                        </select>
+                        <div className="text-slate-400">-</div>
                       )}
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-600">

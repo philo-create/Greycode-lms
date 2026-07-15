@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
 
     const { data: { user }, error: userError } = await userClient.auth.getUser(token);
     if (userError || !user) {
-      return NextResponse.json({ error: 'Unauthorized: Invalid session token' }, { status: 401 });
+      console.error('getUser error:', userError);
+      return NextResponse.json({ error: `Unauthorized: Invalid session token. Details: ${userError?.message || 'No user found'}` }, { status: 401 });
     }
 
     const { data: callerProfile, error: profileError } = await userClient
