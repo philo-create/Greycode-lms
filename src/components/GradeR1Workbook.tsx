@@ -308,6 +308,7 @@ interface GradeR1WorkbookProps {
   activeStudentName?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
+  isNextLessonLocked?: boolean;
   isSuperAdmin?: boolean;
   superAdminBypass?: boolean;
   isTeacherPreparation?: boolean;
@@ -5067,6 +5068,7 @@ export default function GradeR1Workbook({
   activeStudentName = 'Learner',
   onComplete, 
   onNextLesson,
+  isNextLessonLocked = false,
   isSuperAdmin = false,
   superAdminBypass = false,
   isTeacherPreparation = false,
@@ -6135,7 +6137,6 @@ export default function GradeR1Workbook({
                       setReflectionFace('happy');
                       if (quizSubmitted) {
                         speakText("Yippee! You understood perfectly! Today you are an absolute technology hero.");
-                        onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
                       } else {
                         setShowHomeworkWarning(true);
                         if (lesson.id === 'R-T1-W8') {
@@ -7117,9 +7118,9 @@ export default function GradeR1Workbook({
                   )}
                 </div>
               ) : (
-                <div className="bg-slate-50 border border-slate-250 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-                  <div className="space-y-4 flex-1">
-                    <div className="flex justify-center md:justify-start flex-wrap gap-1">
+                <div className="bg-slate-50 border border-slate-250 rounded-2xl p-8 flex flex-col items-center justify-center gap-6 text-center">
+                  <div className="space-y-4 flex flex-col items-center justify-center w-full">
+                    <div className="flex justify-center flex-wrap gap-1">
                       {Array.from({ length: quizTotalScore ?? 3 }).map((_, i) => i + 1).map((starIdx) => {
                         const isEarned = (quizFinalScore ?? 0) >= starIdx;
                         return (
@@ -7128,7 +7129,7 @@ export default function GradeR1Workbook({
                             className={`transition-all ${
                               quizTotalScore && quizTotalScore > 5 
                                 ? 'w-5 h-5 sm:w-6 sm:h-6' 
-                                : 'w-7 h-7'
+                                : 'w-7 h-7 sm:w-8 sm:h-8'
                             } ${
                               isEarned 
                                 ? 'text-amber-500 fill-amber-500 animate-bounce' 
@@ -7139,18 +7140,18 @@ export default function GradeR1Workbook({
                       })}
                     </div>
 
-                    <h4 className="font-extrabold text-sm text-slate-800 uppercase tracking-wide">
+                    <h4 className="font-extrabold text-lg sm:text-xl text-slate-800 uppercase tracking-wide">
                       Secured Score: {quizFinalScore} / {quizTotalScore} 
                       {quizTotalScore ? ` (${Math.round(((quizFinalScore ?? 0) / quizTotalScore) * 100)}%)` : ''} - ⭐
                     </h4>
 
-                    <p className="text-xs text-slate-500 max-w-md mx-auto md:mx-0 leading-relaxed">
+                    <p className="text-sm sm:text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
                       Well done, champion! This homework is officially locked and submitted. Your progress can no longer be redone to keep your scores secure on this workbook session.
                     </p>
                   </div>
 
                   {/* Celebration Mascot Badge */}
-                  <div className="flex-shrink-0 relative w-24 h-24 md:w-28 md:h-28 rounded-full bg-white border-4 border-amber-400 shadow-xl flex items-center justify-center overflow-hidden select-none z-10 p-2">
+                  <div className="flex-shrink-0 relative w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white border-4 border-amber-400 shadow-xl flex items-center justify-center overflow-hidden select-none z-10 p-2 my-2">
                     {lesson.grade === 'R' ? (
                       <img 
                         src={getZolaImage('clapping')} 
@@ -7163,7 +7164,7 @@ export default function GradeR1Workbook({
                     )}
                   </div>
 
-                  <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-3 animate-fade-in">
+                  <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-4 animate-fade-in w-full">
                     <button
                       type="button"
                       onClick={() => {
@@ -7228,7 +7229,6 @@ export default function GradeR1Workbook({
                               disabled={isPending}
                               onClick={async () => {
                                 playChime();
-                                onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
                                 if (schoolId) {
                                   await updateLessonStatus(schoolId, lesson.grade, lesson.id, 'pending_approval', teacherId);
                                   if (setLessonStatuses) {
@@ -7258,15 +7258,22 @@ export default function GradeR1Workbook({
                       ) : (
                         <button
                           type="button"
+                          disabled={isNextLessonLocked}
                           onClick={() => {
-                            playChime();
-                            onComplete(quizFinalScore ?? 3, quizTotalScore ?? 3);
-                            onNextLesson();
+                            if (!isNextLessonLocked) {
+                              playChime();
+                              onNextLesson();
+                            }
                           }}
-                          className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
+                          className={`px-5 py-2.5 font-extrabold rounded-xl text-xs transition shadow-md inline-flex items-center gap-1.5 ${
+                            isNextLessonLocked
+                              ? 'bg-slate-400 text-white cursor-not-allowed opacity-90'
+                              : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 cursor-pointer animate-bounce'
+                          }`}
+                          title={isNextLessonLocked ? "Next lesson is locked" : "Next Lesson"}
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                          <span>Continue to Next Lesson 🚀</span>
+                          <Sparkles className={`w-3.5 h-3.5 ${isNextLessonLocked ? 'text-slate-200' : 'text-amber-300'}`} />
+                          <span>{isNextLessonLocked ? 'Next Lesson Locked 🔒' : 'Continue to Next Lesson 🚀'}</span>
                         </button>
                       )
                     )}

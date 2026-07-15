@@ -93,7 +93,7 @@ export default function TeacherLessonViewPage() {
   const updateProgress = (weekKey: string, starsEarned: number, marksPossible?: number) => {
     setProgress(prev => {
       const newCompleted = { ...prev.completedWeeks, [weekKey]: true };
-      const newStars = { ...prev.starsEarned, [weekKey]: Math.max(prev.starsEarned[weekKey] || 0, starsEarned) };
+      const newStars = { ...prev.starsEarned, [weekKey]: starsEarned };
       const newPossible = { ...prev.marksPossible, [weekKey]: marksPossible || 3 };
       const newTotal = Object.values(newStars).reduce((sum, current) => sum + current, 0);
 

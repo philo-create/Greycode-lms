@@ -14,7 +14,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { GradeType, UserProgress, StudentProfile } from '../types';
-import { CURRICULUM_LESSONS } from '../curriculumData';
+import { CURRICULUM_LESSONS, getMaxStarsForLesson, scaleOldProgressScore } from '../curriculumData';
 
 interface ProgressDashboardProps {
   activeStudent: StudentProfile;
@@ -47,13 +47,17 @@ export default function ProgressDashboard({
     ? Math.round((completedWeeksForGrade / totalWeeksForGrade) * 100) 
     : 0;
 
-  // Let's count stars for this grade
-  const starsEarnedForGrade = lessonsForGrade.reduce((acc, lvl) => {
+  // Let's count stars and possible marks for this grade dynamically using our helpers
+  let starsEarnedForGrade = 0;
+  let maxStarsForGrade = 0;
+  lessonsForGrade.forEach(lvl => {
     const key = `${selectedTabGrade}-${lvl.term}-${lvl.week}`;
-    return acc + (progress.starsEarned[key] || 0);
-  }, 0);
-
-  const maxStarsForGrade = totalWeeksForGrade * 3;
+    const rawScore = progress.starsEarned[key] || 0;
+    const rawPossible = progress.marksPossible?.[key] || 0;
+    const { stars, possible } = scaleOldProgressScore(key, rawScore, rawPossible, progress);
+    starsEarnedForGrade += stars;
+    maxStarsForGrade += possible;
+  });
 
   return (
     <div className="space-y-6 w-full font-sans" id="progress-dashboard-container">
@@ -208,7 +212,9 @@ export default function ProgressDashboard({
                 {termLessons.map((lesson) => {
                   const weekKey = `${selectedTabGrade}-${lesson.term}-${lesson.week}`;
                   const isCompleted = progress.completedWeeks[weekKey];
-                  const score = progress.starsEarned[weekKey] || 0;
+                  const rawScore = progress.starsEarned[weekKey] || 0;
+                  const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                  const { stars: score, possible: maxStarsForWeek } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
 
                   return (
                     <div 
@@ -245,21 +251,13 @@ export default function ProgressDashboard({
 
                         {/* Exact Star Rating Display */}
                         <div className="flex flex-col items-center justify-center gap-1.5 bg-slate-50 border border-slate-200/60 p-2.5 rounded-xl shrink-0 min-w-[80px]">
-                          <div className="flex items-center gap-0.5" title={`${score} / ${progress.marksPossible?.[weekKey] || 3}`}>
-                            {[1, 2, 3].map((starIdx) => {
-                              // If they have marksPossible, map it to 3 stars. Otherwise just use absolute score.
-                              const marks = progress.marksPossible?.[weekKey] || 3;
-                              const percentage = marks > 0 ? (score / marks) : 0;
-                              let earnedStars = 0;
-                              if (percentage >= 0.99) earnedStars = 3;
-                              else if (percentage >= 0.5) earnedStars = 2;
-                              else if (percentage > 0) earnedStars = 1;
-
-                              const isEarned = isCompleted && starIdx <= (score <= 3 && marks <= 3 ? score : earnedStars);
-
+                          <div className="flex items-center gap-0.5" title={`${score} / ${maxStarsForWeek}`}>
+                            {Array.from({ length: Math.min(maxStarsForWeek, 10) }).map((_, idx) => {
+                              const starNum = idx + 1;
+                              const isEarned = isCompleted && starNum <= score;
                               return (
                                 <Star 
-                                  key={starIdx} 
+                                  key={idx} 
                                   className={`w-3.5 h-3.5 ${
                                     isEarned 
                                       ? 'text-amber-500 fill-amber-500' 
@@ -271,9 +269,7 @@ export default function ProgressDashboard({
                           </div>
                           {isCompleted ? (
                             <span className="text-[9px] font-extrabold text-amber-600 font-mono leading-none tracking-widest">
-                              {score <= 3 && (progress.marksPossible?.[weekKey] || 3) <= 3 
-                                ? `${score}/3 STARS` 
-                                : `${Math.round((score / (progress.marksPossible?.[weekKey] || 3)) * 100)}%`}
+                              {`${score}/${maxStarsForWeek} STARS`}
                             </span>
                           ) : (
                             <span className="text-[9px] font-bold text-slate-400 font-mono leading-none uppercase">

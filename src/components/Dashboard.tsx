@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Star, Sparkles, Trophy, Play, CheckCircle, ChevronDown, Award, Check, Volume2, VolumeX, Maximize2, Minimize2, ChevronRight, Clock, Lock } from 'lucide-react';
-import { CURRICULUM_LESSONS, GRADES } from '../curriculumData';
+import { CURRICULUM_LESSONS, GRADES, getMaxStarsForLesson, scaleOldProgressScore } from '../curriculumData';
 import { GradeType, Lesson, UserProgress, LessonStatus } from '../types';
 import { updateLessonStatus } from '../lib/lesson-status-service';
 import PatternActivity from './PatternActivity';
@@ -164,6 +164,7 @@ interface JuniorLessonViewProps {
   resetCounter: number;
   setResetCounter: React.Dispatch<React.SetStateAction<number>>;
   onNextLesson?: () => void;
+  isNextLessonLocked?: boolean;
   isSuperAdmin?: boolean;
   superAdminBypass?: boolean;
 }
@@ -178,6 +179,7 @@ function JuniorLessonView({
   resetCounter,
   setResetCounter,
   onNextLesson,
+  isNextLessonLocked,
   isSuperAdmin,
   superAdminBypass
 }: JuniorLessonViewProps) {
@@ -413,6 +415,7 @@ function JuniorLessonView({
                           updateProgress(weekKey, stars, possible);
                         }} 
                         onNextLesson={onNextLesson}
+                        isNextLessonLocked={isNextLessonLocked}
                         isSuperAdmin={isSuperAdmin}
                         superAdminBypass={superAdminBypass}
                       />
@@ -425,6 +428,7 @@ function JuniorLessonView({
                           updateProgress(weekKey, stars, possible);
                         }}
                         onNextLesson={onNextLesson}
+                        isNextLessonLocked={isNextLessonLocked}
                         isSuperAdmin={isSuperAdmin}
                         superAdminBypass={superAdminBypass}
                       />
@@ -639,7 +643,10 @@ function JuniorLessonView({
                 type="button"
                 disabled={!isChecklistCompleted}
                 onClick={() => {
-                  updateProgress(weekKey, 3, 3);
+                  const rawScore = progress.starsEarned[weekKey] || 0;
+                  const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                  const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                  updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
                 }}
                 className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer select-none active:scale-95 ${
                   isCompleted
@@ -868,7 +875,10 @@ export default function Dashboard({
     const activeLvl = CURRICULUM_LESSONS.find(lvl => lvl.id === lessonId);
     if (activeLvl) {
       const weekKey = `${activeLvl.grade}-${activeLvl.term}-${activeLvl.week}`;
-      updateProgress(weekKey, 3, 3);
+      const rawScore = progress.starsEarned[weekKey] || 0;
+      const rawPossible = progress.marksPossible?.[weekKey] || 0;
+      const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+      updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
     }
   };
 
@@ -1146,9 +1156,12 @@ export default function Dashboard({
                           <div className="flex items-center gap-1.5 animate-fade-in shrink-0">
                             <span className="flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full uppercase tracking-wider">
                               <Star className="w-2.5 h-2.5 fill-amber-500 text-amber-500" />
-                              {(progress.starsEarned[weekKey] || 0) <= 3 && (progress.marksPossible?.[weekKey] || 3) <= 3 
-                                ? `${progress.starsEarned[weekKey] || 0}/3 STARS` 
-                                : `${Math.round(((progress.starsEarned[weekKey] || 0) / (progress.marksPossible?.[weekKey] || 3)) * 100)}%`}
+                              {(() => {
+                                const rawScore = progress.starsEarned[weekKey] || 0;
+                                const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                                const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                                return `${stars}/${possible} STARS`;
+                              })()}
                             </span>
                             <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full uppercase tracking-wider">
                               <CheckCircle className="w-2.5 h-2.5 text-emerald-500" />
@@ -1257,6 +1270,10 @@ export default function Dashboard({
                                     }
                                   }
 
+                                  const currIdxGlobal = gradeLessons.findIndex(lvl => lvl.id === lesson.id);
+                                  const localNextLesson = currIdxGlobal !== -1 && currIdxGlobal < gradeLessons.length - 1 ? gradeLessons[currIdxGlobal + 1] : null;
+                                  const localIsNextLessonLocked = localNextLesson ? checkIsLessonLocked(localNextLesson.id) : false;
+
                                   return lesson.id === '1-T1-W2' ? (
                                     <Grade1Week2Workbook 
                                       activeStudentId={activeStudentId}
@@ -1267,6 +1284,7 @@ export default function Dashboard({
                                         handleUnlockNextLesson('1-T1-W2');
                                       }} 
                                       onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                      isNextLessonLocked={localIsNextLessonLocked}
                                       isSuperAdmin={isSuperAdmin}
                                       superAdminBypass={superAdminBypass}
                                     />
@@ -1281,6 +1299,7 @@ export default function Dashboard({
                                         handleUnlockNextLesson(lesson.id);
                                       }}
                                       onNextLesson={() => handleGoToNextLesson(lesson.id)}
+                                      isNextLessonLocked={localIsNextLessonLocked}
                                       isSuperAdmin={isSuperAdmin}
                                       superAdminBypass={superAdminBypass}
                                     />
@@ -1555,6 +1574,7 @@ export default function Dashboard({
                                             handleUnlockNextLesson('1-T1-W2');
                                           }} 
                                           onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                          isNextLessonLocked={localIsNextLessonLocked}
                                           isSuperAdmin={isSuperAdmin}
                                           superAdminBypass={superAdminBypass}
                                         />
@@ -1699,7 +1719,10 @@ export default function Dashboard({
                                 disabled={!isChecklistCompletedForLesson(lesson.id)}
                                 onClick={() => {
                                   const weekKey = `${grade}-${lesson.term}-${lesson.week}`;
-                                  updateProgress(weekKey, 3, 3);
+                                  const rawScore = progress.starsEarned[weekKey] || 0;
+                                  const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                                  const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                                  updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
                                 }}
                                 className={`w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer select-none active:scale-95 ${
                                   isCompleted
@@ -1866,7 +1889,10 @@ export default function Dashboard({
                           disabled={isPendingApproval || isCompleted || !isCurrentLessonChecklistCompleted}
                           onClick={async () => {
                             const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                            updateProgress(weekKey, 3, 3);
+                            const rawScore = progress.starsEarned[weekKey] || 0;
+                            const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                            const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                            updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
                             if (schoolId) {
                               await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
                               if (setLessonStatuses) {
@@ -1899,10 +1925,10 @@ export default function Dashboard({
                     })()
                   ) : (
                     <button
-                      disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
+                      disabled={!nextLesson || checkIsLessonLocked(nextLesson.id)}
                       onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
                       className="text-[11px] font-bold text-white bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-xl transition cursor-pointer active:scale-95 flex items-center gap-1"
-                      title={!isCurrentLessonChecklistCompleted && nextLesson ? "Select 'Yes' for all 4 Assessment Checklist items to unlock this next lesson" : "Next Lesson"}
+                      title={nextLesson && checkIsLessonLocked(nextLesson.id) ? "Next lesson is locked" : "Next Lesson"}
                     >
                       <span className="hidden sm:inline">Next Lesson</span>
                       <span>→</span>
@@ -2021,6 +2047,7 @@ export default function Dashboard({
                               handleUnlockNextLesson('1-T1-W2');
                             }} 
                             onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                            isNextLessonLocked={nextLesson ? checkIsLessonLocked(nextLesson.id) : false}
                             isSuperAdmin={isSuperAdmin}
                             superAdminBypass={superAdminBypass}
                             isTeacherPreparation={isTeacherPreparation}
@@ -2040,6 +2067,7 @@ export default function Dashboard({
                               handleUnlockNextLesson(fullscreenLesson.id);
                             }}
                             onNextLesson={() => handleGoToNextLesson(fullscreenLesson.id)}
+                            isNextLessonLocked={nextLesson ? checkIsLessonLocked(nextLesson.id) : false}
                             isSuperAdmin={isSuperAdmin}
                             superAdminBypass={superAdminBypass}
                             isTeacherPreparation={isTeacherPreparation}
@@ -2319,6 +2347,7 @@ export default function Dashboard({
                                   handleUnlockNextLesson('1-T1-W2');
                                 }} 
                                 onNextLesson={() => handleGoToNextLesson('1-T1-W2')}
+                                isNextLessonLocked={nextLesson ? checkIsLessonLocked(nextLesson.id) : false}
                                 isSuperAdmin={isSuperAdmin}
                                 superAdminBypass={superAdminBypass}
                               />
@@ -2485,7 +2514,10 @@ export default function Dashboard({
                           disabled={isPendingApproval || !isChecklistCompletedForLesson(fullscreenLesson.id)}
                           onClick={async () => {
                             const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                            updateProgress(weekKey, 3, 3);
+                            const rawScore = progress.starsEarned[weekKey] || 0;
+                            const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                            const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                            updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
                             
                             if (isTeacherPreparation && schoolId) {
                                await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
@@ -2536,9 +2568,13 @@ export default function Dashboard({
                     <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
                     Interactive Full-Screen Navigation
                   </span>
-                  {!isCurrentLessonChecklistCompleted && nextLesson ? (
+                  {isTeacherPreparation && !isCurrentLessonChecklistCompleted && nextLesson ? (
                     <span className="text-[10.5px] text-rose-600 font-bold flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded border border-rose-100 w-fit animate-pulse">
                       🔒 Complete Checklist (Select 'Yes ✔' for all 4 items) to Unlock Next Week
+                    </span>
+                  ) : !isTeacherPreparation && nextLesson && checkIsLessonLocked(nextLesson.id) ? (
+                    <span className="text-[10.5px] text-rose-600 font-bold flex items-center gap-1 bg-rose-50 px-2.5 py-0.5 rounded border border-rose-100 w-fit animate-pulse">
+                      🔒 Next lesson is locked. Requires admin approval.
                     </span>
                   ) : (
                     <span className="text-[10px] text-slate-500 font-medium">
@@ -2577,7 +2613,10 @@ export default function Dashboard({
                           disabled={isPendingApproval || isCompleted || !isCurrentLessonChecklistCompleted}
                           onClick={async () => {
                             const weekKey = `${grade}-${fullscreenLesson.term}-${fullscreenLesson.week}`;
-                            updateProgress(weekKey, 3, 3);
+                            const rawScore = progress.starsEarned[weekKey] || 0;
+                            const rawPossible = progress.marksPossible?.[weekKey] || 0;
+                            const { stars, possible } = scaleOldProgressScore(weekKey, rawScore, rawPossible, progress);
+                            updateProgress(weekKey, stars || getMaxStarsForLesson(weekKey), possible);
                             
                             if (schoolId) {
                               await updateLessonStatus(schoolId, grade, fullscreenLesson.id, 'pending_approval', teacherId);
@@ -2626,10 +2665,10 @@ export default function Dashboard({
                     })()
                   ) : (
                     <button
-                      disabled={!nextLesson || !isCurrentLessonChecklistCompleted}
+                      disabled={!nextLesson || checkIsLessonLocked(nextLesson.id)}
                       onClick={() => nextLesson && handleSwitchLesson(nextLesson)}
                       className="w-full sm:w-auto px-7 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-black text-xs rounded-xl transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-600/30"
-                      title={!isCurrentLessonChecklistCompleted && nextLesson ? "Complete the observation checklist items with 'Yes' to proceed" : "Next Lesson Week"}
+                      title={nextLesson && checkIsLessonLocked(nextLesson.id) ? "Next lesson is locked" : "Next Lesson Week"}
                     >
                       <span>Next Lesson Week</span>
                       <ChevronRight className="w-4 h-4 shrink-0" />

@@ -6,6 +6,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { DashboardCard } from '@/components/dashboard/DashboardCard';
 import { EmptyState } from '@/components/dashboard/EmptyState';
+import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { DashboardCalendar } from '@/components/dashboard/DashboardCalendar';
 
 import { supabase } from '@/lib/supabase';
@@ -168,11 +169,22 @@ export default function ParentDashboard() {
           </DashboardCard>
 
           <DashboardCard title="Recent Learning Activity">
-             <EmptyState 
+            {data.recentProgress && data.recentProgress.length > 0 ? (
+              <ActivityFeed activities={data.recentProgress.map((p: any) => ({
+                id: p.id || Math.random().toString(),
+                title: p.lesson_title,
+                description: `${p.student_name} scored ${p.score || 0} stars.`,
+                time: new Date(p.completed_at).toLocaleDateString(),
+                icon: <BookOpen className="w-5 h-5" />,
+                color: "bg-blue-100 text-blue-600"
+              }))} />
+            ) : (
+              <EmptyState 
                 title="No Recent Activity" 
                 description="When your children complete lessons or quizzes, they will appear here."
                 icon={<BookOpen className="w-12 h-12 text-slate-300" />}
               />
+            )}
           </DashboardCard>
         </div>
 

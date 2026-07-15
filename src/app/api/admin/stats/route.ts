@@ -60,14 +60,49 @@ export async function GET(req: NextRequest) {
       { count: learnersCount },
       { count: teachersCount },
       { count: classesCount },
-      { data: recentSchools }
+      { data: recentSchools },
+      { data: recentProfiles }
     ] = await Promise.all([
       adminClient.from('schools').select('*', { count: 'exact', head: true }),
       adminClient.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'learner'),
       adminClient.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'teacher'),
       adminClient.from('classes').select('*', { count: 'exact', head: true }),
-      adminClient.from('schools').select('*').order('created_at', { ascending: false }).limit(5)
+      adminClient.from('schools').select('id, name, created_at').order('created_at', { ascending: false }).limit(5),
+      adminClient.from('profiles').select('id, first_name, last_name, role, created_at').order('created_at', { ascending: false }).limit(10)
     ]);
+
+    const activities: any[] = [];
+    if (recentSchools) {
+      recentSchools.forEach(school => {
+        activities.push({
+          id: `school-${school.id}`,
+          title: "New School Onboarded",
+          description: `${school.name} registered on the platform.`,
+          time: new Date(school.created_at).toLocaleString(),
+          iconType: 'building',
+          created_at: new Date(school.created_at).getTime()
+        });
+      });
+    }
+
+    if (recentProfiles) {
+      recentProfiles.forEach(profile => {
+        const role = profile.role ? profile.role.charAt(0).toUpperCase() + profile.role.slice(1) : 'User';
+        const name = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'A user';
+        activities.push({
+          id: `profile-${profile.id}`,
+          title: `New ${role} Registered`,
+          description: `${name} joined the platform as a ${role.toLowerCase()}.`,
+          time: new Date(profile.created_at).toLocaleString(),
+          iconType: profile.role === 'learner' ? 'user' : (profile.role === 'teacher' ? 'teacher' : 'admin'),
+          created_at: new Date(profile.created_at).getTime()
+        });
+      });
+    }
+
+    // Sort by created_at descending and take top 8
+    activities.sort((a, b) => b.created_at - a.created_at);
+    const recentActivities = activities.slice(0, 8).map(({ created_at, ...rest }) => rest);
 
     let capsProgress = 65;
     let practicalAssessments = 42;
@@ -124,6 +159,7 @@ export async function GET(req: NextRequest) {
         classes: classesCount || 0
       },
       recentSchools: recentSchools || [],
+      recentActivities,
       capsProgress,
       practicalAssessments
     });

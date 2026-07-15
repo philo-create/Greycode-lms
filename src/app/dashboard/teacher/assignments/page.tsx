@@ -53,7 +53,7 @@ export default function AssignmentsPage() {
           console.error('Error fetching assignments:', error);
         }
       } else if (data) {
-        setAssignments(data);
+        setAssignments(data.filter(a => !a.title?.startsWith('[TEST/EXAM] ')));
       }
     } catch (err) {
       console.error(err);

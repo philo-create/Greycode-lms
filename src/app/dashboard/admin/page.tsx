@@ -1125,8 +1125,15 @@ export default function SuperAdminDashboard() {
           </DashboardCard>
 
           <DashboardCard title="Recent Activity">
-            {data.recentSchools && data.recentSchools.length > 0 ? (
-              <ActivityFeed activities={data.recentSchools.map((s, i) => ({ id: s.id, title: "New School Onboarded", description: `${s.name} registered on the platform.`, time: new Date(s.created_at).toLocaleDateString(), icon: <Building2 className="w-5 h-5" />, color: "bg-indigo-100 text-indigo-600" }))} />
+            {data.recentActivities && data.recentActivities.length > 0 ? (
+              <ActivityFeed activities={data.recentActivities.map((act: any) => ({ 
+                id: act.id, 
+                title: act.title, 
+                description: act.description, 
+                time: act.time, 
+                icon: act.iconType === 'building' ? <Building2 className="w-5 h-5" /> : (act.iconType === 'teacher' ? <GraduationCap className="w-5 h-5" /> : (act.iconType === 'user' ? <Users className="w-5 h-5" /> : <Settings className="w-5 h-5" />)), 
+                color: act.iconType === 'building' ? "bg-indigo-100 text-indigo-600" : (act.iconType === 'teacher' ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600")
+              }))} />
             ) : (
               <EmptyState title="No recent activity" description="Audit logs and system events will appear here." />
             )}

@@ -17,11 +17,23 @@ export interface Lesson {
   activityId?: string; // which interactive simulation level to play
 }
 
+export interface SubjectAssessment {
+  id: string; // unique assessment ID
+  name: string; // assessment name e.g., "Counting 1 to 10"
+  score: number; // teacher-assigned score
+  outOf: number; // max possible score
+  date: string;  // ISO date string
+  feedback?: string; // teacher feedback
+  type?: 'home' | 'classwork' | 'test' | 'practical test';
+  activityId?: string; // linked class activity ID
+}
+
 export interface UserProgress {
   completedWeeks: Record<string, boolean>; // key: "Grade-Term-Week"
   starsEarned: Record<string, number>; // key: "Grade-Term-Week"
   totalStars: number;
   marksPossible?: Record<string, number>; // key: "Grade-Term-Week"
+  subjectGrades?: Record<string, SubjectAssessment[]>; // key: Subject name (e.g., "Mathematics")
 }
 
 export interface StudentProfile {

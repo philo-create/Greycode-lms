@@ -10,7 +10,7 @@ import { localStore, getStudentWorkbookStates } from '../lib/localStore';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, GraduationCap, Trophy, Sparkles, Award, ChevronDown, Settings, LayoutDashboard, Palette } from 'lucide-react';
-import { GRADES } from '../curriculumData';
+import { GRADES, normalizeUserProgress } from '../curriculumData';
 import { GradeType, UserProgress, StudentProfile, LessonStatus } from '../types';
 import { fetchLessonStatuses } from '../lib/lesson-status-service';
 import Dashboard from './Dashboard';
@@ -77,8 +77,9 @@ export default function App() {
   }, [activeStudent]);
 
   const handleLogin = (student: StudentProfile) => {
-    setActiveStudent(student);
-    setProgress(student.progress);
+    const norm = normalizeUserProgress(student.progress);
+    setActiveStudent({ ...student, progress: norm });
+    setProgress(norm);
     setSelectedGrade(student.grade);
   };
 
@@ -94,13 +95,15 @@ export default function App() {
     if (!activeStudent) return;
 
     setProgress(prev => {
-      const previousStarsForWeek = prev.starsEarned[weekKey] || 0;
       const newCompleted = { ...prev.completedWeeks, [weekKey]: true };
-      const newStars = { ...prev.starsEarned, [weekKey]: Math.max(previousStarsForWeek, starsEarned) };
+      
+      // We overwrite instead of Math.max to prevent discrepancies where a default 3/3 
+      // is kept instead of a legitimate 2/5 quiz score.
+      const newStars = { ...prev.starsEarned, [weekKey]: starsEarned };
       
       const newPossible = { ...(prev.marksPossible || {}) };
       if (marksPossible !== undefined) {
-        newPossible[weekKey] = Math.max(newPossible[weekKey] || marksPossible, marksPossible);
+        newPossible[weekKey] = marksPossible;
       } else if (newPossible[weekKey] === undefined) {
         newPossible[weekKey] = 3; // Fallback so we always have a denominator if undefined
       }

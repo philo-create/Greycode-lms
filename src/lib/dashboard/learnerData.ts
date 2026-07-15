@@ -1,4 +1,5 @@
 import { supabase } from '../supabase';
+import { normalizeUserProgress } from '../../curriculumData';
 
 export async function getLearnerData(userId: string) {
   if (!userId) throw new Error('No user ID provided');
@@ -45,8 +46,9 @@ export async function getLearnerData(userId: string) {
     .select('*')
     .eq('student_id', userId);
 
-  const totalPoints = (profile.progress as any)?.totalStars || progress?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
-  const completedLessons = progress?.filter(p => p.status === 'completed').length || Object.keys((profile.progress as any)?.completedWeeks || {}).length || 0;
+  const normalizedProgress = normalizeUserProgress(profile.progress);
+  const totalPoints = normalizedProgress?.totalStars || progress?.reduce((acc, curr) => acc + (curr.score || 0), 0) || 0;
+  const completedLessons = progress?.filter(p => p.status === 'completed').length || Object.keys(normalizedProgress?.completedWeeks || {}).length || 0;
   const currentProgress = Math.min(100, Math.round((completedLessons / 10) * 100));
 
   

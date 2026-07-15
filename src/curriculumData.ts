@@ -552,3 +552,230 @@ export const GRADES = [
   { value: '2', label: 'Grade 2', description: 'Explicit turns, IF-THEN conditions, sorting', color: 'border-emerald-400 text-emerald-500 bg-emerald-50' },
   { value: '3', label: 'Grade 3', description: 'Repetitive loops, ASCII binary beading, drawing', color: 'border-violet-400 text-violet-500 bg-violet-50' }
 ];
+
+export function getMaxStarsForLesson(key: string): number {
+  if (!key) return 3;
+  const cleanKey = key.replace('T', '').replace('W', ''); // e.g. R-T1-W2 -> R-1-2
+  if (cleanKey === '1-1-1' || cleanKey === '1-T1-W1') return 4;
+  if (['R-1-2', 'R-1-4', 'R-1-9', 'R-T1-W2', 'R-T1-W4', 'R-T1-W9'].includes(cleanKey)) return 6;
+  if (cleanKey.startsWith('R-')) return 5;
+  return 3;
+}
+
+export function scaleOldProgressScore(weekKey: string, savedStars: number, savedPossible: number, progress?: any): { stars: number; possible: number } {
+  const maxFb = getMaxStarsForLesson(weekKey);
+  
+  if (progress && progress.workbookStates) {
+    const parts = weekKey.split('-');
+    if (parts.length >= 3) {
+      const grade = parts[0];
+      let term = parts[1];
+      let week = parts[2];
+      if (!term.startsWith('T')) term = `T${term}`;
+      if (!week.startsWith('W')) week = `W${week}`;
+      const lessonId = `${grade}-${term}-${week}`;
+      
+      const scoreKeyMatch = `_${lessonId}_score`;
+      const totalKeyMatch = `_${lessonId}_total`;
+      
+      let foundScore: number | null = null;
+      let foundTotal: number | null = null;
+      
+      for (const k of Object.keys(progress.workbookStates)) {
+        if (k.endsWith(scoreKeyMatch)) {
+          foundScore = parseInt(progress.workbookStates[k], 10);
+        }
+        if (k.endsWith(totalKeyMatch)) {
+          foundTotal = parseInt(progress.workbookStates[k], 10);
+        }
+      }
+      
+      if (foundScore !== null && foundTotal !== null && !isNaN(foundScore) && !isNaN(foundTotal)) {
+        return { stars: foundScore, possible: foundTotal };
+      }
+    }
+  }
+  
+  if (!savedStars) {
+    return { stars: 0, possible: maxFb };
+  }
+
+  if (savedPossible === 3 && maxFb !== 3) {
+    const scaledStars = Math.round((savedStars / 3) * maxFb);
+    return { stars: scaledStars, possible: maxFb };
+  }
+
+  if (savedStars === 3 && (savedPossible === 3 || savedPossible === maxFb || !savedPossible)) {
+    if (maxFb > 3) {
+      return { stars: maxFb, possible: maxFb };
+    }
+  }
+
+  return { stars: savedStars, possible: savedPossible || maxFb };
+}
+
+export function normalizeWeekKey(key: string): string {
+  if (!key) return key;
+  const parts = key.split('-');
+  if (parts.length >= 3) {
+    const grade = parts[0];
+    let term = parts[1];
+    let week = parts[2];
+    if (!term.startsWith('T')) term = `T${term}`;
+    if (!week.startsWith('W')) week = `W${week}`;
+    return `${grade}-${term}-${week}`;
+  }
+  return key;
+}
+
+export function getSubjectsForGrade(grade: string): string[] {
+  const g = (grade || '').toUpperCase();
+  if (g === 'R') {
+    return ['Home Language', 'Mathematics', 'Life Skills', 'Coding and Robotics'];
+  }
+  if (g === '1' || g === '2' || g === '3') {
+    return ['Home Language', 'First Additional Language', 'Mathematics', 'Life Skills', 'Coding and Robotics'];
+  }
+  if (g === '4' || g === '5' || g === '6') {
+    return [
+      'Home Language', 'First Additional Language', 'Mathematics', 
+      'Natural Sciences and Technology', 'Social Sciences', 'Life Skills', 
+      'Coding and Robotics'
+    ];
+  }
+  if (g === '7' || g === '8' || g === '9') {
+    return [
+      'Home Language', 'First Additional Language', 'Mathematics', 
+      'Natural Sciences', 'Social Sciences', 'Technology', 
+      'Economic and Management Sciences', 'Creative Arts', 'Life Orientation', 
+      'Coding and Robotics'
+    ];
+  }
+  // Grades 10-12
+  return [
+    'Home Language', 'First Additional Language', 'Mathematics or Mathematical Literacy', 
+    'Life Orientation', 'Elective Subject 1', 'Elective Subject 2', 'Elective Subject 3'
+  ];
+}
+
+export function normalizeUserProgress(p: any): any {
+  if (!p) return p;
+  
+  const completedWeeks: Record<string, boolean> = {};
+  const starsEarned: Record<string, number> = {};
+  const marksPossible: Record<string, number> = {};
+  
+  if (p.completedWeeks) {
+    for (const key of Object.keys(p.completedWeeks)) {
+      const normalizedKey = normalizeWeekKey(key);
+      if (p.completedWeeks[key]) {
+        completedWeeks[normalizedKey] = true;
+      }
+    }
+  }
+  
+  if (p.starsEarned) {
+    for (const key of Object.keys(p.starsEarned)) {
+      const normalizedKey = normalizeWeekKey(key);
+      const rawScore = p.starsEarned[key] || 0;
+      const rawPossible = p.marksPossible?.[key] || 0;
+      const { stars, possible } = scaleOldProgressScore(normalizedKey, rawScore, rawPossible, p);
+      
+      starsEarned[normalizedKey] = stars;
+      marksPossible[normalizedKey] = possible;
+    }
+  }
+  
+  for (const key of Object.keys(completedWeeks)) {
+    if (starsEarned[key] === undefined) {
+      const { stars, possible } = scaleOldProgressScore(key, 0, 0, p);
+      starsEarned[key] = stars;
+      marksPossible[key] = possible;
+    }
+  }
+
+  const totalStars = Object.keys(completedWeeks).reduce((sum, key) => {
+    return sum + (starsEarned[key] || 0);
+  }, 0);
+  
+  return {
+    ...p,
+    completedWeeks,
+    starsEarned,
+    marksPossible,
+    totalStars,
+    subjectGrades: p.subjectGrades || {}
+  };
+}
+
+export const SUBJECT_STRANDS: Record<string, string[]> = {
+  'Home Language': [
+    'Listening & Speaking',
+    'Reading & Phonics',
+    'Writing & Handwriting',
+    'Thinking & Reasoning'
+  ],
+  'First Additional Language': [
+    'Listening & Speaking',
+    'Reading & Phonics',
+    'Writing & Handwriting',
+    'Thinking & Reasoning'
+  ],
+  'Mathematics': [
+    'Numbers, Operations & Relationships',
+    'Patterns, Functions & Algebra',
+    'Space & Shape (Geometry)',
+    'Measurement',
+    'Data Handling'
+  ],
+  'Life Skills': [
+    'Beginning Knowledge',
+    'Personal & Social Well-being',
+    'Creative Arts',
+    'Physical Education'
+  ],
+  'Coding and Robotics': [
+    'Algorithms & Coding',
+    'Robotics & Automation',
+    'Digital Skills & Citizenship'
+  ],
+  'Natural Sciences and Technology': [
+    'Life & Living',
+    'Matter & Materials',
+    'Energy & Change',
+    'Planet Earth & Beyond',
+    'Structures, Processing & Systems'
+  ],
+  'Natural Sciences': [
+    'Life & Living',
+    'Matter & Materials',
+    'Energy & Change',
+    'Planet Earth & Beyond'
+  ],
+  'Technology': [
+    'Structures',
+    'Processing',
+    'Mechanical Systems & Control',
+    'Electrical Systems & Control'
+  ],
+  'Social Sciences': [
+    'Geography',
+    'History'
+  ],
+  'Economic and Management Sciences': [
+    'The Economy',
+    'Financial Literacy',
+    'Entrepreneurship'
+  ],
+  'Creative Arts': [
+    'Performing Arts',
+    'Visual Arts'
+  ],
+  'Life Orientation': [
+    'Development of the Self in Society',
+    'Social and Environmental Responsibility',
+    'Democracy and Human Rights',
+    'Careers and Career Choices'
+  ]
+};
+

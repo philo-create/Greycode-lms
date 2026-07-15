@@ -16,6 +16,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface Assignment {
   id: string;
@@ -48,76 +49,16 @@ function getLocalDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-const DEFAULT_ACTIVITIES: SchoolActivity[] = [
-  {
-    id: 'act-1',
-    title: '🚀 Robotics Championship Prep',
-    description: 'Special mentorship workshop for the upcoming national robotics tournament.',
-    date: getLocalDateString(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)), // 2 days from now
-    time: '14:00 - 15:30',
-    category: 'activity'
-  },
-  {
-    id: 'act-2',
-    title: '💻 Weekly Coding Club Meetup',
-    description: 'Level up your scratch and python programming skills. Bring your own laptop!',
-    date: (() => {
-      // Find next Tuesday
-      const d = new Date();
-      d.setDate(d.getDate() + ((2 + 7 - d.getDay()) % 7 || 7));
-      return getLocalDateString(d);
-    })(),
-    time: '15:00 - 16:00',
-    category: 'club'
-  },
-  {
-    id: 'act-3',
-    title: '🎨 Digital Art Exhibition',
-    description: 'Showcasing student-designed virtual animations and games in the auditorium.',
-    date: getLocalDateString(new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)), // 5 days from now
-    time: '09:00 - 13:00',
-    category: 'activity'
-  },
-  {
-    id: 'act-4',
-    title: '🧠 Parent-Teacher Meeting',
-    description: 'Term review and digital literacy curriculum showcase with facilitators.',
-    date: getLocalDateString(new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)), // tomorrow
-    time: '17:30 - 19:00',
-    category: 'reminder'
-  },
-  {
-    id: 'act-5',
-    title: '📚 Robotics Lab Science Fair',
-    description: 'Presenting active working electronics and physical computing projects.',
-    date: getLocalDateString(new Date(Date.now() + 8 * 24 * 60 * 60 * 1000)),
-    time: '10:00 - 15:00',
-    category: 'activity'
-  },
-  {
-    id: 'act-6',
-    title: 'Celebrate Coding Day! 🎉',
-    description: 'Fun puzzles, trivia, and special snacks for coding champions.',
-    date: getLocalDateString(new Date()), // Today
-    time: 'All Day',
-    category: 'activity'
-  }
-];
+const DEFAULT_ACTIVITIES: SchoolActivity[] = [];
 
 export function DashboardCalendar({ assignments = [], role = 'learner' }: DashboardCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [customEvents, setCustomEvents] = useState<SchoolActivity[]>([]);
+  const [showAllUpcoming, setShowAllUpcoming] = useState(true); // Default to showing all upcoming activities
+  
   const [filterType, setFilterType] = useState<'all' | 'assignment' | 'activity'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Modal state for adding a custom activity
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDesc, setNewDesc] = useState('');
-  const [newDateStr, setNewDateStr] = useState(getLocalDateString(new Date()));
-  const [newTime, setNewTime] = useState('14:00');
-  const [newCategory, setNewCategory] = useState<'activity' | 'club' | 'exam' | 'reminder'>('activity');
 
   const currentYear = currentDate.getFullYear();
   const currentMonth = currentDate.getMonth();
@@ -393,6 +334,7 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
     const today = new Date();
     setCurrentDate(today);
     setSelectedDate(today);
+    setShowAllUpcoming(false);
   };
 
   // Merge default activities, assignments, and custom events
@@ -419,13 +361,19 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
         }
       }
       const asgTime = asg.due_date ? new Date(asg.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Due end of day';
+      
+      const isTest = asg.title.startsWith('[TEST/EXAM] ');
+      const isAnnouncement = asg.title.startsWith('[ANNOUNCEMENT] ');
+      const cleanTitle = isTest ? asg.title.replace('[TEST/EXAM] ', '') : (isAnnouncement ? asg.title.replace('[ANNOUNCEMENT] ', '') : asg.title);
+      const displayTitle = isTest ? `📝 Test/Exam: ${cleanTitle}` : (isAnnouncement ? `📣 Announcement: ${cleanTitle}` : `📖 Homework: ${cleanTitle}`);
+      
       eventsList.push({
         id: `asg-${asg.id}`,
-        title: `📖 Homework: ${asg.title}`,
+        title: displayTitle,
         description: asg.description || 'No description provided.',
         date: asgDateOnly,
         time: asgTime,
-        type: 'assignment',
+        type: (isTest || isAnnouncement) ? 'activity' : 'assignment',
         subject: asg.subject || 'General'
       });
     });
@@ -449,21 +397,9 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
       eventsList.push(act);
     });
 
-    // Add custom events
-    customEvents.forEach(act => {
-      eventsList.push({
-        id: act.id,
-        title: act.title,
-        description: act.description,
-        date: act.date,
-        time: act.time,
-        type: 'activity',
-        category: act.category
-      });
-    });
 
     return eventsList;
-  }, [assignments, customEvents]);
+  }, [assignments]);
 
   // Calendar math: grid generation
   const calendarCells = useMemo(() => {
@@ -533,9 +469,16 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
   // Selected date events filter
   const selectedDateStr = getLocalDateString(selectedDate);
   
-  const filteredEventsForSelectedDate = useMemo(() => {
-    const eventsOnDay = eventsByDate[selectedDateStr] || [];
-    return eventsOnDay.filter(e => {
+  const displayedEvents = useMemo(() => {
+    let baseEvents = [];
+    if (showAllUpcoming) {
+      const todayStr = getLocalDateString(new Date());
+      baseEvents = allEvents.filter(e => e.date >= todayStr).sort((a, b) => a.date.localeCompare(b.date));
+    } else {
+      baseEvents = eventsByDate[selectedDateStr] || [];
+    }
+
+    return baseEvents.filter(e => {
       if (filterType === 'assignment' && e.type !== 'assignment') return false;
       if (filterType === 'activity' && e.type !== 'activity') return false;
       
@@ -545,7 +488,7 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
       }
       return true;
     });
-  }, [eventsByDate, selectedDateStr, filterType, searchTerm]);
+  }, [eventsByDate, selectedDateStr, filterType, searchTerm, showAllUpcoming, allEvents]);
 
   // Global events search list
   const searchResults = useMemo(() => {
@@ -558,29 +501,6 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
     });
   }, [allEvents, searchTerm, filterType]);
 
-  const handleAddEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    const emojiPrefix = newCategory === 'exam' ? '📝' : newCategory === 'club' ? '💻' : '✨';
-    const finalTitle = `${emojiPrefix} ${newTitle}`;
-
-    const newAct: SchoolActivity = {
-      id: `custom-${Date.now()}`,
-      title: finalTitle,
-      description: newDesc,
-      date: newDateStr,
-      time: newTime,
-      category: newCategory
-    };
-
-    setCustomEvents(prev => [...prev, newAct]);
-    
-    // Reset form states
-    setNewTitle('');
-    setNewDesc('');
-    setShowAddModal(false);
-  };
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -658,7 +578,7 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
             return (
               <button
                 key={idx}
-                onClick={() => setSelectedDate(cell.date)}
+                onClick={() => { setSelectedDate(cell.date); setShowAllUpcoming(false); }}
                 className={`
                   relative aspect-square p-1 rounded-2xl flex flex-col justify-between items-center transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-400
                   ${cell.isCurrentMonth ? 'text-slate-700 font-bold' : 'text-slate-300 font-normal'}
@@ -727,24 +647,20 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
 
         {/* Selected Date Header */}
         <div className="flex justify-between items-center mb-3">
-          <h4 className="font-extrabold text-sm text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />
-            {searchTerm ? 'Search Results' : selectedDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-          </h4>
-          
-          {/* Quick add event option for teachers, admins, and parents */}
-          {['teacher', 'parent', 'school_admin', 'super_admin'].includes(role) && (
-            <button 
-              onClick={() => {
-                setNewDateStr(selectedDateStr);
-                setShowAddModal(true);
-              }}
-              className="p-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all cursor-pointer hover:scale-105 active:scale-95"
-              title="Add School Activity/Reminder"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <h4 className="font-extrabold text-sm text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-yellow-500 animate-pulse" />
+              {searchTerm ? 'Search Results' : (showAllUpcoming ? 'All Upcoming Events' : selectedDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }))}
+            </h4>
+            {!showAllUpcoming && !searchTerm && (
+              <button 
+                onClick={() => setShowAllUpcoming(true)}
+                className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold transition-colors cursor-pointer"
+              >
+                Show All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Events list container */}
@@ -780,19 +696,26 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
               </div>
             )
           ) : (
-            filteredEventsForSelectedDate.length > 0 ? (
-              filteredEventsForSelectedDate.map(event => (
+            displayedEvents.length > 0 ? (
+              displayedEvents.map(event => (
                 <div key={event.id} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl hover:border-indigo-100 transition-all">
                   <div className="flex justify-between items-start gap-2 mb-1.5">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide ${event.type === 'assignment' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
                       {event.type === 'assignment' ? 'Homework' : 'Activity'}
                     </span>
-                    {event.time && (
-                      <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {event.time}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {showAllUpcoming && (
+                         <span className="text-[10px] font-bold text-slate-500 bg-slate-200/50 px-1.5 rounded">
+                           {new Date(event.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                         </span>
+                      )}
+                      {event.time && (
+                        <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {event.time}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <h5 className="font-black text-slate-800 text-xs leading-snug">{event.title}</h5>
                   {event.description && (
@@ -809,121 +732,15 @@ export function DashboardCalendar({ assignments = [], role = 'learner' }: Dashbo
             ) : (
               <div className="text-center py-8">
                 <CheckCircle className="w-8 h-8 text-slate-200 mx-auto mb-2" />
-                <p className="text-xs font-bold text-slate-400">No homework or activities planned today!</p>
-                <p className="text-[10px] text-slate-300 mt-0.5">Enjoy your free time or trace some words! 🌟</p>
+                <p className="text-xs font-bold text-slate-400">
+                  {showAllUpcoming ? "No upcoming homework or activities!" : "No homework or activities planned for this day!"}
+                </p>
+                <p className="text-[10px] text-slate-300 mt-0.5">Enjoy your free time! 🌟</p>
               </div>
             )
           )}
         </div>
       </div>
-
-      {/* MODAL: Add Custom Activity Form */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-3xl border-4 border-indigo-100 shadow-xl max-w-sm w-full p-6 relative">
-            <button 
-              onClick={() => setShowAddModal(false)}
-              className="absolute right-4 top-4 p-1.5 hover:bg-slate-50 text-slate-400 hover:text-slate-600 rounded-xl transition-all cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-indigo-600" />
-              <h3 className="font-black text-slate-800 text-md">Add Calendar Activity</h3>
-            </div>
-
-            <form onSubmit={handleAddEvent} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                  Activity Title
-                </label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="e.g. Science Lab Project Showcase"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                  Description
-                </label>
-                <textarea 
-                  placeholder="Briefly describe what's happening..."
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  rows={2}
-                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                    Date
-                  </label>
-                  <input 
-                    type="date"
-                    required
-                    value={newDateStr}
-                    onChange={(e) => setNewDateStr(e.target.value)}
-                    className="w-full p-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                    Time
-                  </label>
-                  <input 
-                    type="text"
-                    placeholder="e.g. 14:00 - 15:00"
-                    value={newTime}
-                    onChange={(e) => setNewTime(e.target.value)}
-                    className="w-full p-2 border border-slate-200 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">
-                  Category
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value as any)}
-                  className="w-full p-2.5 border border-slate-200 bg-white rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                >
-                  <option value="activity">School Activity</option>
-                  <option value="club">After-School Club</option>
-                  <option value="exam">Homework / Exam Review</option>
-                  <option value="reminder">Special Reminder</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95"
-                >
-                  Save Activity ✨
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

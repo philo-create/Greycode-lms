@@ -55,6 +55,7 @@ interface Grade1Week2WorkbookProps {
   activeStudentName?: string;
   onComplete: (stars: number, possible?: number) => void;
   onNextLesson?: () => void;
+  isNextLessonLocked?: boolean;
   isSuperAdmin?: boolean;
   superAdminBypass?: boolean;
   isTeacherPreparation?: boolean;
@@ -69,6 +70,7 @@ export default function Grade1Week2Workbook({
   activeStudentName = 'Learner',
   onComplete, 
   onNextLesson,
+  isNextLessonLocked = false,
   isSuperAdmin = false,
   superAdminBypass = false,
   isTeacherPreparation = false,
@@ -2051,15 +2053,23 @@ export default function Grade1Week2Workbook({
                   ) : (
                     <button
                       type="button"
+                      disabled={isNextLessonLocked}
                       onClick={() => {
-                        playChime();
-                        onComplete(hwScore ?? 3, 3);
-                        onNextLesson();
+                        if (!isNextLessonLocked) {
+                          playChime();
+                          onComplete(hwScore ?? 3, 3);
+                          onNextLesson();
+                        }
                       }}
-                      className="px-5 py-2.5 bg-emerald-600 text-white font-extrabold rounded-xl text-xs hover:bg-emerald-700 active:scale-95 transition shadow-md cursor-pointer inline-flex items-center gap-1.5 animate-bounce"
+                      className={`px-5 py-2.5 font-extrabold rounded-xl text-xs transition shadow-md inline-flex items-center gap-1.5 ${
+                        isNextLessonLocked
+                          ? 'bg-slate-400 text-white cursor-not-allowed opacity-90'
+                          : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 cursor-pointer animate-bounce'
+                      }`}
+                      title={isNextLessonLocked ? "Next lesson is locked" : "Next Lesson"}
                     >
-                      <Sparkles className="w-4 h-4 text-amber-300" />
-                      <span>Continue to Next Lesson 🚀</span>
+                      <Sparkles className={`w-4 h-4 ${isNextLessonLocked ? 'text-slate-200' : 'text-amber-300'}`} />
+                      <span>{isNextLessonLocked ? 'Next Lesson Locked 🔒' : 'Continue to Next Lesson 🚀'}</span>
                     </button>
                   )
                 )}

@@ -159,6 +159,100 @@ export const TERM_WORKSTATION_ACTIVITIES: WorkstationActivity[] = [
   }
 ];
 
+const getFriendlyObjectName = (obj: CanvasObject) => {
+  if (obj.type === 'draw') return 'Freehand Scribble';
+  if (obj.type === 'rectangle') return 'Rectangle Shape';
+  if (obj.type === 'circle' || obj.type === 'oval') return 'Circle Shape';
+  if (obj.type === 'triangle') return 'Triangle Shape';
+  if (obj.type === 'text') return `Text: "${obj.text ? obj.text.slice(0, 12) : 'Untitled'}"`;
+  if (obj.type === 'component') {
+    if (obj.componentType === 'led') return 'LED Component';
+    if (obj.componentType === 'battery') return 'Battery Component';
+    if (obj.componentType === 'esp32') return 'ESP32 Microcontroller';
+    return `${obj.componentType || 'Generic'} Component`;
+  }
+  return 'Canvas Drawing';
+};
+
+const getObjectBoundingBox = (obj: CanvasObject) => {
+  let minX = 0, maxX = 0, minY = 0, maxY = 0;
+  
+  if (obj.type === 'draw' && obj.points && obj.points.length > 0) {
+    minX = Math.min(...obj.points.map(p => p.x));
+    maxX = Math.max(...obj.points.map(p => p.x));
+    minY = Math.min(...obj.points.map(p => p.y));
+    maxY = Math.max(...obj.points.map(p => p.y));
+  } else if ((obj.type === 'line' || obj.type === 'circuit-wire' || obj.type === 'curly') && obj.x1 !== undefined && obj.y1 !== undefined && obj.x2 !== undefined && obj.y2 !== undefined) {
+    minX = Math.min(obj.x1, obj.x2);
+    maxX = Math.max(obj.x1, obj.x2);
+    minY = Math.min(obj.y1, obj.y2);
+    maxY = Math.max(obj.y1, obj.y2);
+  } else {
+    minX = obj.x;
+    maxX = obj.x + obj.width;
+    minY = obj.y;
+    maxY = obj.y + obj.height;
+  }
+  
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+    centerX: (minX + maxX) / 2,
+    centerY: (minY + maxY) / 2
+  };
+};
+
+const moveCanvasObject = (obj: CanvasObject, dx: number, dy: number): CanvasObject => {
+  if (obj.type === 'draw' && obj.points) {
+    const nextPoints = obj.points.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    const minX = Math.min(...nextPoints.map(p => p.x));
+    const minY = Math.min(...nextPoints.map(p => p.y));
+    const maxX = Math.max(...nextPoints.map(p => p.x));
+    const maxY = Math.max(...nextPoints.map(p => p.y));
+    return {
+      ...obj,
+      points: nextPoints,
+      x: minX,
+      y: minY,
+      width: maxX - minX,
+      height: maxY - minY
+    };
+  }
+  
+  if (obj.type === 'line' || obj.type === 'circuit-wire' || obj.type === 'curly') {
+    const nextX1 = obj.x1 !== undefined ? obj.x1 + dx : undefined;
+    const nextY1 = obj.y1 !== undefined ? obj.y1 + dy : undefined;
+    const nextX2 = obj.x2 !== undefined ? obj.x2 + dx : undefined;
+    const nextY2 = obj.y2 !== undefined ? obj.y2 + dy : undefined;
+    
+    let nextWaypoints = obj.waypoints;
+    if (obj.waypoints) {
+      nextWaypoints = obj.waypoints.map(p => ({ x: p.x + dx, y: p.y + dy }));
+    }
+    
+    return {
+      ...obj,
+      x: obj.x + dx,
+      y: obj.y + dy,
+      x1: nextX1,
+      y1: nextY1,
+      x2: nextX2,
+      y2: nextY2,
+      waypoints: nextWaypoints
+    };
+  }
+  
+  return {
+    ...obj,
+    x: obj.x + dx,
+    y: obj.y + dy
+  };
+};
+
 interface CreativeWorkstationAppProps {
   onComplete?: (stars: number, possible?: number, aiFeedback?: string) => void;
   mode?: 'bracelet' | 'general';
@@ -478,6 +572,13 @@ export default function CreativeWorkstationApp({
   const [penColor, setPenColor] = useState('#4f46e5');
   const [drawings, setDrawings] = useState<any[]>([]);
   const [robotCostume, setRobotCostume] = useState<'cute-bot' | 'rover-bot' | 'ufo-bot'>('cute-bot');
+  const [programmingTargetId, setProgrammingTargetId] = useState<string>('mascot');
+  const programmingTargetIdRef = useRef('mascot');
+  const [originalObjectsBackup, setOriginalObjectsBackup] = useState<CanvasObject[] | null>(null);
+
+  useEffect(() => {
+    programmingTargetIdRef.current = programmingTargetId;
+  }, [programmingTargetId]);
 
   // React Refs for high-speed synchronous reads and writes inside executeStep loop
   const spriteXRef = useRef(0);
@@ -493,6 +594,11 @@ export default function CreativeWorkstationApp({
   const blocksRef = useRef(blocks);
   const foreverLoopRef = useRef(foreverLoop);
   const runCodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const objectsRef = useRef(objects);
+  useEffect(() => {
+    objectsRef.current = objects;
+  }, [objects]);
 
   useEffect(() => {
     isRunningCodeRef.current = isRunningCode;
@@ -537,12 +643,20 @@ export default function CreativeWorkstationApp({
     setPenActive(false);
     setPenColor('#4f46e5');
     setDrawings([]);
+
+    // Restore original positions of animated custom objects
+    if (originalObjectsBackup) {
+      setObjects(originalObjectsBackup);
+      setOriginalObjectsBackup(null);
+    }
+
     addConsoleLog("🧹 Robot returned to home, pen lifted, and drawings canvas wiped clean.");
     speakTextLocal("Reset stage canvas.");
   };
 
   const stopCodeExecution = () => {
     setIsRunningCode(false);
+    isRunningCodeRef.current = false;
     setCurrentBlockIndex(null);
     if (runCodeTimeoutRef.current) {
       clearTimeout(runCodeTimeoutRef.current);
@@ -555,35 +669,56 @@ export default function CreativeWorkstationApp({
       }
       return obj;
     }));
-    
+
+    // Reset Scratch stage coordinate registers back to 0 so target starts at center next time
+    spriteXRef.current = 0;
+    spriteYRef.current = 0;
+    spriteAngleRef.current = 0;
+    spriteSizeRef.current = 100;
+    penActiveRef.current = false;
+    drawingsRef.current = [];
+
+    setSpriteX(0);
+    setSpriteY(0);
+    setSpriteAngle(0);
+    setSpriteSize(100);
     setSpriteSay(null);
+    setPenActive(false);
+    setDrawings([]);
+
+    // Restore original positions of animated custom objects
+    if (originalObjectsBackup) {
+      setObjects(originalObjectsBackup);
+      setOriginalObjectsBackup(null);
+    }
+    
     addConsoleLog("⏹️ Program stopped. All microcontroller pins powered down.");
     speakTextLocal("Program stopped.");
   };
 
   const startCodeExecution = () => {
-    // Check if there is an ESP32 microcontroller component on the canvas
-    const esp32Obj = objects.find(obj => obj.componentType === 'esp32');
-    if (!esp32Obj) {
-      // Auto-add an ESP32 to make it extremely easy for the student to simulate!
-      const newEsp32: CanvasObject = {
-        id: 'esp32-' + Date.now(),
-        type: 'component',
-        componentType: 'esp32',
-        x: 350,
-        y: 200,
-        width: 240,
-        height: 96,
-        color: '#4f46e5',
-        strokeWidth: 4,
-        pinStates: {}
-      };
-      commitObjects(prev => [...prev, newEsp32]);
-      addConsoleLog("⚙️ Added virtual microcontroller (ESP32) to canvas.");
-    }
+    // Save backup of current objects so we can restore them on stop/reset
+    setOriginalObjectsBackup(objects);
+
+    // Reset Scratch stage coordinate registers back to 0 so target starts at center
+    spriteXRef.current = 0;
+    spriteYRef.current = 0;
+    spriteAngleRef.current = 0;
+    spriteSizeRef.current = 100;
+    penActiveRef.current = false;
+    drawingsRef.current = [];
+
+    setSpriteX(0);
+    setSpriteY(0);
+    setSpriteAngle(0);
+    setSpriteSize(100);
+    setSpriteSay(null);
+    setPenActive(false);
+    setDrawings([]);
 
     setIsSimulating(true);
     setIsRunningCode(true);
+    isRunningCodeRef.current = true;
     setConsoleLogs([
       "[MicroBlocks VM v1.2] Initializing Interpreter...",
       "[MicroBlocks VM v1.2] Compiling block sequences...",
@@ -616,12 +751,59 @@ export default function CreativeWorkstationApp({
         drawingsRef.current.push(newDrawing);
         setDrawings([...drawingsRef.current]);
       }
+
+      // Sync custom canvas object position if selected
+      const targetId = programmingTargetIdRef.current;
+      if (targetId !== 'mascot') {
+        const canvasDeltaX = newX - oldX;
+        const canvasDeltaY = -(newY - oldY); // SVG Y-axis is inverted relative to Scratch Stage
+        setObjects(prevObjects => prevObjects.map(obj => {
+          if (obj.id === targetId) {
+            return moveCanvasObject(obj, canvasDeltaX, canvasDeltaY);
+          }
+          return obj;
+        }));
+      }
     };
 
     let blockIdx = 0;
 
     const executeStep = () => {
       if (!isRunningCodeRef.current) return;
+
+      const clampCoordinates = (nx: number, ny: number) => {
+        let clampedX = nx;
+        let clampedY = ny;
+        if (programmingTargetIdRef.current === 'mascot') {
+          if (clampedX > 180) clampedX = 180;
+          if (clampedX < -180) clampedX = -180;
+          if (clampedY > 130) clampedY = 130;
+          if (clampedY < -130) clampedY = -130;
+        } else {
+          const canvasEl = document.getElementById('main-workspace-canvas');
+          if (canvasEl) {
+            const canvasWidth = canvasEl.clientWidth;
+            const canvasHeight = canvasEl.clientHeight;
+            const targetObj = objectsRef.current.find(o => o.id === programmingTargetIdRef.current);
+            if (targetObj) {
+              const objX = targetObj.x ?? targetObj.x1 ?? 0;
+              const objY = targetObj.y ?? targetObj.y1 ?? 0;
+              const objW = targetObj.width ?? 0;
+              const objH = targetObj.height ?? 0;
+
+              const absX = objX + (clampedX - spriteXRef.current);
+              const absY = objY - (clampedY - spriteYRef.current);
+
+              if (absX < 0) clampedX = spriteXRef.current - objX;
+              else if (absX + objW > canvasWidth) clampedX = spriteXRef.current + (canvasWidth - objW - objX);
+
+              if (absY < 0) clampedY = spriteYRef.current + objY;
+              else if (absY + objH > canvasHeight) clampedY = spriteYRef.current - (canvasHeight - objH - objY);
+            }
+          }
+        }
+        return { newX: clampedX, newY: clampedY };
+      };
 
       const currentBlocks = blocksRef.current;
       if (currentBlocks.length === 0) {
@@ -728,11 +910,9 @@ export default function CreativeWorkstationApp({
         let newX = spriteXRef.current + Math.cos(rad) * steps;
         let newY = spriteYRef.current + Math.sin(rad) * steps;
         
-        // Stage boundaries: X is [-180, 180], Y is [-130, 130]
-        if (newX > 180) newX = 180;
-        if (newX < -180) newX = -180;
-        if (newY > 130) newY = 130;
-        if (newY < -130) newY = -130;
+        const clamped = clampCoordinates(newX, newY);
+        newX = clamped.newX;
+        newY = clamped.newY;
 
         updateSpritePosition(newX, newY);
         addConsoleLog(`🏃 Moved robot ${steps} steps forward to (${newX.toFixed(0)}, ${newY.toFixed(0)})`);
@@ -754,10 +934,9 @@ export default function CreativeWorkstationApp({
       } else if (block.type === 'go-to-xy') {
         let tx = parseFloat(block.paramX) || 0;
         let ty = parseFloat(block.paramY) || 0;
-        if (tx > 180) tx = 180;
-        if (tx < -180) tx = -180;
-        if (ty > 130) ty = 130;
-        if (ty < -130) ty = -130;
+        const clamped = clampCoordinates(tx, ty);
+        tx = clamped.newX;
+        ty = clamped.newY;
         updateSpritePosition(tx, ty);
         addConsoleLog(`📍 Go to X: ${tx}, Y: ${ty}`);
         delayMs = 250;
@@ -766,14 +945,40 @@ export default function CreativeWorkstationApp({
         let y = spriteYRef.current;
         let ang = spriteAngleRef.current;
         let bounced = false;
-        if (Math.abs(x) >= 179) {
-          ang = (180 - ang + 360) % 360;
-          bounced = true;
+        
+        if (programmingTargetIdRef.current === 'mascot') {
+          if (Math.abs(x) >= 179) {
+            ang = (180 - ang + 360) % 360;
+            bounced = true;
+          }
+          if (Math.abs(y) >= 129) {
+            ang = (-ang + 360) % 360;
+            bounced = true;
+          }
+        } else {
+          const canvasEl = document.getElementById('main-workspace-canvas');
+          if (canvasEl) {
+            const canvasWidth = canvasEl.clientWidth;
+            const canvasHeight = canvasEl.clientHeight;
+            const targetObj = objectsRef.current.find(o => o.id === programmingTargetIdRef.current);
+            if (targetObj) {
+              const objX = targetObj.x ?? targetObj.x1 ?? 0;
+              const objY = targetObj.y ?? targetObj.y1 ?? 0;
+              const objW = targetObj.width ?? 0;
+              const objH = targetObj.height ?? 0;
+
+              if (objX <= 1 || objX + objW >= canvasWidth - 1) {
+                ang = (180 - ang + 360) % 360;
+                bounced = true;
+              }
+              if (objY <= 1 || objY + objH >= canvasHeight - 1) {
+                ang = (-ang + 360) % 360;
+                bounced = true;
+              }
+            }
+          }
         }
-        if (Math.abs(y) >= 129) {
-          ang = (-ang + 360) % 360;
-          bounced = true;
-        }
+
         if (bounced) {
           spriteAngleRef.current = ang;
           setSpriteAngle(ang);
@@ -2678,6 +2883,71 @@ export default function CreativeWorkstationApp({
     }
   };
 
+  const renderPassiveObjectForStage = (obj: CanvasObject) => {
+    const isPowered = isSimulating && poweredIds.has(obj.id);
+    
+    if (obj.type === 'draw') {
+      return (
+        <polyline
+          points={obj.points?.map(p => `${p.x},${p.y}`).join(' ')}
+          fill="none"
+          stroke={obj.color}
+          strokeWidth={obj.strokeWidth}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
+    }
+    
+    if (obj.type === 'line') {
+      return (
+        <line
+          x1={obj.x1} y1={obj.y1} x2={obj.x2} y2={obj.y2}
+          stroke={obj.color} strokeWidth={obj.strokeWidth} strokeLinecap="round"
+        />
+      );
+    }
+
+    if (obj.type === 'rectangle') {
+      return <rect x={obj.x} y={obj.y} width={obj.width} height={obj.height} fill={obj.fillColor || "transparent"} stroke={obj.color} strokeWidth={obj.strokeWidth} />;
+    }
+    
+    if (obj.type === 'circle' || obj.type === 'oval') {
+      return <ellipse cx={obj.x + obj.width/2} cy={obj.y + obj.height/2} rx={obj.width/2} ry={obj.height/2} fill={obj.fillColor || "transparent"} stroke={obj.color} strokeWidth={obj.strokeWidth} />;
+    }
+    
+    if (obj.type === 'triangle') {
+      return <polygon points={`${obj.x + obj.width/2},${obj.y} ${obj.x},${obj.y + obj.height} ${obj.x + obj.width},${obj.y + obj.height}`} fill={obj.fillColor || "transparent"} stroke={obj.color} strokeWidth={obj.strokeWidth} strokeLinejoin="round" />;
+    }
+    
+    if (obj.type === 'component' && obj.componentType) {
+      return (
+        <foreignObject x={obj.x} y={obj.y} width={obj.width} height={obj.height}>
+          <div className="w-full h-full flex items-center justify-center">
+            {getComponentIcon(obj.componentType, isPowered, obj)}
+          </div>
+        </foreignObject>
+      );
+    }
+
+    if (obj.type === 'text') {
+      return (
+        <text
+          x={obj.x}
+          y={obj.y + obj.height / 2 + (obj.fontSize || 14) / 3}
+          fill={obj.color}
+          fontSize={obj.fontSize || 14}
+          fontFamily="monospace"
+          fontWeight="bold"
+        >
+          {obj.text || ''}
+        </text>
+      );
+    }
+    
+    return null;
+  };
+
   const renderObject = (obj: CanvasObject) => {
     const isSelected = selectedIds.includes(obj.id);
     const isInteractive = activeTool === 'select' || activeTool === 'fill' || activeTool === 'eraser';
@@ -3717,6 +3987,7 @@ export default function CreativeWorkstationApp({
         {/* Interactive Canvas Area */}
         <div className="flex-1 relative overflow-auto bg-slate-200">
           <div 
+            id="main-workspace-canvas"
             ref={canvasRef}
             className={`min-w-[1500px] min-h-[1500px] bg-[url('/grid.svg')] bg-repeat bg-white relative overflow-hidden touch-none shadow-sm m-4 ${
               activeTool === 'select' ? 'cursor-default' : 'cursor-crosshair'
@@ -4855,6 +5126,57 @@ export default function CreativeWorkstationApp({
               </button>
             </div>
 
+            {/* 🎯 SELECT TARGET OBJECT FOR PROGRAMMING */}
+            <div className="mb-4 select-none bg-slate-800/40 border border-slate-800 p-3.5 rounded-2xl">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                  🎯 Code Target Object
+                </h4>
+                <span className="text-[8px] bg-slate-950 text-slate-400 font-extrabold px-1.5 py-0.5 rounded border border-slate-800">
+                  Select drawing to program!
+                </span>
+              </div>
+              <div className="relative">
+                <select
+                  value={programmingTargetId}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProgrammingTargetId(val);
+                    // Reset Scratch stage coordinate registers back to 0 so target starts at center
+                    spriteXRef.current = 0;
+                    spriteYRef.current = 0;
+                    spriteAngleRef.current = 0;
+                    spriteSizeRef.current = 100;
+                    setSpriteX(0);
+                    setSpriteY(0);
+                    setSpriteAngle(0);
+                    setSpriteSize(100);
+                    
+                    if (val === 'mascot') {
+                      speakTextLocal("Now programming Robot Mascot.");
+                      addConsoleLog("🎯 Programming target switched to: Robot Mascot");
+                    } else {
+                      const obj = objects.find(o => o.id === val);
+                      const name = obj ? getFriendlyObjectName(obj) : 'Canvas Object';
+                      speakTextLocal(`Now programming movement for ${name}.`);
+                      addConsoleLog(`🎯 Programming target switched to: ${name}`);
+                    }
+                  }}
+                  className="w-full bg-slate-950 text-white text-xs font-bold border border-slate-800 rounded-xl px-3 py-2.5 outline-none focus:border-amber-500 transition cursor-pointer"
+                >
+                  <option value="mascot">🤖 Robot Mascot (Default)</option>
+                  {objects
+                    .filter(obj => obj.type !== 'circuit-wire' && obj.type !== 'curly' && obj.componentType !== 'esp32' && obj.componentType !== 'battery') // Filter out wiring & power sources
+                    .map(obj => (
+                      <option key={obj.id} value={obj.id}>
+                        🎨 {getFriendlyObjectName(obj)} ({obj.type.toUpperCase()})
+                      </option>
+                    ))
+                  }
+                </select>
+              </div>
+            </div>
+
             {/* 🌟 SCRATCH INTERACTIVE SIMULATOR STAGE 🌟 */}
             <div className="mb-4 relative overflow-hidden bg-slate-950 border-2 border-slate-800 rounded-2xl w-full aspect-[4/3] shadow-inner flex flex-col">
               {/* Stage Header */}
@@ -4909,6 +5231,16 @@ export default function CreativeWorkstationApp({
                   />
                 ))}
 
+                {/* Draw Passive Background Canvas Objects (all except the active programmed target) */}
+                {objects
+                  .filter(obj => obj.id !== programmingTargetId && obj.type !== 'circuit-wire' && obj.type !== 'curly' && obj.componentType !== 'esp32' && obj.componentType !== 'battery')
+                  .map(obj => (
+                    <g key={obj.id} opacity="0.35" style={{ pointerEvents: 'none' }}>
+                      {renderPassiveObjectForStage(obj)}
+                    </g>
+                  ))
+                }
+
                 {/* Render Animated Sprite at (200 + spriteX, 150 - spriteY) */}
                 <g 
                   transform={`translate(${200 + spriteX}, ${150 - spriteY}) rotate(${spriteAngle}) scale(${spriteSize / 100})`}
@@ -4917,9 +5249,10 @@ export default function CreativeWorkstationApp({
                   {/* Outer glow ring around sprite */}
                   <circle cx="0" cy="0" r="25" fill="#38bdf8" opacity="0.05" className="animate-ping" />
                   
-                  {/* Costume-specific rendering */}
-                  {(() => {
-                    if (robotCostume === 'cute-bot') {
+                  {/* Costume-specific or custom programmed object rendering */}
+                  {programmingTargetId === 'mascot' ? (
+                    (() => {
+                      if (robotCostume === 'cute-bot') {
                       return (
                         <g>
                           {/* Antenna */}
@@ -5000,7 +5333,33 @@ export default function CreativeWorkstationApp({
                         </g>
                       );
                     }
-                  })()}
+                  })()
+                  ) : (
+                    (() => {
+                      const targetObj = objects.find(o => o.id === programmingTargetId);
+                      if (!targetObj) return null;
+                      
+                      const bbox = getObjectBoundingBox(targetObj);
+                      return (
+                        <g transform={`translate(${-bbox.centerX}, ${-bbox.centerY})`}>
+                          {renderPassiveObjectForStage(targetObj)}
+                          {/* Highlight outline indicating active programming target */}
+                          <rect
+                            x={bbox.minX - 4}
+                            y={bbox.minY - 4}
+                            width={bbox.width + 8}
+                            height={bbox.height + 8}
+                            fill="none"
+                            stroke="#fbbf24"
+                            strokeWidth="2"
+                            strokeDasharray="4,4"
+                            className="animate-pulse"
+                            rx="4"
+                          />
+                        </g>
+                      );
+                    })()
+                  )}
                 </g>
               </svg>
 

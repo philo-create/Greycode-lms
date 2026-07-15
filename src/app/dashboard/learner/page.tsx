@@ -33,7 +33,7 @@ export default function LearnerDashboard() {
         setUserEmail(session.user.email || '');
 
         if (session.user.email === 'mapilam2@gmail.com') {
-          const hasReset = localStorage.getItem('reset_progress_mapilam_v3');
+          const hasReset = localStorage.getItem('reset_progress_mapilam_v4');
           if (!hasReset) {
             const emptyProgress = { completedWeeks: {}, starsEarned: {}, totalStars: 0, marksPossible: {} };
             await supabase.from('profiles').update({ progress: emptyProgress }).eq('id', session.user.id);
@@ -48,7 +48,7 @@ export default function LearnerDashboard() {
             }
             keysToRemove.forEach(k => localStorage.removeItem(k));
             
-            localStorage.setItem('reset_progress_mapilam_v3', 'true');
+            localStorage.setItem('reset_progress_mapilam_v4', 'true');
             window.location.reload();
             return;
           }

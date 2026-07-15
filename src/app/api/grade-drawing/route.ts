@@ -17,11 +17,12 @@ export async function POST(req: NextRequest) {
     const base64Data = imageData.replace(/^data:image\/\w+;base64,/, "");
 
     const prompt = `
-      You are an encouraging AI CAPS Tutor grading a Foundation Phase (Grade R/1) learner's drawing.
-      The student was asked to draw a picture of: "${word}".
+      You are an encouraging AI CAPS Tutor grading a Foundation Phase (Grade R/1) learner's word tracing activity.
+      The student was asked to trace or write the word: "${word}".
       
-      Look at the image provided. Is it a reasonable attempt at drawing a "${word}"?
-      Because they are Grade R/1 (5-7 years old), please be EXTREMELY lenient. If there is any squiggle that loosely resembles it, or if they made a genuine attempt, mark it as correct.
+      Look at the image provided. Does the drawing contain handwritten letters that spell "${word}"?
+      While they are young learners (5-7 years old) and their handwriting might be messy, they must have actually attempted to write the letters of the word "${word}" to be marked correct.
+      If the image contains a completely different word (like "DOG" when asked for "SAFETY"), or just random scribbles that don't resemble the letters of "${word}", mark it as incorrect.
       
       Return your response in JSON format matching this schema:
       {
